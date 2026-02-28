@@ -488,6 +488,78 @@ function createContactCardNode(isDark: boolean, accentColor: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Banner node — announcement / highlight bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createBannerNode(accentColor: string) {
+  return Node.create({
+    name: "banner",
+    group: "block",
+    atom: true,
+    addAttributes() {
+      return {
+        text:      { default: "Add your announcement here" },
+        emoji:     { default: "📢" },
+        bgStyle:   { default: "accent" },
+        link:      { default: "" },
+        linkLabel: { default: "Learn more →" },
+      };
+    },
+    parseHTML() {
+      return [{ tag: 'div[data-type="banner"]' }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      const bgStyle = HTMLAttributes["data-bg-style"] || HTMLAttributes.bgStyle || "accent";
+      const text     = escapeHtml(HTMLAttributes["data-text"]      || HTMLAttributes.text      || "");
+      const emoji    = escapeHtml(HTMLAttributes["data-emoji"]     || HTMLAttributes.emoji     || "");
+      const link     = sanitizeUrl(HTMLAttributes["data-link"]     || HTMLAttributes.link      || "");
+      const linkLabel = escapeHtml(HTMLAttributes["data-link-label"] || HTMLAttributes.linkLabel || "Learn more →");
+
+      const bgCss =
+        bgStyle === "warning"
+          ? "background:#fef3c7;color:#92400e;"
+          : bgStyle === "subtle"
+          ? `background:${accentColor}1a;color:${accentColor};`
+          : `background:${accentColor};color:#ffffff;`;
+
+      const innerContent = link
+        ? [
+            "a",
+            {
+              href: link,
+              target: "_blank",
+              rel: "noopener noreferrer",
+              style: "display:flex;align-items:center;justify-content:space-between;gap:16px;text-decoration:none;color:inherit;",
+            },
+            ["span", { style: "font-size:14px;font-weight:600;" }, emoji ? `${emoji} ${text}` : text],
+            ["span", { style: "font-size:13px;font-weight:700;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;" }, linkLabel],
+          ]
+        : [
+            "div",
+            { style: "display:flex;align-items:center;" },
+            ["span", { style: "font-size:14px;font-weight:600;" }, emoji ? `${emoji} ${text}` : text],
+          ];
+
+      return [
+        "div",
+        mergeAttributes(
+          {
+            "data-type":       "banner",
+            "data-bg-style":   bgStyle,
+            "data-text":       HTMLAttributes["data-text"]        || HTMLAttributes.text       || "",
+            "data-emoji":      HTMLAttributes["data-emoji"]       || HTMLAttributes.emoji      || "",
+            "data-link":       HTMLAttributes["data-link"]        || HTMLAttributes.link       || "",
+            "data-link-label": HTMLAttributes["data-link-label"]  || HTMLAttributes.linkLabel  || "Learn more →",
+          },
+          { style: `${bgCss}border-radius:12px;padding:14px 20px;margin:8px 0;` }
+        ),
+        innerContent,
+      ];
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PageRenderer
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -516,6 +588,7 @@ export function PageRenderer({
     createLogoGridNode(isDark),
     createFormBlockNode(isDark, accentColor),
     createContactCardNode(isDark, accentColor),
+    createBannerNode(accentColor),
   ];
 
   const rawHtml = generateHTML(
@@ -539,6 +612,11 @@ export function PageRenderer({
       "data-fields",
       "data-submit-label",
       "data-success-message",
+      "data-text",
+      "data-emoji",
+      "data-bg-style",
+      "data-link",
+      "data-link-label",
     ],
     ALLOWED_URI_REGEXP:
       /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,

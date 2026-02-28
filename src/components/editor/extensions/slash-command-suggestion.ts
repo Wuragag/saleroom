@@ -226,6 +226,29 @@ const COMMANDS: SlashCommandItem[] = [
         .run();
     },
   },
+  {
+    title: "Banner",
+    description: "Announcement or highlight bar",
+    icon: "Megaphone",
+    aliases: ["banner", "announcement", "alert", "notice", "bar", "highlight"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "banner",
+          attrs: {
+            text:      "Add your announcement here",
+            emoji:     "📢",
+            bgStyle:   "accent",
+            link:      "",
+            linkLabel: "Learn more →",
+          },
+        })
+        .run();
+    },
+  },
 ];
 
 export const slashCommandSuggestion = {

@@ -105,12 +105,11 @@ export function TabbedPageView({
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all"
+                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all w-full"
                   style={{
                     fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
                     color: isActive ? accentColor : "var(--pub-body-color)",
-                    background: isActive ? `${accentColor}14` : "transparent",
-                    borderLeft: isActive ? `2px solid ${accentColor}` : "2px solid transparent",
+                    background: isActive ? `${accentColor}18` : "transparent",
                   }}
                 >
                   {tab.name}
