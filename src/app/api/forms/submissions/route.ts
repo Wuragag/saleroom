@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getUserTeamId } from "@/lib/team-auth";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -11,18 +12,27 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const pageId = searchParams.get("pageId");
 
-  // Get all pages for the current user to scope submissions
-  const userPages = await prisma.page.findMany({
-    where: { userId: session.user.id },
+  const teamId = await getUserTeamId(session.user.id);
+
+  // Get team pages (TEAM visibility) + user's own private pages
+  const accessiblePages = await prisma.page.findMany({
+    where: teamId
+      ? {
+          OR: [
+            { teamId, visibility: "TEAM" },
+            { userId: session.user.id, visibility: "PRIVATE" },
+          ],
+        }
+      : { userId: session.user.id },
     select: { id: true },
   });
-  const pageIds = userPages.map((p) => p.id);
+  const pageIds = accessiblePages.map((p) => p.id);
 
   const whereClause: Record<string, unknown> = {
     pageId: { in: pageIds },
   };
   if (pageId) {
-    // Only filter by specific pageId if it belongs to the current user
+    // Only filter by specific pageId if it belongs to accessible pages
     if (!pageIds.includes(pageId)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

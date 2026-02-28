@@ -4,16 +4,30 @@ import { prisma } from "@/lib/prisma";
 import { AppNav } from "@/components/app-nav";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { SortableDashboard } from "@/components/sortable-dashboard";
+import { getUserTeamId } from "@/lib/team-auth";
 import type { PageAnalytics, PageListItem } from "@/types";
 
 export default async function Dashboard() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin");
 
+  const teamId = await getUserTeamId(session.user.id);
+
+  // Show team pages (TEAM visibility) + user's own private pages
   const pages = await prisma.page.findMany({
-    where: { userId: session.user.id },
+    where: teamId
+      ? {
+          OR: [
+            { teamId, visibility: "TEAM" },
+            { userId: session.user.id, visibility: "PRIVATE" },
+          ],
+        }
+      : { userId: session.user.id },
     orderBy: { updatedAt: "desc" },
-    include: { user: { select: { name: true } } },
+    include: {
+      user: { select: { name: true } },
+      lockedBy: { select: { name: true } },
+    },
   });
 
   const analyticsMap = Object.fromEntries(
@@ -55,6 +69,9 @@ export default async function Dashboard() {
     updatedAt: p.updatedAt.toISOString(),
     createdAt: p.createdAt.toISOString(),
     user: { name: p.user.name },
+    visibility: p.visibility,
+    lockedById: p.lockedById,
+    lockedByName: p.lockedBy?.name ?? null,
   }));
 
   return (

@@ -42,6 +42,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.image = user.image;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.onboardingCompleted = (user as any).onboardingCompleted ?? false;
+
+        // Fetch team membership
+        const membership = await prisma.teamMember.findFirst({
+          where: { userId: user.id as string },
+          select: { teamId: true, role: true },
+        });
+        token.teamId = membership?.teamId ?? null;
+        token.teamRole = membership?.role ?? null;
       }
       // When client calls update(), refresh user data from DB
       if (trigger === "update" && token.id) {
@@ -55,6 +63,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.image = fresh.avatarUrl || null;
           token.onboardingCompleted = fresh.onboardingCompleted;
         }
+        // Refresh team membership
+        const membership = await prisma.teamMember.findFirst({
+          where: { userId: token.id as string },
+          select: { teamId: true, role: true },
+        });
+        token.teamId = membership?.teamId ?? null;
+        token.teamRole = membership?.role ?? null;
       }
       return token;
     },
@@ -63,6 +78,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.image) session.user.image = token.image as string;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session.user as any).onboardingCompleted = token.onboardingCompleted ?? false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session.user as any).teamId = token.teamId ?? null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session.user as any).teamRole = token.teamRole ?? null;
       return session;
     },
   },

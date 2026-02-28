@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { AppNav } from "@/components/app-nav";
 import { AccountSettings } from "@/components/account-settings";
-import { User, Paintbrush, Bell, Plug } from "lucide-react";
+import { TeamSettings } from "@/components/team-settings";
+import { User, Users, Paintbrush, Bell, Plug } from "lucide-react";
 
 const TABS = [
   { id: "account", label: "Account", icon: User, ready: true },
+  { id: "team", label: "Team", icon: Users, ready: true },
   { id: "branding", label: "Branding", icon: Paintbrush, ready: false },
   { id: "notifications", label: "Notifications", icon: Bell, ready: false },
   { id: "integrations", label: "Integrations", icon: Plug, ready: false },
@@ -54,8 +56,9 @@ export default function SettingsPage() {
 
         {/* Tab content */}
         {activeTab === "account" && <AccountSettings />}
+        {activeTab === "team" && <TeamSettings />}
 
-        {activeTab !== "account" && (
+        {activeTab !== "account" && activeTab !== "team" && (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               {TABS.find((t) => t.id === activeTab)?.icon &&

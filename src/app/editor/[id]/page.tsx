@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { checkPageAccess } from "@/lib/team-auth";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
 
 export default async function EditorPage({
@@ -12,13 +13,24 @@ export default async function EditorPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin");
 
+  // Check view access first
+  const viewAccess = await checkPageAccess(id, "view");
+  if (!viewAccess.authorized) notFound();
+
   const page = await prisma.page.findUnique({
     where: { id },
-    include: { tabs: { orderBy: { order: "asc" } } },
+    include: {
+      tabs: { orderBy: { order: "asc" } },
+      lockedBy: { select: { id: true, name: true } },
+    },
   });
 
   if (!page) notFound();
-  if (page.userId !== session.user.id) notFound();
+
+  // Determine if user can edit
+  const editAccess = await checkPageAccess(id, "edit");
+  const canEdit = editAccess.authorized;
+  const isLockedByOther = page.lockedById !== null && page.lockedById !== session.user.id;
 
   // Serialize dates for client component
   const serialized = {
@@ -32,5 +44,11 @@ export default async function EditorPage({
     })),
   };
 
-  return <TiptapEditor page={serialized} />;
+  return (
+    <TiptapEditor
+      page={serialized}
+      readOnly={!canEdit}
+      lockedByName={isLockedByOther ? (page.lockedBy?.name ?? "another user") : undefined}
+    />
+  );
 }

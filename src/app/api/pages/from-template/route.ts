@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { auth } from "@/auth";
+import { getUserTeamId } from "@/lib/team-auth";
 import slugify from "slugify";
 
 function generateSlug(name: string): string {
@@ -62,6 +63,9 @@ export async function POST(request: Request) {
   // First tab's content becomes the page's top-level content
   const firstTabContent = tabs[0]?.content ?? DEFAULT_CONTENT;
 
+  // Assign to user's team
+  const teamId = await getUserTeamId(session.user.id);
+
   // Create page with all tabs
   const page = await prisma.page.create({
     data: {
@@ -69,6 +73,7 @@ export async function POST(request: Request) {
       slug,
       content: JSON.stringify(firstTabContent),
       userId: session.user.id,
+      teamId,
       tabs: {
         create: tabs.map((tab, i) => ({
           name: tab.label,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
 import { auth } from "@/auth";
+import { getUserTeamId } from "@/lib/team-auth";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -30,12 +31,16 @@ export async function POST(request: Request) {
     attempts++;
   }
 
+  // Assign to user's team
+  const teamId = await getUserTeamId(session.user.id);
+
   const page = await prisma.page.create({
     data: {
       title,
       slug,
       content: JSON.stringify(DEFAULT_CONTENT),
       userId: session.user.id,
+      teamId,
       tabs: {
         create: {
           name: DEFAULT_TAB_NAME,
@@ -56,8 +61,18 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const teamId = await getUserTeamId(session.user.id);
+
+  // Show team pages (TEAM visibility) + user's own private pages
   const pages = await prisma.page.findMany({
-    where: { userId: session.user.id },
+    where: teamId
+      ? {
+          OR: [
+            { teamId, visibility: "TEAM" },
+            { userId: session.user.id, visibility: "PRIVATE" },
+          ],
+        }
+      : { userId: session.user.id },
     orderBy: { updatedAt: "desc" },
     include: { tabs: { orderBy: { order: "asc" } } },
   });

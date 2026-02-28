@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { checkPageAccess } from "@/lib/team-auth";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ tabId: string }> }
 ) {
   const { tabId } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const existingTab = await prisma.tab.findUnique({
     where: { id: tabId },
@@ -19,8 +15,12 @@ export async function PUT(
   if (!existingTab) {
     return NextResponse.json({ error: "Tab not found" }, { status: 404 });
   }
-  if (existingTab.page.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // Use team-based auth via the parent page
+  const access = await checkPageAccess(existingTab.page.id, "edit");
+  if (!access.authorized) {
+    const status = !access.session ? 401 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
   }
 
   const body = await request.json();
@@ -42,10 +42,6 @@ export async function DELETE(
   { params }: { params: Promise<{ tabId: string }> }
 ) {
   const { tabId } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   // Find the tab to get its pageId
   const tab = await prisma.tab.findUnique({
@@ -57,8 +53,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Tab not found" }, { status: 404 });
   }
 
-  if (tab.page.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Use team-based auth via the parent page
+  const access = await checkPageAccess(tab.page.id, "edit");
+  if (!access.authorized) {
+    const status = !access.session ? 401 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
   }
 
   // Prevent deleting the last tab

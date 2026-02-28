@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { checkPageAccess } from "@/lib/team-auth";
 import bcrypt from "bcryptjs";
 
 export async function GET(
@@ -8,23 +8,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await checkPageAccess(id, "view");
+
+  if (!access.authorized) {
+    const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
   }
 
   const page = await prisma.page.findUnique({
     where: { id },
     include: { tabs: { orderBy: { order: "asc" } } },
   });
-
-  if (!page) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-
-  if (page.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   return NextResponse.json(page);
 }
@@ -34,22 +28,28 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const existingPage = await prisma.page.findUnique({
-    where: { id },
-  });
-  if (!existingPage) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-  if (existingPage.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const body = await request.json();
+
+  // Visibility change: only the page creator can change it
+  if (body.visibility !== undefined) {
+    const viewAccess = await checkPageAccess(id, "view");
+    if (!viewAccess.authorized) {
+      const status = !viewAccess.session ? 401 : viewAccess.reason === "Page not found" ? 404 : 403;
+      return NextResponse.json({ error: viewAccess.reason }, { status });
+    }
+    if (viewAccess.page?.userId !== viewAccess.session?.user?.id) {
+      return NextResponse.json(
+        { error: "Only the page creator can change visibility" },
+        { status: 403 }
+      );
+    }
+  }
+
+  const access = await checkPageAccess(id, "edit");
+  if (!access.authorized) {
+    const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
+  }
 
   const updateData: Record<string, unknown> = {};
 
@@ -70,6 +70,7 @@ export async function PUT(
       : null;
   }
   if (body.tags !== undefined) updateData.tags = body.tags;
+  if (body.visibility !== undefined) updateData.visibility = body.visibility;
 
   const page = await prisma.page.update({
     where: { id },
@@ -84,19 +85,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const access = await checkPageAccess(id, "delete");
 
-  const existingPage = await prisma.page.findUnique({
-    where: { id },
-  });
-  if (!existingPage) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-  if (existingPage.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!access.authorized) {
+    const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
   }
 
   await prisma.page.delete({

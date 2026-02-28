@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserTeamId } from "@/lib/team-auth";
 import { AppNav } from "@/components/app-nav";
 import { Eye, Clock, Link2, FileText, TrendingUp, Globe, FileX } from "lucide-react";
 
@@ -24,8 +25,17 @@ export default async function AnalyticsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin");
 
+  const teamId = await getUserTeamId(session.user.id);
+
   const pages = await prisma.page.findMany({
-    where: { userId: session.user.id },
+    where: teamId
+      ? {
+          OR: [
+            { teamId, visibility: "TEAM" },
+            { userId: session.user.id, visibility: "PRIVATE" },
+          ],
+        }
+      : { userId: session.user.id },
     orderBy: { updatedAt: "desc" },
   });
 

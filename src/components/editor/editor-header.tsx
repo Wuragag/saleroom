@@ -15,6 +15,10 @@ import {
   MoreHorizontal,
   BookmarkPlus,
   CheckCircle2,
+  Lock,
+  Unlock,
+  Users,
+  EyeOff as EyeOffIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +50,13 @@ interface EditorHeaderProps {
   onPublishedChange: (published: boolean) => void;
   saveStatus: "saved" | "saving" | "unsaved";
   onForceSave: () => Promise<void>;
+  readOnly?: boolean;
+  lockedByName?: string;
+  isLocked?: boolean;
+  onLockChange?: (locked: boolean) => void;
+  visibility?: "TEAM" | "PRIVATE";
+  onVisibilityChange?: (visibility: "TEAM" | "PRIVATE") => void;
+  isCreator?: boolean;
 }
 
 export function EditorHeader({
@@ -57,9 +68,17 @@ export function EditorHeader({
   onPublishedChange,
   saveStatus,
   onForceSave,
+  readOnly,
+  lockedByName,
+  isLocked,
+  onLockChange,
+  visibility,
+  onVisibilityChange,
+  isCreator,
 }: EditorHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [lockLoading, setLockLoading] = useState(false);
 
   // Save as Template modal state
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
@@ -138,6 +157,37 @@ export function EditorHeader({
     }
   };
 
+  const handleLockToggle = async () => {
+    setLockLoading(true);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/lock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locked: !isLocked }),
+      });
+      if (res.ok) {
+        onLockChange?.(!isLocked);
+      }
+    } finally {
+      setLockLoading(false);
+    }
+  };
+
+  const handleVisibilityChange = async (newVisibility: "TEAM" | "PRIVATE") => {
+    try {
+      const res = await fetch(`/api/pages/${pageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visibility: newVisibility }),
+      });
+      if (res.ok) {
+        onVisibilityChange?.(newVisibility);
+      }
+    } catch (err) {
+      console.error("Failed to change visibility:", err);
+    }
+  };
+
   return (
     <>
       <header className="border-b border-border bg-background">
@@ -177,6 +227,22 @@ export function EditorHeader({
                   ? "Saving..."
                   : "Unsaved"}
               </div>
+
+              {/* Lock indicator */}
+              {lockedByName && (
+                <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full gap-1 text-amber-600 border-amber-200 dark:border-amber-800">
+                  <Lock className="h-2.5 w-2.5" />
+                  Locked by {lockedByName}
+                </Badge>
+              )}
+
+              {/* Visibility badge */}
+              {visibility === "PRIVATE" && (
+                <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full gap-1">
+                  <EyeOffIcon className="h-2.5 w-2.5" />
+                  Private
+                </Badge>
+              )}
             </div>
 
             {/* Right: actions */}
@@ -241,6 +307,51 @@ export function EditorHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  {/* Lock toggle */}
+                  {!readOnly && (
+                    <DropdownMenuItem
+                      onClick={handleLockToggle}
+                      disabled={lockLoading}
+                      className="gap-2 cursor-pointer"
+                    >
+                      {isLocked ? (
+                        <>
+                          <Unlock className="h-4 w-4" />
+                          Unlock Page
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-4 w-4" />
+                          Lock Page
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  )}
+
+                  {/* Visibility toggle — only for creator */}
+                  {isCreator && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleVisibilityChange(
+                          visibility === "PRIVATE" ? "TEAM" : "PRIVATE"
+                        )
+                      }
+                      className="gap-2 cursor-pointer"
+                    >
+                      {visibility === "PRIVATE" ? (
+                        <>
+                          <Users className="h-4 w-4" />
+                          Make Team Visible
+                        </>
+                      ) : (
+                        <>
+                          <EyeOffIcon className="h-4 w-4" />
+                          Make Private
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem
                     onClick={openSaveAsTemplate}
                     className="gap-2 cursor-pointer"
@@ -259,6 +370,7 @@ export function EditorHeader({
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="Untitled Page"
+            readOnly={readOnly}
             className="mt-3 w-full text-2xl font-bold bg-transparent border-none outline-none placeholder:text-muted-foreground text-foreground"
           />
         </div>

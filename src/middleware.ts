@@ -9,7 +9,8 @@ export default auth((req) => {
   if (
     pathname.startsWith("/auth") ||
     pathname.startsWith("/p/") ||
-    pathname.startsWith("/api/")
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/invite/")
   ) {
     return NextResponse.next();
   }

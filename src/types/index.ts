@@ -74,4 +74,40 @@ export interface PageListItem {
   updatedAt: string;
   createdAt: string;
   user: { name: string };
+  visibility?: "TEAM" | "PRIVATE";
+  lockedById?: string | null;
+  lockedByName?: string | null;
+}
+
+// ──── Team types ────
+
+export interface TeamData {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface TeamMemberData {
+  id: string;
+  userId: string;
+  role: "OWNER" | "MEMBER";
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    lastName: string;
+    email: string;
+    avatarUrl: string;
+  };
+}
+
+export interface TeamInviteData {
+  id: string;
+  email: string;
+  status: "PENDING" | "ACCEPTED" | "EXPIRED";
+  expiresAt: string;
+  createdAt: string;
+  invitedBy: {
+    name: string;
+  };
 }

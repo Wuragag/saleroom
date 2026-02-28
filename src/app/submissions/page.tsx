@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserTeamId } from "@/lib/team-auth";
 import { SubmissionsTable } from "@/components/submissions-table";
 import { AppNav } from "@/components/app-nav";
 
@@ -8,8 +9,17 @@ export default async function SubmissionsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin");
 
+  const teamId = await getUserTeamId(session.user.id);
+
   const pages = await prisma.page.findMany({
-    where: { userId: session.user.id },
+    where: teamId
+      ? {
+          OR: [
+            { teamId, visibility: "TEAM" },
+            { userId: session.user.id, visibility: "PRIVATE" },
+          ],
+        }
+      : { userId: session.user.id },
     select: { id: true, title: true, slug: true },
     orderBy: { title: "asc" },
   });

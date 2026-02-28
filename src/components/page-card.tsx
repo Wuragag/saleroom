@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Pencil, ExternalLink, MoreVertical, Trash2, Copy,
-  Eye, Clock, Link2, Tag, X, Plus,
+  Eye, Clock, Link2, Tag, X, Plus, Lock, EyeOff,
 } from "lucide-react";
 import { PageThumbnail } from "@/components/page-thumbnail";
 import type { PageAnalytics, PageListItem } from "@/types";
@@ -213,6 +213,24 @@ export function PageCard({ page, analytics }: PageCardProps) {
                 const c = tagColor(t);
                 return <span key={t} className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.text }}>{t}</span>;
               })}
+            </div>
+          )}
+
+          {/* Lock / Private badges */}
+          {(page.lockedById || page.visibility === "PRIVATE") && (
+            <div className="flex items-center gap-1.5">
+              {page.lockedById && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                  <Lock className="h-2.5 w-2.5" />
+                  {page.lockedByName ? `Locked by ${page.lockedByName}` : "Locked"}
+                </span>
+              )}
+              {page.visibility === "PRIVATE" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                  <EyeOff className="h-2.5 w-2.5" />
+                  Private
+                </span>
+              )}
             </div>
           )}
 

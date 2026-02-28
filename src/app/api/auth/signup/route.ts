@@ -49,12 +49,30 @@ export async function POST(request: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: { name, email, password: hashed, company: company || "" },
-      select: { id: true, email: true, name: true },
+    // Create user + team + membership in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: { name, email, password: hashed, company: company || "" },
+        select: { id: true, email: true, name: true, company: true },
+      });
+
+      const teamName = user.company || `${user.name}'s Team`;
+      const team = await tx.team.create({
+        data: { name: teamName },
+      });
+
+      await tx.teamMember.create({
+        data: {
+          userId: user.id,
+          teamId: team.id,
+          role: "OWNER",
+        },
+      });
+
+      return { id: user.id, email: user.email, name: user.name };
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch {
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },

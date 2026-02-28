@@ -9,44 +9,113 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ──── Enums ────
+
+enum TeamRole {
+  OWNER
+  MEMBER
+}
+
+enum PageVisibility {
+  TEAM
+  PRIVATE
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+// ──── Models ────
+
 model User {
-  id                   String   @id @default(cuid())
-  name                 String
-  lastName             String   @default("")
-  email                String   @unique
-  password             String?
-  avatarUrl            String   @default("")
-  role                 String?
-  onboardingCompleted  Boolean  @default(false)
-  company              String   @default("")
-  pages                Page[]
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String       @id @default(cuid())
+  name                String
+  lastName            String       @default("")
+  email               String       @unique
+  password            String?
+  avatarUrl           String       @default("")
+  role                String?
+  onboardingCompleted Boolean      @default(false)
+  company             String       @default("")
+  pages               Page[]
+  teamMemberships     TeamMember[]
+  sentInvites         TeamInvite[] @relation("InvitedBy")
+  lockedPages         Page[]       @relation("LockedBy")
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  members   TeamMember[]
+  invites   TeamInvite[]
+  pages     Page[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      TeamRole @default(MEMBER)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, teamId])
+  @@index([teamId])
+}
+
+model TeamInvite {
+  id          String       @id @default(cuid())
+  email       String
+  teamId      String
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  token       String       @unique
+  invitedById String
+  invitedBy   User         @relation("InvitedBy", fields: [invitedById], references: [id])
+  status      InviteStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+
+  @@index([email])
+  @@index([teamId])
 }
 
 model Page {
-  id           String      @id @default(cuid())
-  title        String      @default("Untitled Page")
-  slug         String      @unique
-  content      String      @default("{}")
-  published    Boolean     @default(false)
+  id           String         @id @default(cuid())
+  title        String         @default("Untitled Page")
+  slug         String         @unique
+  content      String         @default("{}")
+  published    Boolean        @default(false)
   userId       String
-  user         User        @relation(fields: [userId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  teamId       String?
+  team         Team?          @relation(fields: [teamId], references: [id])
+  visibility   PageVisibility @default(TEAM)
+  lockedById   String?
+  lockedBy     User?          @relation("LockedBy", fields: [lockedById], references: [id])
   tabs         Tab[]
   views        PageView[]
   events       PageEvent[]
   submissions  FormSubmission[]
-  font         String      @default("inter")
-  accentColor  String      @default("slate")
-  layoutWidth  String      @default("default")
-  background   String      @default("white")
-  tabPlacement String      @default("top")
-  logoUrl      String      @default("")
-  links        String      @default("[]")
+  font         String         @default("inter")
+  accentColor  String         @default("slate")
+  layoutWidth  String         @default("default")
+  background   String         @default("white")
+  tabPlacement String         @default("top")
+  logoUrl      String         @default("")
+  links        String         @default("[]")
   password     String?
-  tags         String      @default("[]")
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  tags         String         @default("[]")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([teamId])
 }
 
 model Tab {

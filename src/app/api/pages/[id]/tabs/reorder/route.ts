@@ -1,25 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { checkPageAccess } from "@/lib/team-auth";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const access = await checkPageAccess(id, "edit");
 
-  const page = await prisma.page.findUnique({
-    where: { id },
-  });
-  if (!page) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-  if (page.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!access.authorized) {
+    const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
   }
 
   const { tabIds } = await request.json();

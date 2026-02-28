@@ -24,11 +24,17 @@ import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle } from
 
 interface TiptapEditorProps {
   page: PageData;
+  readOnly?: boolean;
+  lockedByName?: string;
 }
 
-export function TiptapEditor({ page }: TiptapEditorProps) {
+export function TiptapEditor({ page, readOnly, lockedByName }: TiptapEditorProps) {
   const [title, setTitle] = useState(page.title);
   const [published, setPublished] = useState(page.published);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [isLocked, setIsLocked] = useState(!!(page as any).lockedById);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [visibility, setVisibility] = useState<"TEAM" | "PRIVATE">((page as any).visibility ?? "TEAM");
   const [pageStyle, setPageStyle] = useState<PageStyle>({
     font: page.font ?? DEFAULT_PAGE_STYLE.font,
     accentColor: page.accentColor ?? DEFAULT_PAGE_STYLE.accentColor,
@@ -65,6 +71,7 @@ export function TiptapEditor({ page }: TiptapEditorProps) {
 
   const editor = useEditor({
     immediatelyRender: false,
+    editable: !readOnly,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
@@ -190,6 +197,13 @@ export function TiptapEditor({ page }: TiptapEditorProps) {
           onPublishedChange={setPublished}
           saveStatus={saveStatus}
           onForceSave={forceSave}
+          readOnly={readOnly}
+          lockedByName={lockedByName}
+          isLocked={isLocked}
+          onLockChange={setIsLocked}
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          isCreator={page.userId === undefined ? false : true}
         />
         <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-4">
           <EditorToolbar editor={editor} />

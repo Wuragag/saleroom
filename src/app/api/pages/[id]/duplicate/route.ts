@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { checkPageAccess, getUserTeamId } from "@/lib/team-auth";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -14,9 +14,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await checkPageAccess(id, "view");
+
+  if (!access.authorized) {
+    const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
   }
 
   // Fetch original page with all its tabs
@@ -27,10 +29,6 @@ export async function POST(
 
   if (!original) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-
-  if (original.userId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // Generate a unique slug for the copy
@@ -44,6 +42,9 @@ export async function POST(
     attempts++;
   }
 
+  // Assign to the duplicating user's team
+  const teamId = await getUserTeamId(access.session.user.id);
+
   // Create duplicated page + tabs in a transaction
   const copy = await prisma.$transaction(async (tx) => {
     const newPage = await tx.page.create({
@@ -51,8 +52,9 @@ export async function POST(
         title: copyTitle,
         slug,
         content: original.content,
-        published: false,           // always start as draft
-        userId: session.user.id,
+        published: false,
+        userId: access.session.user.id,
+        teamId,
         font: original.font,
         accentColor: original.accentColor,
         layoutWidth: original.layoutWidth,
