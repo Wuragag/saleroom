@@ -1,11 +1,78 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
+// ── Quotes ────────────────────────────────────────────────────────────────────
+const QUOTES = [
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+  { text: "The best way to predict the future is to create it.", author: "Peter Drucker" },
+  { text: "Success usually comes to those who are too busy to be looking for it.", author: "Henry David Thoreau" },
+  { text: "Don't count the days. Make the days count.", author: "Muhammad Ali" },
+  { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
+  { text: "The harder I work, the luckier I get.", author: "Samuel Goldwyn" },
+  { text: "Great things are done by a series of small things brought together.", author: "Vincent Van Gogh" },
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+];
+
+// ── Loading screen ────────────────────────────────────────────────────────────
+function LoadingScreen() {
+  const [index, setIndex] = useState(() =>
+    Math.floor(Math.random() * QUOTES.length)
+  );
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // Fade out
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % QUOTES.length);
+        // Fade in
+        setVisible(true);
+      }, 500);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const quote = QUOTES[index];
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 gap-10">
+      {/* Spinner */}
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative h-11 w-11">
+          <div className="absolute inset-0 rounded-full border-[3px] border-primary/15" />
+          <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-primary animate-spin" />
+        </div>
+        <p className="text-sm font-medium text-foreground tracking-tight">
+          Signing you in…
+        </p>
+      </div>
+
+      {/* Quote */}
+      <div
+        className="max-w-xs text-center"
+        style={{
+          opacity: visible ? 1 : 0,
+          transition: "opacity 0.5s ease",
+        }}
+      >
+        <p className="text-[13px] text-muted-foreground leading-relaxed italic">
+          &ldquo;{quote.text}&rdquo;
+        </p>
+        <p className="text-[11px] text-muted-foreground/60 mt-2 font-medium tracking-wide">
+          — {quote.author}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Sign-in form ──────────────────────────────────────────────────────────────
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,14 +95,18 @@ function SignInForm() {
       redirect: false,
     });
 
-    setLoading(false);
-
     if (res?.error) {
+      setLoading(false);
       setError("Invalid email or password");
     } else {
+      // Keep loading=true while navigating
       router.push(callbackUrl);
       router.refresh();
     }
+  }
+
+  if (loading) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -116,8 +187,7 @@ function SignInForm() {
               disabled={loading}
               className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading ? "Signing in…" : "Sign in"}
+              Sign in
             </button>
           </form>
         </div>
