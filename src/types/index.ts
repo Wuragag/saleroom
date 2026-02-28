@@ -79,6 +79,36 @@ export interface PageListItem {
   lockedByName?: string | null;
 }
 
+// ──── Buyer Analytics types ────
+
+export type IntentLabel = "High Intent" | "Warm" | "Cold";
+
+export interface BuyerVisitorRow {
+  visitorId: string;
+  visitorHash: string; // first 8 chars of hash
+  sessions: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  totalDurationSeconds: number;
+  engagementScore: number;
+  mostViewedTab: string;
+  ctaClicked: boolean;
+  pricingTabViewed: boolean;
+  intent: IntentLabel;
+}
+
+export interface BuyerAnalyticsSummary {
+  totalVisitors: number;
+  uniqueReturning: number;
+  highIntentCount: number;
+  avgScore: number;
+}
+
+export interface BuyerAnalyticsResponse {
+  summary: BuyerAnalyticsSummary;
+  visitors: BuyerVisitorRow[];
+}
+
 // ──── Team types ────
 
 export interface TeamData {

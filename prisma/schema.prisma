@@ -87,33 +87,34 @@ model TeamInvite {
 }
 
 model Page {
-  id           String         @id @default(cuid())
-  title        String         @default("Untitled Page")
-  slug         String         @unique
-  content      String         @default("{}")
-  published    Boolean        @default(false)
-  userId       String
-  user         User           @relation(fields: [userId], references: [id])
-  teamId       String?
-  team         Team?          @relation(fields: [teamId], references: [id])
-  visibility   PageVisibility @default(TEAM)
-  lockedById   String?
-  lockedBy     User?          @relation("LockedBy", fields: [lockedById], references: [id])
-  tabs         Tab[]
-  views        PageView[]
-  events       PageEvent[]
-  submissions  FormSubmission[]
-  font         String         @default("inter")
-  accentColor  String         @default("slate")
-  layoutWidth  String         @default("default")
-  background   String         @default("white")
-  tabPlacement String         @default("top")
-  logoUrl      String         @default("")
-  links        String         @default("[]")
-  password     String?
-  tags         String         @default("[]")
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  title         String         @default("Untitled Page")
+  slug          String         @unique
+  content       String         @default("{}")
+  published     Boolean        @default(false)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  teamId        String?
+  team          Team?          @relation(fields: [teamId], references: [id])
+  visibility    PageVisibility @default(TEAM)
+  lockedById    String?
+  lockedBy      User?          @relation("LockedBy", fields: [lockedById], references: [id])
+  tabs          Tab[]
+  views         PageView[]
+  events        PageEvent[]
+  submissions   FormSubmission[]
+  buyerVisitors BuyerVisitor[]
+  font          String         @default("inter")
+  accentColor   String         @default("slate")
+  layoutWidth   String         @default("default")
+  background    String         @default("white")
+  tabPlacement  String         @default("top")
+  logoUrl       String         @default("")
+  links         String         @default("[]")
+  password      String?
+  tags          String         @default("[]")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([teamId])
 }
@@ -183,4 +184,65 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ──── Buyer Analytics ────
+
+model BuyerVisitor {
+  id              String         @id @default(cuid())
+  visitorHash     String
+  pageId          String
+  page            Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  sessions        BuyerSession[]
+  firstSeenAt     DateTime       @default(now())
+  lastSeenAt      DateTime       @default(now())
+  totalSessions   Int            @default(0)
+  engagementScore Int            @default(0)
+  ctaClicked      Boolean        @default(false)
+
+  @@unique([visitorHash, pageId])
+  @@index([pageId])
+}
+
+model BuyerSession {
+  id              String         @id @default(cuid())
+  visitorId       String
+  visitor         BuyerVisitor   @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  pageId          String
+  startedAt       DateTime       @default(now())
+  lastActiveAt    DateTime       @default(now())
+  duration        Int            @default(0)
+  engagementScore Int            @default(0)
+  isReturn        Boolean        @default(false)
+  tabViews        BuyerTabView[]
+  events          BuyerEvent[]
+
+  @@index([visitorId])
+  @@index([pageId])
+  @@index([lastActiveAt])
+}
+
+model BuyerTabView {
+  id           String       @id @default(cuid())
+  sessionId    String
+  session      BuyerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  tabId        String
+  tabName      String       @default("")
+  viewCount    Int          @default(1)
+  duration     Int          @default(0)
+  lastViewedAt DateTime     @default(now())
+
+  @@unique([sessionId, tabId])
+  @@index([sessionId])
+}
+
+model BuyerEvent {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   BuyerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      String
+  metadata  String       @default("{}")
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId, type])
 }

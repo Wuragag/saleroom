@@ -43,6 +43,13 @@ export function TabbedPageView({
     if (tabId === activeTabId) return;
     setActiveTabId(tabId);
     setContentKey((k) => k + 1);
+    // Notify the buyer analytics tracker (decoupled via custom event)
+    const tab = tabs.find((t) => t.id === tabId);
+    window.dispatchEvent(
+      new CustomEvent("sr:tab_view", {
+        detail: { tabId, tabName: tab?.name ?? "" },
+      })
+    );
   };
 
   /** External links row — reused in both layouts */

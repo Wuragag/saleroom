@@ -6,6 +6,7 @@ import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
+import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 
 export default async function PublishedPage({
   params,
@@ -228,6 +229,11 @@ export default async function PublishedPage({
       </footer>
 
       <AnalyticsTracker pageId={page.id} viewId={pageView.id} />
+      <BuyerAnalyticsTracker
+        pageId={page.id}
+        initialTabId={tabs[0]?.id}
+        initialTabName={tabs[0]?.name}
+      />
       <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
     </main>
   );
