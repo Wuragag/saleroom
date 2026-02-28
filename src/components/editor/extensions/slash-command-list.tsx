@@ -1,0 +1,120 @@
+"use client";
+
+import {
+  useState,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import {
+  Heading1,
+  Heading2,
+  Heading3,
+  Type,
+  List,
+  ListOrdered,
+  Globe,
+  ImageIcon,
+  Minus,
+  Table,
+  MousePointerClick,
+  LayoutGrid,
+  Quote,
+  FileText,
+  UserRound,
+} from "lucide-react";
+import type { SlashCommandItem } from "./slash-command-suggestion";
+
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Heading1,
+  Heading2,
+  Heading3,
+  Type,
+  List,
+  ListOrdered,
+  Globe,
+  ImageIcon,
+  Minus,
+  Table,
+  MousePointerClick,
+  LayoutGrid,
+  Quote,
+  FileText,
+  UserRound,
+};
+
+interface SlashCommandListProps {
+  items: SlashCommandItem[];
+  command: (item: SlashCommandItem) => void;
+}
+
+export const SlashCommandList = forwardRef(function SlashCommandList(
+  { items, command }: SlashCommandListProps,
+  ref
+) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [items]);
+
+  const onKeyDown = useCallback(
+    ({ event }: { event: KeyboardEvent }) => {
+      if (event.key === "ArrowUp") {
+        setSelectedIndex((i) => (i + items.length - 1) % items.length);
+        return true;
+      }
+      if (event.key === "ArrowDown") {
+        setSelectedIndex((i) => (i + 1) % items.length);
+        return true;
+      }
+      if (event.key === "Enter") {
+        const item = items[selectedIndex];
+        if (item) command(item);
+        return true;
+      }
+      return false;
+    },
+    [items, selectedIndex, command]
+  );
+
+  useImperativeHandle(ref, () => ({ onKeyDown }));
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-popover border rounded-lg shadow-lg p-3 text-sm text-muted-foreground">
+        No results
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-popover border rounded-lg shadow-lg p-1 max-h-80 overflow-y-auto w-72">
+      {items.map((item, index) => {
+        const Icon = ICON_MAP[item.icon];
+        return (
+          <button
+            key={item.title}
+            onClick={() => command(item)}
+            className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-left transition-colors ${
+              index === selectedIndex
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-accent/50"
+            }`}
+          >
+            <div className="flex-shrink-0 w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+              {Icon && <Icon className="h-4 w-4" />}
+            </div>
+            <div>
+              <div className="font-medium">{item.title}</div>
+              <div className="text-xs text-muted-foreground">
+                {item.description}
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+});

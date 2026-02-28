@@ -1,0 +1,95 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+// Strict rate limit for password attempts: 5 per minute per IP
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // Rate limit check
+  const ip = getClientIp(request);
+  const { success } = limiter.check(ip, 5);
+  if (!success) {
+    return new NextResponse("Too many attempts. Please try again later.", {
+      status: 429,
+    });
+  }
+
+  // Basic Origin / Referer CSRF check for native form POSTs
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const requestUrl = new URL(request.url);
+  const expectedOrigin = requestUrl.origin;
+
+  if (origin && origin !== expectedOrigin) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+  if (!origin && referer) {
+    try {
+      const refOrigin = new URL(referer).origin;
+      if (refOrigin !== expectedOrigin) {
+        return new NextResponse("Forbidden", { status: 403 });
+      }
+    } catch {
+      // Malformed referer — block
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+  }
+
+  const formData = await request.formData();
+  const submittedPassword = formData.get("password") as string | null;
+  const slug = formData.get("slug") as string | null;
+
+  if (!submittedPassword || !slug) {
+    return NextResponse.redirect(
+      new URL(`/p/${slug}/password?error=1`, request.url),
+      { status: 303 }
+    );
+  }
+
+  const page = await prisma.page.findUnique({
+    where: { id },
+    select: { id: true, slug: true, password: true },
+  });
+
+  if (!page || !page.password) {
+    return NextResponse.redirect(
+      new URL(`/p/${slug}`, request.url),
+      { status: 303 }
+    );
+  }
+
+  const passwordMatch = await bcrypt.compare(submittedPassword, page.password);
+  if (!passwordMatch) {
+    return NextResponse.redirect(
+      new URL(`/p/${page.slug}/password?error=1`, request.url),
+      { status: 303 }
+    );
+  }
+
+  // Correct password — compute token and set httpOnly cookie
+  const token = crypto
+    .createHash("sha256")
+    .update(`${page.id}:${page.password}`)
+    .digest("hex");
+
+  const response = NextResponse.redirect(
+    new URL(`/p/${page.slug}`, request.url),
+    { status: 303 }
+  );
+  response.cookies.set(`page_auth_${page.id}`, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24, // 24 hours
+    path: "/",
+    sameSite: "lax",
+  });
+
+  return response;
+}

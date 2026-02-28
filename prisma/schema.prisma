@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                   String   @id @default(cuid())
+  name                 String
+  lastName             String   @default("")
+  email                String   @unique
+  password             String?
+  avatarUrl            String   @default("")
+  role                 String?
+  onboardingCompleted  Boolean  @default(false)
+  company              String   @default("")
+  pages                Page[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Page {
+  id           String      @id @default(cuid())
+  title        String      @default("Untitled Page")
+  slug         String      @unique
+  content      String      @default("{}")
+  published    Boolean     @default(false)
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  tabs         Tab[]
+  views        PageView[]
+  events       PageEvent[]
+  submissions  FormSubmission[]
+  font         String      @default("inter")
+  accentColor  String      @default("slate")
+  layoutWidth  String      @default("default")
+  background   String      @default("white")
+  tabPlacement String      @default("top")
+  logoUrl      String      @default("")
+  links        String      @default("[]")
+  password     String?
+  tags         String      @default("[]")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Tab {
+  id        String   @id @default(cuid())
+  name      String   @default("Overview")
+  order     Int      @default(0)
+  content   String   @default("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}")
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, order])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  duration  Int?
+  createdAt DateTime @default(now())
+
+  @@index([pageId])
+}
+
+model PageEvent {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      String
+  meta      String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([pageId, type])
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  formId    String
+  data      String   @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([pageId, formId])
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  icon        String
+  tabs        String   @default("[]")
+  isDefault   Boolean  @default(true)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
