@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImageIcon, Upload, X } from "lucide-react";
+import { ImageIcon, Upload, X, AlertCircle } from "lucide-react";
 
 interface CoverImageEditorProps {
   pageId: string;
@@ -15,10 +15,12 @@ export function CoverImageEditor({
   onCoverImageChange,
 }: CoverImageEditorProps) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
+    setError(null);
     const formData = new FormData();
     formData.append("file", file);
 
@@ -28,18 +30,31 @@ export function CoverImageEditor({
         body: formData,
       });
 
-      if (!uploadRes.ok) return;
+      const data = await uploadRes.json();
 
-      const { url } = await uploadRes.json();
+      if (!uploadRes.ok) {
+        setError(data?.error ?? `Upload failed (${uploadRes.status})`);
+        return;
+      }
+
+      const { url } = data;
 
       // Persist to the page
-      await fetch(`/api/pages/${pageId}`, {
+      const saveRes = await fetch(`/api/pages/${pageId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ coverImage: url }),
       });
 
+      if (!saveRes.ok) {
+        setError("Image uploaded but failed to save. Please try again.");
+        return;
+      }
+
       onCoverImageChange(url);
+    } catch (err) {
+      console.error("Cover upload error:", err);
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setUploading(false);
       // Reset file input so the same file can be re-selected
@@ -48,6 +63,7 @@ export function CoverImageEditor({
   };
 
   const handleRemove = async () => {
+    setError(null);
     await fetch(`/api/pages/${pageId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -73,54 +89,70 @@ export function CoverImageEditor({
   /* ── Empty state ── */
   if (!coverImage) {
     return (
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        disabled={uploading}
-        className="group flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-xs font-medium"
-      >
-        <ImageIcon className="h-3.5 w-3.5" />
-        {uploading ? "Uploading…" : "Add cover image"}
-        {fileInput}
-      </button>
+      <div className="flex flex-col gap-1 mb-3">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-xs font-medium w-fit"
+        >
+          <ImageIcon className="h-3.5 w-3.5" />
+          {uploading ? "Uploading…" : "Add cover image"}
+          {fileInput}
+        </button>
+        {error && (
+          <div className="flex items-center gap-1.5 text-xs text-destructive px-3">
+            <AlertCircle className="h-3 w-3 shrink-0" />
+            {error}
+          </div>
+        )}
+      </div>
     );
   }
 
   /* ── Cover image set ── */
   return (
-    <div className="group relative w-full rounded-xl overflow-hidden mb-4" style={{ height: "220px" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={coverImage}
-        alt="Cover"
-        className="w-full h-full object-cover"
-      />
+    <div className="mb-4">
+      <div className="group relative w-full rounded-xl overflow-hidden" style={{ height: "220px" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverImage}
+          alt="Cover"
+          className="w-full h-full object-cover"
+        />
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
 
-      {/* Action buttons */}
-      <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
-        >
-          <Upload className="h-3 w-3" />
-          {uploading ? "Uploading…" : "Change"}
-        </button>
-        <button
-          type="button"
-          onClick={handleRemove}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
-        >
-          <X className="h-3 w-3" />
-          Remove
-        </button>
+        {/* Action buttons */}
+        <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
+          >
+            <Upload className="h-3 w-3" />
+            {uploading ? "Uploading…" : "Change"}
+          </button>
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
+          >
+            <X className="h-3 w-3" />
+            Remove
+          </button>
+        </div>
+
+        {fileInput}
       </div>
-
-      {fileInput}
+      {error && (
+        <div className="flex items-center gap-1.5 text-xs text-destructive mt-1.5 px-1">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          {error}
+        </div>
+      )}
     </div>
   );
 }

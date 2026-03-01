@@ -12,6 +12,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("BLOB_READ_WRITE_TOKEN is not set");
+    return NextResponse.json(
+      { error: "Storage is not configured. Please contact support." },
+      { status: 503 }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -37,19 +45,23 @@ export async function POST(request: Request) {
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
     const filename = `avatars/${session.user.id}-${Date.now()}.${ext}`;
 
-    // Upload to Vercel Blob (works in serverless — no local filesystem needed)
-    const blob = await put(filename, file, {
+    // Convert File → Buffer for maximum serverless compatibility
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Upload to Vercel Blob
+    const blob = await put(filename, buffer, {
       access: "public",
       contentType: file.type,
     });
 
-    // Clean up old avatar blob
+    // Best-effort cleanup of old avatar blob
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { avatarUrl: true },
     });
     if (user?.avatarUrl && user.avatarUrl.startsWith("https://")) {
-      del(user.avatarUrl).catch(() => {}); // Best-effort cleanup
+      del(user.avatarUrl).catch(() => {});
     }
 
     await prisma.user.update({
@@ -60,8 +72,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error("Avatar upload error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
+      { error: `Upload failed: ${message}` },
       { status: 500 }
     );
   }

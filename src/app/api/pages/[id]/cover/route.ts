@@ -17,6 +17,14 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("BLOB_READ_WRITE_TOKEN is not set");
+    return NextResponse.json(
+      { error: "Storage is not configured. Please contact support." },
+      { status: 503 }
+    );
+  }
+
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
     const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
@@ -48,26 +56,31 @@ export async function POST(
     const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
     const filename = `covers/${id}-${Date.now()}.${ext}`;
 
-    // Upload to Vercel Blob (works in serverless — no local filesystem needed)
-    const blob = await put(filename, file, {
+    // Convert File → Buffer for maximum serverless compatibility
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Upload to Vercel Blob
+    const blob = await put(filename, buffer, {
       access: "public",
       contentType: file.type,
     });
 
-    // Clean up old cover image blob to prevent storage bloat
+    // Best-effort cleanup of old cover image blob
     const page = await prisma.page.findUnique({
       where: { id },
       select: { coverImage: true },
     });
     if (page?.coverImage && page.coverImage.startsWith("https://")) {
-      del(page.coverImage).catch(() => {}); // Best-effort cleanup
+      del(page.coverImage).catch(() => {});
     }
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error("Cover upload error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
+      { error: `Upload failed: ${message}` },
       { status: 500 }
     );
   }
