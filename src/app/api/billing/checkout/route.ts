@@ -43,6 +43,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Guard against manual-override placeholder customer IDs
+    if (subscription.stripeCustomerId.startsWith("manual_override_")) {
+      return NextResponse.json(
+        { error: "No Stripe customer on file. Please contact support." },
+        { status: 400 }
+      );
+    }
+
     // If they already have an active Stripe subscription, redirect to portal instead
     if (subscription.stripeSubscriptionId) {
       return NextResponse.json(

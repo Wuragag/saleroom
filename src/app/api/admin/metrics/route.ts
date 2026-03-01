@@ -30,7 +30,7 @@ export async function GET() {
   ]);
 
   const planDistribution = {
-    FREE: totalTeams - proCount - teamCount,
+    FREE: Math.max(0, totalTeams - proCount - teamCount),
     PRO: proCount,
     TEAM: teamCount,
   };

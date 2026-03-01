@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 
 function getSecret(): string {
   if (!process.env.NEXTAUTH_SECRET) throw new Error("NEXTAUTH_SECRET not set");
@@ -14,8 +14,8 @@ export function createImpersonateToken(
     adminId,
     targetUserId,
     exp: Date.now() + 5 * 60 * 1000,
-    // Random nonce so tokens can't be replayed even if time is the same
-    nonce: Math.random().toString(36).slice(2),
+    // Cryptographically secure nonce to prevent replay attacks
+    nonce: randomBytes(16).toString("hex"),
   });
   const base64 = Buffer.from(payload).toString("base64url");
   const sig = createHmac("sha256", getSecret())

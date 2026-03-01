@@ -31,8 +31,14 @@ export async function PUT(
     return NextResponse.json({ error: "Team not found" }, { status: 404 });
   }
 
-  // Upsert subscription — use a placeholder stripeCustomerId if the team
-  // has no Stripe customer yet (manual override doesn't need one)
+  // Check if team already has a subscription with a real Stripe customer ID
+  const existing = await prisma.subscription.findUnique({
+    where: { teamId },
+    select: { stripeCustomerId: true },
+  });
+
+  // Upsert subscription — only use a placeholder stripeCustomerId when creating
+  // a brand-new record (i.e., when the team has never been through Stripe checkout)
   const subscription = await prisma.subscription.upsert({
     where: { teamId },
     update: {
@@ -45,8 +51,9 @@ export async function PUT(
       teamId,
       plan,
       status: "ACTIVE",
-      // Placeholder — no real Stripe customer for manual overrides
-      stripeCustomerId: `manual_override_${teamId}`,
+      // Preserve any existing Stripe customer ID, otherwise use a sentinel
+      // that's clearly not a real Stripe ID so it won't collide
+      stripeCustomerId: existing?.stripeCustomerId ?? `manual_override_${teamId}`,
     },
   });
 

@@ -67,14 +67,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const subscriptionId = session.subscription as string;
   const sub = await getWebhookStripe().subscriptions.retrieve(subscriptionId);
   const priceId = sub.items.data[0]?.price.id;
-  const plan = priceId ? getPlanFromPriceId(priceId) : null;
+  const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null;
+  const plan: BillingPlan = (resolvedPlan as BillingPlan | null) ?? "FREE";
 
   await prisma.subscription.update({
     where: { teamId },
     data: {
       stripeSubscriptionId: subscriptionId,
       stripePriceId: priceId ?? null,
-      plan: (plan as BillingPlan) ?? "FREE",
+      plan,
       status: "ACTIVE",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentPeriodStart: new Date(((sub as any).current_period_start ?? 0) * 1000),
@@ -91,13 +92,14 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   if (!subscription) return;
 
   const priceId = sub.items.data[0]?.price.id;
-  const plan = priceId ? getPlanFromPriceId(priceId) : null;
+  const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null;
+  const plan = resolvedPlan ? (resolvedPlan as BillingPlan) : null;
 
   await prisma.subscription.update({
     where: { stripeSubscriptionId: sub.id },
     data: {
       stripePriceId: priceId ?? subscription.stripePriceId,
-      plan: (plan as BillingPlan) ?? subscription.plan,
+      plan: plan ?? subscription.plan,
       status: STRIPE_STATUS_MAP[sub.status] ?? "ACTIVE",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentPeriodStart: new Date(((sub as any).current_period_start ?? 0) * 1000),
