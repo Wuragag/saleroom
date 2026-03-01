@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
+import { verifyImpersonateToken } from "@/lib/impersonation";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -10,8 +11,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        impersonateToken: { label: "Impersonate Token" },
       },
       async authorize(credentials) {
+        // ── Impersonation path ──────────────────────────────────────────────
+        if (credentials?.impersonateToken) {
+          const payload = verifyImpersonateToken(
+            credentials.impersonateToken as string
+          );
+          if (!payload) return null;
+
+          const [target, admin] = await Promise.all([
+            prisma.user.findUnique({ where: { id: payload.targetUserId } }),
+            prisma.user.findUnique({
+              where: { id: payload.adminId },
+              select: { id: true, name: true, email: true },
+            }),
+          ]);
+          if (!target || !admin) return null;
+
+          return {
+            id: target.id,
+            email: target.email,
+            name: target.name,
+            image: target.avatarUrl || null,
+            onboardingCompleted: target.onboardingCompleted,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            impersonatedBy: admin.id,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            impersonatedByName: admin.name,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            impersonatedByEmail: admin.email,
+          };
+        }
+
+        // ── Normal email/password path ───────────────────────────────────────
         if (!credentials?.email || !credentials?.password) return null;
 
         const user = await prisma.user.findUnique({
@@ -69,6 +103,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { isAdmin: true },
         });
         token.isAdmin = dbUser?.isAdmin ?? false;
+
+        // Impersonation metadata (only set when signing in via impersonate token)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const u = user as any;
+        if (u.impersonatedBy) {
+          token.impersonatedBy = u.impersonatedBy;
+          token.impersonatedByName = u.impersonatedByName;
+          token.impersonatedByEmail = u.impersonatedByEmail;
+        }
       }
       // When client calls update(), refresh user data from DB
       if (trigger === "update" && token.id) {
@@ -118,6 +161,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       session.user.planLimits = token.planLimits as any ?? PLAN_LIMITS.FREE;
       session.user.isAdmin = (token.isAdmin as boolean) ?? false;
+      // Impersonation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session.user as any).impersonatedBy = (token.impersonatedBy as string) ?? null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session.user as any).impersonatedByName = (token.impersonatedByName as string) ?? null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session.user as any).impersonatedByEmail = (token.impersonatedByEmail as string) ?? null;
       return session;
     },
   },

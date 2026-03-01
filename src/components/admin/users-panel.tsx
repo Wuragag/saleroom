@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 interface UserRow {
@@ -33,6 +34,7 @@ export function UsersPanel() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
 
@@ -90,6 +92,24 @@ export function UsersPanel() {
     }
   };
 
+  const handleImpersonate = async (user: UserRow) => {
+    setImpersonatingId(user.id);
+    try {
+      const res = await fetch(`/api/admin/impersonate/${user.id}`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error ?? "Failed to start impersonation");
+        return;
+      }
+      const { token } = await res.json();
+      await signIn("credentials", { impersonateToken: token, callbackUrl: "/" });
+    } finally {
+      setImpersonatingId(null);
+    }
+  };
+
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
@@ -115,18 +135,19 @@ export function UsersPanel() {
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Role</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Joined</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Admin</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-12">
+                <td colSpan={8} className="text-center py-12">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                <td colSpan={8} className="text-center py-12 text-muted-foreground">
                   No users found
                 </td>
               </tr>
@@ -175,6 +196,22 @@ export function UsersPanel() {
                           <span className="text-muted-foreground">—</span>
                         </>
                       )}
+                    </button>
+                  </td>
+                  {/* Impersonate */}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleImpersonate(user)}
+                      disabled={impersonatingId === user.id}
+                      title="Log in as this user"
+                      className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                    >
+                      {impersonatingId === user.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <UserCheck className="h-3.5 w-3.5" />
+                      )}
+                      <span>Login as</span>
                     </button>
                   </td>
                 </tr>

@@ -14,6 +14,9 @@ declare module "next-auth" {
       plan?: "FREE" | "PRO" | "TEAM";
       planLimits?: PlanLimits;
       isAdmin?: boolean;
+      impersonatedBy?: string | null;
+      impersonatedByName?: string | null;
+      impersonatedByEmail?: string | null;
     };
   }
 }
