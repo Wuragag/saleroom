@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import path from "path";
+import { put, del } from "@vercel/blob";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -47,28 +46,26 @@ export async function POST(
     }
 
     const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
-    const filename = `${id}-${Date.now()}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "covers");
+    const filename = `covers/${id}-${Date.now()}.${ext}`;
 
-    await mkdir(uploadDir, { recursive: true });
+    // Upload to Vercel Blob (works in serverless — no local filesystem needed)
+    const blob = await put(filename, file, {
+      access: "public",
+      contentType: file.type,
+    });
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), buffer);
-
-    const url = `/uploads/covers/${filename}`;
-
-    // Clean up old cover image file to prevent disk bloat
+    // Clean up old cover image blob to prevent storage bloat
     const page = await prisma.page.findUnique({
       where: { id },
       select: { coverImage: true },
     });
-    if (page?.coverImage && page.coverImage.startsWith("/uploads/covers/")) {
-      const oldPath = path.join(process.cwd(), "public", page.coverImage);
-      unlink(oldPath).catch(() => {}); // Best-effort cleanup
+    if (page?.coverImage && page.coverImage.startsWith("https://")) {
+      del(page.coverImage).catch(() => {}); // Best-effort cleanup
     }
 
-    return NextResponse.json({ url });
-  } catch {
+    return NextResponse.json({ url: blob.url });
+  } catch (err) {
+    console.error("Cover upload error:", err);
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 }
