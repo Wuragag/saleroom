@@ -60,21 +60,31 @@ export async function DELETE(
     return NextResponse.json({ error: access.reason }, { status });
   }
 
-  // Prevent deleting the last tab
-  const tabCount = await prisma.tab.count({
-    where: { pageId: tab.pageId },
-  });
+  // Atomic count-check + delete inside a transaction to prevent
+  // concurrent requests from deleting the last tab (TOCTOU race).
+  try {
+    await prisma.$transaction(async (tx) => {
+      const tabCount = await tx.tab.count({
+        where: { pageId: tab.pageId },
+      });
 
-  if (tabCount <= 1) {
-    return NextResponse.json(
-      { error: "Cannot delete the last tab" },
-      { status: 400 }
-    );
+      if (tabCount <= 1) {
+        throw new Error("LAST_TAB");
+      }
+
+      await tx.tab.delete({
+        where: { id: tabId },
+      });
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "LAST_TAB") {
+      return NextResponse.json(
+        { error: "Cannot delete the last tab" },
+        { status: 400 }
+      );
+    }
+    throw err; // re-throw unexpected errors
   }
-
-  await prisma.tab.delete({
-    where: { id: tabId },
-  });
 
   return new NextResponse(null, { status: 204 });
 }

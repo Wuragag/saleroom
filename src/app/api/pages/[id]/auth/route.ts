@@ -73,9 +73,11 @@ export async function POST(
     );
   }
 
-  // Correct password — compute token and set httpOnly cookie
+  // Correct password — compute HMAC token with server secret.
+  // Using HMAC ensures a DB leak alone can't forge auth tokens.
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret";
   const token = crypto
-    .createHash("sha256")
+    .createHmac("sha256", secret)
     .update(`${page.id}:${page.password}`)
     .digest("hex");
 

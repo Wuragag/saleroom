@@ -60,6 +60,13 @@ export async function POST(request: Request) {
     attempts++;
   }
 
+  if (attempts >= 5) {
+    return NextResponse.json(
+      { error: "Could not generate a unique URL. Please try again." },
+      { status: 409 }
+    );
+  }
+
   // First tab's content becomes the page's top-level content
   const firstTabContent = tabs[0]?.content ?? DEFAULT_CONTENT;
 

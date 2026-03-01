@@ -21,6 +21,7 @@ import { useAutoSave } from "@/hooks/use-auto-save";
 import type { PageData, PageLink } from "@/types";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle } from "@/lib/page-styles";
+import { CoverImageEditor } from "./cover-image-editor";
 
 interface TiptapEditorProps {
   page: PageData;
@@ -43,6 +44,7 @@ export function TiptapEditor({ page, readOnly, lockedByName }: TiptapEditorProps
     tabPlacement: page.tabPlacement ?? DEFAULT_PAGE_STYLE.tabPlacement,
     logoUrl: page.logoUrl ?? DEFAULT_PAGE_STYLE.logoUrl,
   });
+  const [coverImage, setCoverImage] = useState<string>(page.coverImage ?? "");
   const [links, setLinks] = useState<PageLink[]>(() => {
     try { return JSON.parse(page.links ?? "[]"); } catch { return []; }
   });
@@ -207,6 +209,11 @@ export function TiptapEditor({ page, readOnly, lockedByName }: TiptapEditorProps
           isCreator={page.userId === undefined ? false : true}
         />
         <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-4">
+          <CoverImageEditor
+            pageId={page.id}
+            coverImage={coverImage}
+            onCoverImageChange={setCoverImage}
+          />
           <EditorToolbar editor={editor} />
           <div
             className="mt-4 border border-border rounded-xl bg-card shadow-sm"

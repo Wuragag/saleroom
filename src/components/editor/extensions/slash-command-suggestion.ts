@@ -227,10 +227,10 @@ const COMMANDS: SlashCommandItem[] = [
     },
   },
   {
-    title: "Banner",
-    description: "Announcement or highlight bar",
+    title: "Callout",
+    description: "Highlight or announcement bar",
     icon: "Megaphone",
-    aliases: ["banner", "announcement", "alert", "notice", "bar", "highlight"],
+    aliases: ["callout", "banner", "announcement", "alert", "notice", "bar", "highlight"],
     command: ({ editor, range }) => {
       editor
         .chain()

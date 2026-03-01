@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { StepRole } from "./step-role";
 
 export type OnboardingRole =
@@ -18,6 +19,7 @@ interface Props {
 
 export function OnboardingFlow({ userName }: Props) {
   const router = useRouter();
+  const { update } = useSession();
   const [role, setRole] = useState<OnboardingRole>(null);
 
   async function handleComplete(selectedRole: OnboardingRole) {
@@ -26,6 +28,8 @@ export function OnboardingFlow({ userName }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: selectedRole, onboardingCompleted: true }),
     });
+    // Refresh the JWT so middleware sees onboardingCompleted: true
+    await update();
     router.push("/");
     router.refresh();
   }

@@ -12,9 +12,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 // 30-minute inactivity window (ms)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+
+// Rate limit: 20 session creations per minute per IP
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 function hashVisitorId(raw: string, pageId: string): string {
   return createHash("sha256").update(`${raw}:${pageId}`).digest("hex");
@@ -22,6 +26,13 @@ function hashVisitorId(raw: string, pageId: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit check
+    const ip = getClientIp(req);
+    const { success } = limiter.check(ip, 20);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await req.json();
     const { visitorId, pageId } = body as { visitorId?: string; pageId?: string };
 

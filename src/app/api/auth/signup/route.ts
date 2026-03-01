@@ -32,6 +32,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address" },
+        { status: 400 }
+      );
+    }
+
+    // Normalize email to lowercase to prevent case-sensitive duplicates
+    const normalizedEmail = email.toLowerCase().trim();
+
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
@@ -39,7 +51,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       return NextResponse.json(
         { error: "An account with this email already exists" },
@@ -52,7 +64,7 @@ export async function POST(request: Request) {
     // Create user + team + membership in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
-        data: { name, email, password: hashed, company: company || "" },
+        data: { name, email: normalizedEmail, password: hashed, company: company || "" },
         select: { id: true, email: true, name: true, company: true },
       });
 

@@ -42,6 +42,13 @@ export async function POST(
     attempts++;
   }
 
+  if (attempts >= 5) {
+    return NextResponse.json(
+      { error: "Could not generate a unique URL. Please try again." },
+      { status: 409 }
+    );
+  }
+
   // Assign to the duplicating user's team
   const teamId = await getUserTeamId(access.session.user.id);
 

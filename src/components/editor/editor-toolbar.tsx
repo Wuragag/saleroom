@@ -27,7 +27,17 @@ import {
   Undo,
   Redo,
   X,
+  Plus,
+  MousePointerClick,
+  Globe,
+  Table,
+  LayoutGrid,
+  FileText,
+  UserRound,
+  Megaphone,
+  type LucideIcon,
 } from "lucide-react";
+import { detectProvider } from "./extensions/embed-utils";
 
 // ---------------------------------------------------------------------------
 // Color palette
@@ -45,6 +55,173 @@ const SWATCHES = [
   { label: "Blue",      value: "#3B82F6" },
   { label: "Violet",    value: "#7C3AED" },
   { label: "Pink",      value: "#EC4899" },
+];
+
+// ---------------------------------------------------------------------------
+// Block element definitions for the inserter
+// ---------------------------------------------------------------------------
+interface BlockDef {
+  id: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  insert: (editor: Editor) => void;
+}
+
+const BLOCKS: BlockDef[] = [
+  {
+    id: "cta",
+    label: "Button",
+    description: "Call-to-action link",
+    icon: MousePointerClick,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "ctaButton",
+          attrs: { label: "Click Here", url: "#" },
+        })
+        .run();
+    },
+  },
+  {
+    id: "embed",
+    label: "Embed",
+    description: "YouTube, Loom, Calendar",
+    icon: Globe,
+    insert: (editor) => {
+      const url = window.prompt(
+        "Enter embed URL (YouTube, Loom, Google Calendar, Drive, or PDF):"
+      );
+      if (url) {
+        const info = detectProvider(url);
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "embed",
+            attrs: { src: info.embedUrl, provider: info.provider },
+          })
+          .run();
+      }
+    },
+  },
+  {
+    id: "table",
+    label: "Table",
+    description: "Data table with rows",
+    icon: Table,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run();
+    },
+  },
+  {
+    id: "image",
+    label: "Image",
+    description: "Full-width image",
+    icon: ImageIcon,
+    insert: (editor) => {
+      const url = window.prompt("Enter image URL:");
+      if (url) {
+        editor.chain().focus().setImage({ src: url }).run();
+      }
+    },
+  },
+  {
+    id: "logos",
+    label: "Customer Logos",
+    description: "Logo grid row",
+    icon: LayoutGrid,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "logoGrid",
+          attrs: { logos: [] },
+        })
+        .run();
+    },
+  },
+  {
+    id: "form",
+    label: "Form",
+    description: "Lead capture form",
+    icon: FileText,
+    insert: (editor) => {
+      const formId = `form_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "formBlock",
+          attrs: {
+            formId,
+            fields: [
+              { id: "name", type: "text", label: "Name", required: true, preset: true },
+              { id: "email", type: "email", label: "Email", required: true, preset: true },
+            ],
+            submitLabel: "Submit",
+            successMessage: "Thank you!",
+          },
+        })
+        .run();
+    },
+  },
+  {
+    id: "contact",
+    label: "Contact Card",
+    description: "Team member card",
+    icon: UserRound,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "contactCard",
+          attrs: {
+            contacts: [
+              {
+                id: `c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                name: "",
+                title: "",
+                email: "",
+                phone: "",
+                photo: "",
+              },
+            ],
+          },
+        })
+        .run();
+    },
+  },
+  {
+    id: "callout",
+    label: "Callout",
+    description: "Highlight bar",
+    icon: Megaphone,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "banner",
+          attrs: {
+            text: "Add your announcement here",
+            emoji: "📢",
+            bgStyle: "accent",
+            link: "",
+            linkLabel: "Learn more →",
+          },
+        })
+        .run();
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -73,9 +250,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      // If click is on the trigger, toggle logic handles it
       if (triggerRef.current?.contains(e.target as Node)) return;
-      // If click is inside the dropdown portal, ignore
       const portal = document.getElementById("color-picker-portal");
       if (portal?.contains(e.target as Node)) return;
       setOpen(false);
@@ -84,7 +259,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  // Close on scroll (reposition would be complex; just close)
+  // Close on scroll
   useEffect(() => {
     if (!open) return;
     const onScroll = () => setOpen(false);
@@ -107,7 +282,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
 
   return (
     <>
-      {/* Trigger button — matches the h-9 height of shadcn Button size="sm" */}
       <button
         ref={triggerRef}
         type="button"
@@ -141,7 +315,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
               "transparent";
         }}
       >
-        {/* "A" glyph — tinted when a color is active */}
         <span
           style={{
             fontSize: "13px",
@@ -153,7 +326,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
         >
           A
         </span>
-        {/* Color indicator bar */}
         <span
           style={{
             display: "block",
@@ -166,7 +338,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
         />
       </button>
 
-      {/* Portal dropdown — fixed to viewport so it escapes any stacking context */}
       {open && dropdownStyle && (
         <div
           id="color-picker-portal"
@@ -184,7 +355,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
             width: "140px",
           }}
         >
-          {/* Clear / no color */}
           <button
             type="button"
             onClick={clearColor}
@@ -227,7 +397,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
             No color
           </button>
 
-          {/* Divider */}
           <div
             style={{
               height: "1px",
@@ -236,7 +405,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
             }}
           />
 
-          {/* 4-column swatch grid */}
           <div
             style={{
               display: "grid",
@@ -280,6 +448,197 @@ function ColorPicker({ editor }: { editor: Editor }) {
                         "scale(1)";
                   }}
                 />
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// BlockInserter — visual dropdown to add rich elements
+// ---------------------------------------------------------------------------
+function BlockInserter({ editor }: { editor: Editor }) {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; right: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    // Align dropdown to the right edge of the trigger, below it
+    setPosition({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (triggerRef.current?.contains(e.target as Node)) return;
+      const portal = document.getElementById("block-inserter-portal");
+      if (portal?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  // Close on scroll
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => setOpen(false);
+    window.addEventListener("scroll", onScroll, true);
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, [open]);
+
+  const handleInsert = useCallback(
+    (block: BlockDef) => {
+      block.insert(editor);
+      setOpen(false);
+    },
+    [editor]
+  );
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label="Add element"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold transition-colors shrink-0"
+        style={{
+          border: "none",
+          background: open ? "hsl(var(--primary))" : "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))",
+          cursor: "pointer",
+          opacity: open ? 0.9 : 1,
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.opacity = "0.85";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.opacity = open ? "0.9" : "1";
+        }}
+      >
+        <Plus style={{ width: "14px", height: "14px" }} />
+        Add Element
+      </button>
+
+      {open && position && (
+        <div
+          id="block-inserter-portal"
+          style={{
+            position: "fixed",
+            top: position.top,
+            right: position.right,
+            zIndex: 99999,
+            background: "hsl(var(--popover))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "14px",
+            boxShadow:
+              "0 16px 48px -8px rgba(0,0,0,0.2), 0 4px 12px -2px rgba(0,0,0,0.08)",
+            padding: "8px",
+            width: "320px",
+          }}
+        >
+          <div
+            style={{
+              padding: "6px 10px 8px",
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              color: "hsl(var(--muted-foreground))",
+            }}
+          >
+            Elements
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "4px",
+            }}
+          >
+            {BLOCKS.map((block) => {
+              const Icon = block.icon;
+              return (
+                <button
+                  key={block.id}
+                  type="button"
+                  onClick={() => handleInsert(block)}
+                  className="group"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "10px 12px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                    fontFamily: "inherit",
+                    transition: "background 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      "hsl(var(--muted))";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      "transparent";
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "8px",
+                      background: "hsl(var(--muted))",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        color: "hsl(var(--foreground))",
+                        opacity: 0.7,
+                      }}
+                    />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        color: "hsl(var(--foreground))",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {block.label}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "10.5px",
+                        color: "hsl(var(--muted-foreground))",
+                        lineHeight: 1.3,
+                        marginTop: "1px",
+                      }}
+                    >
+                      {block.description}
+                    </div>
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -464,6 +823,12 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Redo className="h-4 w-4" />
       </Button>
+
+      {/* ── Spacer pushes Add Element to the right ── */}
+      <div className="flex-1" />
+
+      {/* ── Block inserter ── */}
+      <BlockInserter editor={editor} />
     </div>
   );
 }

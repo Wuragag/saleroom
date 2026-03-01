@@ -10,6 +10,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: 30 event batches per minute per IP
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 const ALLOWED_TYPES = new Set([
   "PAGE_LOAD",
@@ -28,6 +32,13 @@ const MAX_EVENTS_PER_BATCH = 50;
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit check
+    const ip = getClientIp(req);
+    const { success } = limiter.check(ip, 30);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await req.json();
     const { sessionId, events } = body as {
       sessionId?: string;

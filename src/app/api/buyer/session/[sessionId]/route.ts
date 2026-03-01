@@ -14,6 +14,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeSessionScore, aggregateVisitorScore } from "@/lib/engagement-score";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: 60 heartbeats per minute per IP (client sends every ~30s)
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 interface TabViewInput {
   tabId: string;
@@ -27,6 +31,13 @@ export async function PATCH(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    // Rate limit check
+    const ip = getClientIp(req);
+    const { success } = limiter.check(ip, 60);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const { sessionId } = await params;
     const body = await req.json();
     const {

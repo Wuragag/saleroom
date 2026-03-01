@@ -56,7 +56,7 @@ export function BannerNodeView({ node, updateAttributes, selected }: NodeViewPro
             <Input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Banner text…"
+              placeholder="Callout text…"
               className="flex-1"
             />
           </div>

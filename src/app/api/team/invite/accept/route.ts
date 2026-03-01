@@ -59,20 +59,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "You are already a member of this team" });
   }
 
-  // Add to team + mark invite accepted in a transaction
-  await prisma.$transaction([
-    prisma.teamMember.create({
+  // Leave existing team (if any) before joining the new one.
+  // The system assumes one team per user. Signup auto-creates a personal
+  // team, so we clean that up here to avoid broken multi-team state.
+  await prisma.$transaction(async (tx) => {
+    const oldMembership = await tx.teamMember.findFirst({
+      where: { userId: session.user.id },
+    });
+
+    if (oldMembership && oldMembership.teamId !== invite.teamId) {
+      // Remove from old team
+      await tx.teamMember.delete({ where: { id: oldMembership.id } });
+
+      // If the old team is now empty, delete it
+      const remaining = await tx.teamMember.count({
+        where: { teamId: oldMembership.teamId },
+      });
+      if (remaining === 0) {
+        // Reassign any pages from the old team to the new team
+        await tx.page.updateMany({
+          where: { teamId: oldMembership.teamId },
+          data: { teamId: invite.teamId },
+        });
+        await tx.team.delete({ where: { id: oldMembership.teamId } });
+      }
+    }
+
+    // Add to new team
+    await tx.teamMember.create({
       data: {
         userId: session.user.id,
         teamId: invite.teamId,
         role: "MEMBER",
       },
-    }),
-    prisma.teamInvite.update({
+    });
+
+    // Mark invite accepted
+    await tx.teamInvite.update({
       where: { id: invite.id },
       data: { status: "ACCEPTED" },
-    }),
-  ]);
+    });
+  });
 
   return NextResponse.json({
     message: "Welcome to the team!",

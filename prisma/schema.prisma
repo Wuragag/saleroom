@@ -110,6 +110,7 @@ model Page {
   background    String         @default("white")
   tabPlacement  String         @default("top")
   logoUrl       String         @default("")
+  coverImage    String         @default("")
   links         String         @default("[]")
   password      String?
   tags          String         @default("[]")

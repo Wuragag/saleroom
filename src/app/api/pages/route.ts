@@ -31,6 +31,13 @@ export async function POST(request: Request) {
     attempts++;
   }
 
+  if (attempts >= 5) {
+    return NextResponse.json(
+      { error: "Could not generate a unique URL. Please try a different title." },
+      { status: 409 }
+    );
+  }
+
   // Assign to user's team
   const teamId = await getUserTeamId(session.user.id);
 

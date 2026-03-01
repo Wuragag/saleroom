@@ -16,10 +16,13 @@ export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
       if (sent.current) return;
       sent.current = true;
       const duration = Math.round((Date.now() - mountTime.current) / 1000);
-      navigator.sendBeacon(
-        `/api/analytics/view/${viewId}`,
-        JSON.stringify({ duration })
-      );
+      // Use fetch with keepalive instead of sendBeacon so we can send PATCH
+      fetch(`/api/analytics/view/${viewId}`, {
+        method: "PATCH",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ duration }),
+      }).catch(() => {}); // Fire-and-forget
     };
 
     const handleVisibilityChange = () => {

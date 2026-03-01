@@ -63,6 +63,7 @@ export async function PUT(
   if (body.background !== undefined) updateData.background = body.background;
   if (body.tabPlacement !== undefined) updateData.tabPlacement = body.tabPlacement;
   if (body.logoUrl !== undefined) updateData.logoUrl = body.logoUrl;
+  if (body.coverImage !== undefined) updateData.coverImage = body.coverImage;
   if (body.links !== undefined) updateData.links = body.links;
   if (body.password !== undefined) {
     updateData.password = body.password

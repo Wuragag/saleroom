@@ -55,6 +55,7 @@ export interface PageData {
   background: string;
   tabPlacement: string;
   logoUrl: string;
+  coverImage: string;
   links: string;
   password?: string | null;
   tags: string;   // JSON-encoded string[]
