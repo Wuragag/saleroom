@@ -70,100 +70,102 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
   const scrollDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── helpers ──────────────────────────────────────────────────────────────
+  // All helpers are stored in a stable ref so that setInterval / addEventListener
+  // callbacks always call the latest version, avoiding stale-closure bugs if
+  // props or ref wiring ever changes.
 
-  function queueEvent(type: string, metadata?: Record<string, unknown>) {
-    pendingEvents.current.push({ type, metadata });
-  }
+  const helpersRef = useRef({
+    queueEvent(type: string, metadata?: Record<string, unknown>) {
+      pendingEvents.current.push({ type, metadata });
+    },
 
-  function currentDurationSeconds(): number {
-    return Math.round((Date.now() - pageStartRef.current) / 1000);
-  }
+    currentDurationSeconds(): number {
+      return Math.round((Date.now() - pageStartRef.current) / 1000);
+    },
 
-  function buildTabViewsPayload() {
-    // Accumulate duration for the currently active tab up to now
-    const now = Date.now();
-    const map = tabViewsRef.current;
-    const active = activeTabRef.current;
+    buildTabViewsPayload() {
+      const now = Date.now();
+      const map = tabViewsRef.current;
+      const active = activeTabRef.current;
 
-    if (active) {
-      const entry = map.get(active.id);
-      if (entry) {
-        // Add time since last startedAt
-        entry.duration += now - entry.startedAt;
-        entry.startedAt = now; // reset for next heartbeat
+      if (active) {
+        const entry = map.get(active.id);
+        if (entry) {
+          entry.duration += now - entry.startedAt;
+          entry.startedAt = now;
+        }
       }
-    }
 
-    return [...map.values()].map((tv) => ({
-      tabId:     tv.tabId,
-      tabName:   tv.tabName,
-      duration:  Math.round(tv.duration / 1000),
-      viewCount: tv.viewCount,
-    }));
-  }
+      return [...map.values()].map((tv) => ({
+        tabId:     tv.tabId,
+        tabName:   tv.tabName,
+        duration:  Math.round(tv.duration / 1000),
+        viewCount: tv.viewCount,
+      }));
+    },
 
-  function startOrSwitchTab(tabId: string, tabName: string) {
-    const now = Date.now();
-    const map = tabViewsRef.current;
-    const prev = activeTabRef.current;
+    startOrSwitchTab(tabId: string, tabName: string) {
+      const now = Date.now();
+      const map = tabViewsRef.current;
+      const prev = activeTabRef.current;
 
-    // Close out previous tab duration
-    if (prev) {
-      const prevEntry = map.get(prev.id);
-      if (prevEntry) {
-        prevEntry.duration += now - prevEntry.startedAt;
-        prevEntry.startedAt = now;
+      if (prev) {
+        const prevEntry = map.get(prev.id);
+        if (prevEntry) {
+          prevEntry.duration += now - prevEntry.startedAt;
+          prevEntry.startedAt = now;
+        }
       }
-    }
 
-    // Start or increment new tab
-    const existing = map.get(tabId);
-    if (existing) {
-      existing.viewCount++;
-      existing.startedAt = now;
-    } else {
-      map.set(tabId, { tabId, tabName, startedAt: now, duration: 0, viewCount: 1 });
-    }
+      const existing = map.get(tabId);
+      if (existing) {
+        existing.viewCount++;
+        existing.startedAt = now;
+      } else {
+        map.set(tabId, { tabId, tabName, startedAt: now, duration: 0, viewCount: 1 });
+      }
 
-    if (tabName.toLowerCase().includes("pric")) {
-      pricingTabRef.current = true;
-    }
+      if (tabName.toLowerCase().includes("pric")) {
+        pricingTabRef.current = true;
+      }
 
-    activeTabRef.current = { id: tabId, name: tabName };
-  }
+      activeTabRef.current = { id: tabId, name: tabName };
+    },
 
-  async function flushEvents() {
-    if (!sessionIdRef.current) return;
-    const batch = pendingEvents.current.splice(0);
-    if (batch.length === 0) return;
-    try {
-      await fetch(EVENTS_API, {
-        method:    "POST",
-        keepalive: true,
-        headers:   { "Content-Type": "application/json" },
-        body:      JSON.stringify({ sessionId: sessionIdRef.current, events: batch }),
-      });
-    } catch {/* non-critical */}
-  }
+    async flushEvents() {
+      if (!sessionIdRef.current) return;
+      const batch = pendingEvents.current.splice(0);
+      if (batch.length === 0) return;
+      try {
+        await fetch(EVENTS_API, {
+          method:    "POST",
+          keepalive: true,
+          headers:   { "Content-Type": "application/json" },
+          body:      JSON.stringify({ sessionId: sessionIdRef.current, events: batch }),
+        });
+      } catch {/* non-critical */}
+    },
 
-  async function sendHeartbeat() {
-    if (!sessionIdRef.current) return;
-    const tabViews = buildTabViewsPayload();
-    try {
-      await fetch(`${SESSION_API}/${sessionIdRef.current}`, {
-        method:    "PATCH",
-        keepalive: true,
-        headers:   { "Content-Type": "application/json" },
-        body:      JSON.stringify({
-          duration:       currentDurationSeconds(),
-          tabViews,
-          ctaClicked:     ctaClickedRef.current,
-          pricingTabViewed: pricingTabRef.current,
-          fileDownloaded: fileDownloaded.current,
-        }),
-      });
-    } catch {/* non-critical */}
-  }
+    async sendHeartbeat() {
+      if (!sessionIdRef.current) return;
+      const h = helpersRef.current;
+      const tabViews = h.buildTabViewsPayload();
+      try {
+        await fetch(`${SESSION_API}/${sessionIdRef.current}`, {
+          method:    "PATCH",
+          keepalive: true,
+          headers:   { "Content-Type": "application/json" },
+          body:      JSON.stringify({
+            duration:         h.currentDurationSeconds(),
+            tabViews,
+            ctaClicked:       ctaClickedRef.current,
+            pricingTabViewed: pricingTabRef.current,
+            fileDownloaded:   fileDownloaded.current,
+          }),
+        });
+      } catch {/* non-critical */}
+    },
+  });
 
   // ── effects ──────────────────────────────────────────────────────────────
 
@@ -187,11 +189,12 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
         sessionIdRef.current = data.sessionId;
 
         // Record initial tab view
+        const h = helpersRef.current;
         if (initialTabId) {
-          startOrSwitchTab(initialTabId, initialTabName ?? "");
+          h.startOrSwitchTab(initialTabId, initialTabName ?? "");
         }
 
-        queueEvent("PAGE_LOAD", { isReturn: data.isReturn });
+        h.queueEvent("PAGE_LOAD", { isReturn: data.isReturn });
       } catch {/* silent */}
     }
 
@@ -204,8 +207,9 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
   useEffect(() => {
     function onTabView(e: Event) {
       const { tabId, tabName } = (e as CustomEvent).detail;
-      startOrSwitchTab(tabId, tabName);
-      queueEvent("TAB_VIEW", { tabId, tabName });
+      const h = helpersRef.current;
+      h.startOrSwitchTab(tabId, tabName);
+      h.queueEvent("TAB_VIEW", { tabId, tabName });
     }
     window.addEventListener("sr:tab_view", onTabView);
     return () => window.removeEventListener("sr:tab_view", onTabView);
@@ -223,7 +227,7 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
         for (const m of milestones) {
           if (pct >= m && scrollDepth.current < m) {
             scrollDepth.current = m;
-            queueEvent(`SCROLL_${m}`, { depth: m });
+            helpersRef.current.queueEvent(`SCROLL_${m}`, { depth: m });
           }
         }
       }, 300);
@@ -249,17 +253,18 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
         CTA_KEYWORDS.test(text) ||
         target.closest("[data-cta]") !== null;
 
+      const h = helpersRef.current;
       if (isCta) {
         ctaClickedRef.current = true;
-        queueEvent("CTA_CLICK", { text: text.trim().slice(0, 80) });
+        h.queueEvent("CTA_CLICK", { text: text.trim().slice(0, 80) });
       } else if (target.tagName === "A") {
         const href = (target as HTMLAnchorElement).href ?? "";
         const isFile = /\.(pdf|docx?|xlsx?|pptx?|zip|csv)(\?|$)/i.test(href);
         if (isFile) {
           fileDownloaded.current = true;
-          queueEvent("FILE_DOWNLOAD", { href: href.slice(0, 200) });
+          h.queueEvent("FILE_DOWNLOAD", { href: href.slice(0, 200) });
         } else {
-          queueEvent("LINK_CLICK", { href: href.slice(0, 200), text: text.trim().slice(0, 60) });
+          h.queueEvent("LINK_CLICK", { href: href.slice(0, 200), text: text.trim().slice(0, 60) });
         }
       }
     }
@@ -272,16 +277,16 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
   // Heartbeat + flush intervals
   useEffect(() => {
     const heartbeatTimer = setInterval(() => {
-      sendHeartbeat();
-      flushEvents();
+      helpersRef.current.sendHeartbeat();
+      helpersRef.current.flushEvents();
     }, HEARTBEAT_INTERVAL_MS);
 
-    const flushTimer = setInterval(flushEvents, FLUSH_INTERVAL_MS);
+    const flushTimer = setInterval(() => helpersRef.current.flushEvents(), FLUSH_INTERVAL_MS);
 
     function onVisibilityChange() {
       if (document.visibilityState === "hidden") {
-        flushEvents();
-        sendHeartbeat();
+        helpersRef.current.flushEvents();
+        helpersRef.current.sendHeartbeat();
       }
     }
 
@@ -292,10 +297,9 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
       clearInterval(flushTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       // Final flush on unmount
-      flushEvents();
-      sendHeartbeat();
+      helpersRef.current.flushEvents();
+      helpersRef.current.sendHeartbeat();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return null; // purely behavioral, no UI

@@ -32,9 +32,13 @@ export default async function EditorPage({
   const canEdit = editAccess.authorized;
   const isLockedByOther = page.lockedById !== null && page.lockedById !== session.user.id;
 
-  // Serialize dates for client component
+  // Serialize dates for client component; strip password hash — client
+  // only needs to know whether a password is set (boolean flag).
+  const { password: _pw, ...pageWithoutPassword } = page;
   const serialized = {
-    ...page,
+    ...pageWithoutPassword,
+    // The editor uses this as a truthy check to show the password UI
+    password: _pw ? "••••••••" : "",
     createdAt: page.createdAt.toISOString(),
     updatedAt: page.updatedAt.toISOString(),
     tabs: page.tabs.map((tab) => ({
@@ -44,11 +48,14 @@ export default async function EditorPage({
     })),
   };
 
+  const isCreator = page.userId === session.user.id;
+
   return (
     <TiptapEditor
       page={serialized}
       readOnly={!canEdit}
       lockedByName={isLockedByOther ? (page.lockedBy?.name ?? "another user") : undefined}
+      isCreator={isCreator}
     />
   );
 }

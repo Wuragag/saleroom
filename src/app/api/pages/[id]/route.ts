@@ -20,7 +20,11 @@ export async function GET(
     include: { tabs: { orderBy: { order: "asc" } } },
   });
 
-  return NextResponse.json(page);
+  if (!page) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+
+  // Strip password hash from response — clients only need to know if one is set
+  const { password: _pw, ...safePageData } = page;
+  return NextResponse.json({ ...safePageData, hasPassword: !!_pw });
 }
 
 export async function PUT(
@@ -78,7 +82,9 @@ export async function PUT(
     data: updateData,
   });
 
-  return NextResponse.json(page);
+  // Strip password hash from response
+  const { password: _pw, ...safePageData } = page;
+  return NextResponse.json({ ...safePageData, hasPassword: !!_pw });
 }
 
 export async function DELETE(

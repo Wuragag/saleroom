@@ -27,9 +27,10 @@ interface TiptapEditorProps {
   page: PageData;
   readOnly?: boolean;
   lockedByName?: string;
+  isCreator?: boolean;
 }
 
-export function TiptapEditor({ page, readOnly, lockedByName }: TiptapEditorProps) {
+export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }: TiptapEditorProps) {
   const [title, setTitle] = useState(page.title);
   const [published, setPublished] = useState(page.published);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -206,7 +207,7 @@ export function TiptapEditor({ page, readOnly, lockedByName }: TiptapEditorProps
           onLockChange={setIsLocked}
           visibility={visibility}
           onVisibilityChange={setVisibility}
-          isCreator={page.userId === undefined ? false : true}
+          isCreator={isCreator}
         />
         <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-4">
           <CoverImageEditor

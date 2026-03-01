@@ -18,21 +18,24 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const name = body.name || DEFAULT_TAB_NAME;
 
-  // Find the highest order value
-  const lastTab = await prisma.tab.findFirst({
-    where: { pageId: id },
-    orderBy: { order: "desc" },
-  });
+  // Atomic: find max order + create inside a transaction to prevent
+  // concurrent requests from assigning the same order value.
+  const tab = await prisma.$transaction(async (tx) => {
+    const lastTab = await tx.tab.findFirst({
+      where: { pageId: id },
+      orderBy: { order: "desc" },
+    });
 
-  const nextOrder = (lastTab?.order ?? -1) + 1;
+    const nextOrder = (lastTab?.order ?? -1) + 1;
 
-  const tab = await prisma.tab.create({
-    data: {
-      name,
-      order: nextOrder,
-      content: '{"type":"doc","content":[{"type":"paragraph"}]}',
-      pageId: id,
-    },
+    return tx.tab.create({
+      data: {
+        name,
+        order: nextOrder,
+        content: '{"type":"doc","content":[{"type":"paragraph"}]}',
+        pageId: id,
+      },
+    });
   });
 
   return NextResponse.json(tab, { status: 201 });

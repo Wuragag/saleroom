@@ -84,5 +84,11 @@ export async function GET() {
     include: { tabs: { orderBy: { order: "asc" } } },
   });
 
-  return NextResponse.json(pages);
+  // Strip password hashes — clients only need to know if one is set
+  const safePages = pages.map(({ password, ...rest }) => ({
+    ...rest,
+    hasPassword: !!password,
+  }));
+
+  return NextResponse.json(safePages);
 }

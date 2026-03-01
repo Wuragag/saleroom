@@ -1,6 +1,16 @@
 /**
  * Simple in-memory sliding-window rate limiter.
- * Suitable for single-instance deployments (Vercel serverless, etc.).
+ *
+ * ⚠️  SERVERLESS LIMITATION: This limiter uses an in-memory Map that is NOT
+ * shared across serverless function instances. On platforms like Vercel, each
+ * cold-start creates a fresh Map, so a determined attacker can bypass limits
+ * by hitting different instances. This still provides *best-effort* protection
+ * against naive abuse (bots, accidental loops, etc.).
+ *
+ * For production-grade rate limiting, replace this with a shared store such as:
+ *  - Upstash Redis (`@upstash/ratelimit`)
+ *  - Vercel KV / Redis
+ *  - Cloudflare Workers KV or Durable Objects
  *
  * Usage:
  *   const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
