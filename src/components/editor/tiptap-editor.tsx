@@ -68,9 +68,10 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
     updateTabContentLocally,
   } = useTabs(page.id, page.tabs);
 
-  const initialContent = activeTab
-    ? JSON.parse(activeTab.content)
-    : DEFAULT_CONTENT;
+  const initialContent = (() => {
+    if (!activeTab) return DEFAULT_CONTENT;
+    try { return JSON.parse(activeTab.content); } catch { return DEFAULT_CONTENT; }
+  })();
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -120,15 +121,24 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
       return;
     }
     if (editor && activeTab) {
-      const content = JSON.parse(activeTab.content);
-      editor.commands.setContent(content, { emitUpdate: false });
+      try {
+        const content = JSON.parse(activeTab.content);
+        editor.commands.setContent(content, { emitUpdate: false });
+      } catch {
+        editor.commands.setContent(DEFAULT_CONTENT, { emitUpdate: false });
+      }
     }
   }, [activeTabId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectTab = (tabId: string) => {
     if (tabId === activeTabId) return;
     if (editor) {
-      updateTabContentLocally(activeTabId, JSON.stringify(editor.getJSON()));
+      const content = JSON.stringify(editor.getJSON());
+      // Save content locally (so the tabs state is up-to-date)
+      updateTabContentLocally(activeTabId, content);
+      // Also persist to the server so edits aren't lost if the user
+      // navigates away before the next auto-save fires.
+      saveTabContent(activeTabId, content).catch(() => {});
     }
     setActiveTabId(tabId);
   };

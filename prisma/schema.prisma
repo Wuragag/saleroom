@@ -77,7 +77,7 @@ model TeamInvite {
   team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   token       String       @unique
   invitedById String
-  invitedBy   User         @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedBy   User         @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
   status      InviteStatus @default(PENDING)
   expiresAt   DateTime
   createdAt   DateTime     @default(now())
@@ -93,12 +93,12 @@ model Page {
   content       String         @default("{}")
   published     Boolean        @default(false)
   userId        String
-  user          User           @relation(fields: [userId], references: [id])
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId        String?
-  team          Team?          @relation(fields: [teamId], references: [id])
+  team          Team?          @relation(fields: [teamId], references: [id], onDelete: SetNull)
   visibility    PageVisibility @default(TEAM)
   lockedById    String?
-  lockedBy      User?          @relation("LockedBy", fields: [lockedById], references: [id])
+  lockedBy      User?          @relation("LockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
   tabs          Tab[]
   views         PageView[]
   events        PageEvent[]
@@ -118,6 +118,7 @@ model Page {
   updatedAt     DateTime       @updatedAt
 
   @@index([teamId])
+  @@index([userId])
 }
 
 model Tab {

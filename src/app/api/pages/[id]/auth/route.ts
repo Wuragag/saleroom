@@ -75,7 +75,8 @@ export async function POST(
 
   // Correct password — compute HMAC token with server secret.
   // Using HMAC ensures a DB leak alone can't forge auth tokens.
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret";
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be set");
   const token = crypto
     .createHmac("sha256", secret)
     .update(`${page.id}:${page.password}`)

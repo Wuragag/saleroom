@@ -38,7 +38,8 @@ export async function POST(
       where: { id },
       data: { lockedById: session.user.id },
     });
-    return NextResponse.json(updated);
+    const { password: _pw, ...safePage } = updated;
+    return NextResponse.json({ ...safePage, hasPassword: !!_pw });
   } else {
     // Unlock: only the locking user or team owner can unlock
     if (page.lockedById && page.lockedById !== session.user.id) {
@@ -69,6 +70,7 @@ export async function POST(
       where: { id },
       data: { lockedById: null },
     });
-    return NextResponse.json(updated);
+    const { password: _pw, ...safePage } = updated;
+    return NextResponse.json({ ...safePage, hasPassword: !!_pw });
   }
 }

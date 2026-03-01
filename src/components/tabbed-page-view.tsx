@@ -4,6 +4,19 @@ import { useState } from "react";
 import { PageRenderer } from "./page-renderer";
 import { ExternalLink } from "lucide-react";
 
+/** Sanitize a URL to prevent javascript: and data: XSS attacks */
+function sanitizeUrl(url: string): string {
+  if (!url) return "#";
+  const trimmed = url.trim();
+  // Block dangerous protocols
+  if (/^\s*(javascript|data|vbscript)\s*:/i.test(trimmed)) return "#";
+  // Auto-prefix protocol-less URLs
+  if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith("/") && !trimmed.startsWith("mailto:") && !trimmed.startsWith("tel:")) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+}
+
 interface Tab {
   id: string;
   name: string;
@@ -58,7 +71,7 @@ export function TabbedPageView({
       {links.map((link) => (
         <a
           key={link.id}
-          href={link.url}
+          href={sanitizeUrl(link.url)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-sm font-medium transition-all"
@@ -125,7 +138,7 @@ export function TabbedPageView({
                 {links.map((link) => (
                   <a
                     key={link.id}
-                    href={link.url}
+                    href={sanitizeUrl(link.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
@@ -213,7 +226,7 @@ export function TabbedPageView({
               {links.map((link) => (
                 <a
                   key={link.id}
-                  href={link.url}
+                  href={sanitizeUrl(link.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 py-3.5 text-sm font-medium transition-colors whitespace-nowrap"

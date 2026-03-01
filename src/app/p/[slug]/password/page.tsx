@@ -27,8 +27,10 @@ export default async function PasswordPage({
   // If already authenticated, redirect to the page
   const cookieStore = await cookies();
   const token = cookieStore.get(`page_auth_${page.id}`)?.value;
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be set");
   const expected = crypto
-    .createHash("sha256")
+    .createHmac("sha256", secret)
     .update(`${page.id}:${page.password}`)
     .digest("hex");
   if (token === expected) redirect(`/p/${page.slug}`);
