@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { ImagePlus, Lock, X } from "lucide-react";
+import { ImagePlus, Lock, X, Zap } from "lucide-react";
 import {
   FONT_OPTIONS,
   BACKGROUND_OPTIONS,
@@ -31,6 +31,7 @@ interface StylePanelProps {
   onChange: (patch: Partial<PageStyle>) => void;
   password: string;
   onPasswordChange: (value: string) => void;
+  passwordProtection?: boolean;
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -41,7 +42,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StylePanel({ style, onChange, password, onPasswordChange }: StylePanelProps) {
+export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true }: StylePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Color picker state
@@ -280,34 +281,45 @@ export function StylePanel({ style, onChange, password, onPasswordChange }: Styl
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <SectionLabel>Page Access</SectionLabel>
-          {password && (
+          {password && passwordProtection && (
             <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
               Protected
             </span>
           )}
         </div>
-        <div className="relative">
-          <Lock className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => onPasswordChange(e.target.value)}
-            placeholder="Set a password…"
-            className="w-full pl-6 pr-6 py-1.5 text-xs rounded border border-border bg-card focus:outline-none focus:ring-1 focus:ring-primary/40 placeholder:text-muted-foreground/60"
-          />
-          {password && (
-            <button
-              onClick={() => onPasswordChange("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              title="Remove password"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-        <p className="mt-1 text-[10px] text-muted-foreground/70">
-          {password ? "Visitors must enter this password." : "Leave blank for public access."}
-        </p>
+        {passwordProtection ? (
+          <>
+            <div className="relative">
+              <Lock className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => onPasswordChange(e.target.value)}
+                placeholder="Set a password…"
+                className="w-full pl-6 pr-6 py-1.5 text-xs rounded border border-border bg-card focus:outline-none focus:ring-1 focus:ring-primary/40 placeholder:text-muted-foreground/60"
+              />
+              {password && (
+                <button
+                  onClick={() => onPasswordChange("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Remove password"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground/70">
+              {password ? "Visitors must enter this password." : "Leave blank for public access."}
+            </p>
+          </>
+        ) : (
+          <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+            <Zap className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+            <p className="text-[10px] text-amber-800 dark:text-amber-200">
+              Upgrade to Pro to protect pages with a password.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

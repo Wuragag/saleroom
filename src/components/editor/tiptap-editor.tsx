@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -31,6 +32,9 @@ interface TiptapEditorProps {
 }
 
 export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }: TiptapEditorProps) {
+  const { data: session } = useSession();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const passwordProtection = (session?.user as any)?.planLimits?.passwordProtection ?? true;
   const [title, setTitle] = useState(page.title);
   const [published, setPublished] = useState(page.published);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,6 +70,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
     reorderTabs,
     saveTabContent,
     updateTabContentLocally,
+    tabLimitError,
+    clearTabLimitError,
   } = useTabs(page.id, page.tabs);
 
   const initialContent = (() => {
@@ -200,6 +206,9 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
         onLinksChange={handleLinksChange}
         password={password}
         onPasswordChange={handlePasswordChange}
+        tabLimitError={tabLimitError}
+        onClearTabLimitError={clearTabLimitError}
+        passwordProtection={passwordProtection}
       />
       <div className="flex-1 min-w-0 flex flex-col">
         <EditorHeader

@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import NextAuth from "next-auth";
+import type { PlanLimits } from "@/lib/plan-limits";
 
 declare module "next-auth" {
   interface Session {
@@ -10,6 +11,9 @@ declare module "next-auth" {
       image?: string | null;
       teamId?: string | null;
       teamRole?: "OWNER" | "MEMBER" | null;
+      plan?: "FREE" | "PRO" | "TEAM";
+      planLimits?: PlanLimits;
+      isAdmin?: boolean;
     };
   }
 }

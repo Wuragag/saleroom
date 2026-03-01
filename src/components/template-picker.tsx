@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { X, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TemplateData } from "@/types";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
 
 const CATEGORIES = [
   { value: "all", label: "All" },
@@ -41,6 +42,7 @@ export function TemplatePicker({
     null
   );
   const [isCreating, setIsCreating] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   // Fetch templates when modal opens
   useEffect(() => {
@@ -61,6 +63,7 @@ export function TemplatePicker({
       setSelectedCategory("all");
       setSelectedTemplateId(null);
       setIsCreating(false);
+      setLimitError(null);
       // Focus the modal so keyboard events work
       setTimeout(() => modalRef.current?.focus(), 50);
     }
@@ -82,8 +85,17 @@ export function TemplatePicker({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ templateId }),
         });
-        const { pageId } = await res.json();
-        router.push(`/editor/${pageId}`);
+        const data = await res.json();
+        if (!res.ok) {
+          if (data.code === "PLAN_LIMIT") {
+            setLimitError(data.error);
+            setIsCreating(false);
+            return;
+          }
+          setIsCreating(false);
+          return;
+        }
+        router.push(`/editor/${data.pageId}`);
       } catch {
         setIsCreating(false);
       }
@@ -231,6 +243,13 @@ export function TemplatePicker({
             )}
           </div>
         </div>
+
+        {/* ── Limit error ── */}
+        {limitError && (
+          <div className="px-6 py-0">
+            <UpgradePrompt message={limitError} className="rounded-none border-x-0 border-b-0" />
+          </div>
+        )}
 
         {/* ── Footer ── */}
         <div className="px-6 py-4 border-t border-border flex items-center justify-between shrink-0">

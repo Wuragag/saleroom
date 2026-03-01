@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { getStripe } from "@/lib/stripe";
 
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
@@ -61,7 +62,14 @@ export async function POST(request: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
 
-    // Create user + team + membership in a transaction
+    // Create Stripe customer OUTSIDE the transaction — orphaned customer is harmless
+    const stripeCustomer = await getStripe().customers.create({
+      email: normalizedEmail,
+      name,
+      metadata: { source: "signup" },
+    });
+
+    // Create user + team + membership + subscription in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: { name, email: normalizedEmail, password: hashed, company: company || "" },
@@ -81,11 +89,27 @@ export async function POST(request: Request) {
         },
       });
 
+      // Create FREE subscription with Stripe customer
+      await tx.subscription.create({
+        data: {
+          teamId: team.id,
+          stripeCustomerId: stripeCustomer.id,
+          plan: "FREE",
+          status: "ACTIVE",
+        },
+      });
+
+      // Update Stripe customer with real IDs
+      await getStripe().customers.update(stripeCustomer.id, {
+        metadata: { teamId: team.id, userId: user.id },
+      });
+
       return { id: user.id, email: user.email, name: user.name };
     });
 
     return NextResponse.json(result, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error("Signup error:", err);
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 }

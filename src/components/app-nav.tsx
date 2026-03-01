@@ -33,6 +33,15 @@ export function AppNav() {
         >
           SalesRoom
         </Link>
+        {/* Plan badge for free users */}
+        {session?.user?.plan === "FREE" && (
+          <Link
+            href="/settings?tab=billing"
+            className="text-[10px] font-semibold uppercase tracking-wider text-primary-foreground/60 bg-primary-foreground/10 px-2 py-0.5 rounded-full hover:bg-primary-foreground/20 transition-colors"
+          >
+            Free
+          </Link>
+        )}
 
         {/* Nav links */}
         <nav className="flex items-center gap-0.5">

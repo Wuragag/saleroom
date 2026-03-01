@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -51,18 +52,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         token.teamId = membership?.teamId ?? null;
         token.teamRole = membership?.role ?? null;
+
+        // Fetch billing plan
+        if (membership?.teamId) {
+          const plan = await getTeamPlan(membership.teamId);
+          token.plan = plan;
+          token.planLimits = PLAN_LIMITS[plan];
+        } else {
+          token.plan = "FREE";
+          token.planLimits = PLAN_LIMITS.FREE;
+        }
+
+        // Fetch admin status
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { isAdmin: true },
+        });
+        token.isAdmin = dbUser?.isAdmin ?? false;
       }
       // When client calls update(), refresh user data from DB
       if (trigger === "update" && token.id) {
         const fresh = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { name: true, email: true, avatarUrl: true, onboardingCompleted: true },
+          select: { name: true, email: true, avatarUrl: true, onboardingCompleted: true, isAdmin: true },
         });
         if (fresh) {
           token.name = fresh.name;
           token.email = fresh.email;
           token.image = fresh.avatarUrl || null;
           token.onboardingCompleted = fresh.onboardingCompleted;
+          token.isAdmin = fresh.isAdmin;
         }
         // Refresh team membership (deterministic: earliest joined)
         const membership = await prisma.teamMember.findFirst({
@@ -72,6 +91,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         token.teamId = membership?.teamId ?? null;
         token.teamRole = membership?.role ?? null;
+
+        // Refresh billing plan
+        if (membership?.teamId) {
+          const plan = await getTeamPlan(membership.teamId);
+          token.plan = plan;
+          token.planLimits = PLAN_LIMITS[plan];
+        } else {
+          token.plan = "FREE";
+          token.planLimits = PLAN_LIMITS.FREE;
+        }
       }
       return token;
     },
@@ -84,6 +113,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       (session.user as any).teamId = token.teamId ?? null;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session.user as any).teamRole = token.teamRole ?? null;
+      // Billing
+      session.user.plan = (token.plan as "FREE" | "PRO" | "TEAM") ?? "FREE";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      session.user.planLimits = token.planLimits as any ?? PLAN_LIMITS.FREE;
+      session.user.isAdmin = (token.isAdmin as boolean) ?? false;
       return session;
     },
   },

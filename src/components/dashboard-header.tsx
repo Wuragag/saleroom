@@ -5,23 +5,33 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { TemplatePicker } from "@/components/template-picker";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
 
 export function DashboardHeader() {
   const router = useRouter();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const createBlankPage = async () => {
     setIsCreating(true);
     setIsPickerOpen(false);
+    setLimitError(null);
     try {
       const res = await fetch("/api/pages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      const page = await res.json();
-      router.push(`/editor/${page.id}`);
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.code === "PLAN_LIMIT") {
+          setLimitError(data.error);
+          return;
+        }
+        return;
+      }
+      router.push(`/editor/${data.id}`);
     } finally {
       setIsCreating(false);
     }
@@ -48,6 +58,10 @@ export function DashboardHeader() {
           {isCreating ? "Creating…" : "New Page"}
         </Button>
       </div>
+
+      {limitError && (
+        <UpgradePrompt message={limitError} className="mt-4" />
+      )}
 
       <TemplatePicker
         isOpen={isPickerOpen}

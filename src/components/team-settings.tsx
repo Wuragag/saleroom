@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { TeamMemberData, TeamInviteData } from "@/types";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
 
 export function TeamSettings() {
   const { data: session } = useSession();
@@ -28,6 +29,8 @@ export function TeamSettings() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isOwner = (session?.user as any)?.teamRole === "OWNER";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const canInvite = (session?.user as any)?.planLimits?.canInvite ?? false;
 
   const fetchTeam = useCallback(async () => {
     try {
@@ -244,7 +247,13 @@ export function TeamSettings() {
       </div>
 
       {/* Invite (owner only) */}
-      {isOwner && (
+      {isOwner && !canInvite && (
+        <UpgradePrompt
+          message="Team invites are not available on your current plan."
+          targetPlan="PRO"
+        />
+      )}
+      {isOwner && canInvite && (
         <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <Mail className="h-4 w-4" />

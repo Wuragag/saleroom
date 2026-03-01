@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess, getUserTeamId } from "@/lib/team-auth";
+import { canCreatePage } from "@/lib/plan-limits";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -51,6 +52,17 @@ export async function POST(
 
   // Assign to the duplicating user's team
   const teamId = await getUserTeamId(access.session.user.id);
+
+  // ── Plan limit check ──
+  if (teamId) {
+    const limitCheck = await canCreatePage(teamId);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
+        { status: 403 }
+      );
+    }
+  }
 
   // Create duplicated page + tabs in a transaction
   const copy = await prisma.$transaction(async (tx) => {

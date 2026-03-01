@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
+import { canCreatePage } from "@/lib/plan-limits";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -40,6 +41,17 @@ export async function POST(request: Request) {
 
   // Assign to user's team
   const teamId = await getUserTeamId(session.user.id);
+
+  // ── Plan limit check ──
+  if (teamId) {
+    const limitCheck = await canCreatePage(teamId);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
+        { status: 403 }
+      );
+    }
+  }
 
   const page = await prisma.page.create({
     data: {

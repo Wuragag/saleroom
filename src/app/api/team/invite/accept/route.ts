@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { canAddTeamMember } from "@/lib/plan-limits";
 
 // POST /api/team/invite/accept — accept an invite (authenticated user)
 export async function POST(request: Request) {
@@ -38,6 +39,15 @@ export async function POST(request: Request) {
       data: { status: "EXPIRED" },
     });
     return NextResponse.json({ error: "This invite has expired" }, { status: 400 });
+  }
+
+  // ── Plan limit check ──
+  const limitCheck = await canAddTeamMember(invite.teamId);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
+      { status: 403 }
+    );
   }
 
   // Check if already a member

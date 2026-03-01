@@ -27,6 +27,21 @@ enum InviteStatus {
   EXPIRED
 }
 
+enum BillingPlan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+  INCOMPLETE
+  UNPAID
+}
+
 // ──── Models ────
 
 model User {
@@ -39,6 +54,7 @@ model User {
   role                String?
   onboardingCompleted Boolean      @default(false)
   company             String       @default("")
+  isAdmin             Boolean      @default(false)
   pages               Page[]
   teamMemberships     TeamMember[]
   sentInvites         TeamInvite[] @relation("InvitedBy")
@@ -48,13 +64,32 @@ model User {
 }
 
 model Team {
-  id        String       @id @default(cuid())
-  name      String
-  members   TeamMember[]
-  invites   TeamInvite[]
-  pages     Page[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  members      TeamMember[]
+  invites      TeamInvite[]
+  pages        Page[]
+  subscription Subscription?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  teamId               String             @unique
+  team                 Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  plan                 BillingPlan        @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([stripeCustomerId])
 }
 
 model TeamMember {

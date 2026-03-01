@@ -14,6 +14,8 @@ interface UseTabsReturn {
   reorderTabs: (tabIds: string[]) => Promise<void>;
   saveTabContent: (tabId: string, content: string) => Promise<void>;
   updateTabContentLocally: (tabId: string, content: string) => void;
+  tabLimitError: string | null;
+  clearTabLimitError: () => void;
 }
 
 export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
@@ -21,16 +23,27 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
   const [activeTabId, setActiveTabId] = useState(
     initialTabs[0]?.id || ""
   );
+  const [tabLimitError, setTabLimitError] = useState<string | null>(null);
+
+  const clearTabLimitError = useCallback(() => setTabLimitError(null), []);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || null;
 
   const addTab = useCallback(async () => {
+    setTabLimitError(null);
     const res = await fetch(`/api/pages/${pageId}/tabs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: `Tab ${tabs.length + 1}` }),
     });
-    const tab: TabData = await res.json();
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.code === "PLAN_LIMIT") {
+        setTabLimitError(data.error);
+      }
+      return;
+    }
+    const tab: TabData = data;
     setTabs((prev) => [...prev, tab]);
     setActiveTabId(tab.id);
   }, [pageId, tabs.length]);
@@ -122,5 +135,7 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
     reorderTabs,
     saveTabContent,
     updateTabContentLocally,
+    tabLimitError,
+    clearTabLimitError,
   };
 }

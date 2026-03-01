@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTeamOwner } from "@/lib/team-auth";
+import { canAddTeamMember } from "@/lib/plan-limits";
 import { sendTeamInviteEmail } from "@/lib/email";
 import crypto from "crypto";
 
@@ -20,6 +21,15 @@ export async function POST(request: Request) {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+
+  // ── Plan limit check ──
+  const limitCheck = await canAddTeamMember(teamId!);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
+      { status: 403 }
+    );
+  }
 
   // Check if user is already a team member
   const existingUser = await prisma.user.findUnique({

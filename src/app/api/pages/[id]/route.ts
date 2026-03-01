@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { canSetPassword } from "@/lib/plan-limits";
 import bcrypt from "bcryptjs";
 
 export async function GET(
@@ -70,6 +71,16 @@ export async function PUT(
   if (body.coverImage !== undefined) updateData.coverImage = body.coverImage;
   if (body.links !== undefined) updateData.links = body.links;
   if (body.password !== undefined) {
+    // ── Plan limit check: password protection ──
+    if (body.password && access.page?.teamId) {
+      const pwCheck = await canSetPassword(access.page.teamId);
+      if (!pwCheck.allowed) {
+        return NextResponse.json(
+          { error: pwCheck.reason, code: "PLAN_LIMIT" },
+          { status: 403 }
+        );
+      }
+    }
     updateData.password = body.password
       ? await bcrypt.hash(body.password, 10)
       : null;

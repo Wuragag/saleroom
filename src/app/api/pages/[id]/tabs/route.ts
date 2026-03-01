@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { canCreateTab } from "@/lib/plan-limits";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
 
 export async function POST(
@@ -13,6 +14,17 @@ export async function POST(
   if (!access.authorized) {
     const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
     return NextResponse.json({ error: access.reason }, { status });
+  }
+
+  // ── Plan limit check ──
+  if (access.page?.teamId) {
+    const limitCheck = await canCreateTab(id, access.page.teamId);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
+        { status: 403 }
+      );
+    }
   }
 
   const body = await request.json().catch(() => ({}));
