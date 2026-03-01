@@ -8,6 +8,11 @@ import { auth } from "@/auth";
 // Optionally filter by ?category=post-call
 // ---------------------------------------------------------------------------
 export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
 

@@ -43,10 +43,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.onboardingCompleted = (user as any).onboardingCompleted ?? false;
 
-        // Fetch team membership
+        // Fetch team membership (deterministic: earliest joined)
         const membership = await prisma.teamMember.findFirst({
           where: { userId: user.id as string },
           select: { teamId: true, role: true },
+          orderBy: { createdAt: "asc" },
         });
         token.teamId = membership?.teamId ?? null;
         token.teamRole = membership?.role ?? null;
@@ -63,10 +64,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.image = fresh.avatarUrl || null;
           token.onboardingCompleted = fresh.onboardingCompleted;
         }
-        // Refresh team membership
+        // Refresh team membership (deterministic: earliest joined)
         const membership = await prisma.teamMember.findFirst({
           where: { userId: token.id as string },
           select: { teamId: true, role: true },
+          orderBy: { createdAt: "asc" },
         });
         token.teamId = membership?.teamId ?? null;
         token.teamRole = membership?.role ?? null;

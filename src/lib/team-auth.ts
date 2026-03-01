@@ -108,8 +108,10 @@ export async function checkPageAccess(
 
 /**
  * Verify that the current user is a team OWNER.
+ * Optionally scoped to a specific teamId — when provided, checks ownership
+ * of that exact team instead of any team the user owns.
  */
-export async function requireTeamOwner(): Promise<{
+export async function requireTeamOwner(teamId?: string): Promise<{
   authorized: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   session: any;
@@ -122,7 +124,12 @@ export async function requireTeamOwner(): Promise<{
   }
 
   const membership = await prisma.teamMember.findFirst({
-    where: { userId: session.user.id, role: "OWNER" },
+    where: {
+      userId: session.user.id,
+      role: "OWNER",
+      ...(teamId ? { teamId } : {}),
+    },
+    orderBy: { createdAt: "asc" },
   });
 
   if (!membership) {
@@ -133,12 +140,13 @@ export async function requireTeamOwner(): Promise<{
 }
 
 /**
- * Get the user's current team ID (first team found).
+ * Get the user's current team ID (deterministic — earliest joined team).
  */
 export async function getUserTeamId(userId: string): Promise<string | null> {
   const membership = await prisma.teamMember.findFirst({
     where: { userId },
     select: { teamId: true },
+    orderBy: { createdAt: "asc" },
   });
   return membership?.teamId ?? null;
 }

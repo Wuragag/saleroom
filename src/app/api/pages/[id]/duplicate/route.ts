@@ -69,7 +69,7 @@ export async function POST(
         tabPlacement: original.tabPlacement,
         logoUrl: original.logoUrl,
         links: original.links,
-        password: original.password,
+        // Intentionally NOT copying password — duplicates start unprotected
       },
     });
 

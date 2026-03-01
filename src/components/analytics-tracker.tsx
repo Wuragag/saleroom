@@ -9,12 +9,14 @@ interface AnalyticsTrackerProps {
 
 export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
   const mountTime = useRef(Date.now());
-  const sent = useRef(false);
+  const sending = useRef(false);
 
   useEffect(() => {
     const sendDuration = () => {
-      if (sent.current) return;
-      sent.current = true;
+      // Debounce concurrent sends but allow re-sending on future events
+      // so the duration stays accurate when the user tabs away and back.
+      if (sending.current) return;
+      sending.current = true;
       const duration = Math.round((Date.now() - mountTime.current) / 1000);
       // Use fetch with keepalive instead of sendBeacon so we can send PATCH
       fetch(`/api/analytics/view/${viewId}`, {
@@ -22,7 +24,9 @@ export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
         keepalive: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ duration }),
-      }).catch(() => {}); // Fire-and-forget
+      })
+        .catch(() => {})
+        .finally(() => { sending.current = false; });
     };
 
     const handleVisibilityChange = () => {

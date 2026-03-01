@@ -60,9 +60,15 @@ export default async function PublishedPage({
   };
   const maxWidth = maxWidths[page.layoutWidth ?? "default"] ?? "720px";
 
-  // Personalization params
-  const personName = resolvedSearchParams.name?.trim() || null;
-  const personCompany = resolvedSearchParams.company?.trim() || null;
+  // Personalization params — sanitize to prevent social-engineering phishing
+  // (React auto-escapes HTML, but we still limit length and strip suspicious content)
+  const sanitizeParam = (val: string | undefined, maxLen: number): string | null => {
+    if (!val) return null;
+    const cleaned = val.trim().slice(0, maxLen).replace(/[<>]/g, "");
+    return cleaned || null;
+  };
+  const personName = sanitizeParam(resolvedSearchParams.name, 60);
+  const personCompany = sanitizeParam(resolvedSearchParams.company, 80);
 
   // Theme CSS variables — consumed by .pub-content CSS in globals.css
   const cssVars = {

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -55,6 +56,16 @@ export async function POST(
     await writeFile(path.join(uploadDir, filename), buffer);
 
     const url = `/uploads/covers/${filename}`;
+
+    // Clean up old cover image file to prevent disk bloat
+    const page = await prisma.page.findUnique({
+      where: { id },
+      select: { coverImage: true },
+    });
+    if (page?.coverImage && page.coverImage.startsWith("/uploads/covers/")) {
+      const oldPath = path.join(process.cwd(), "public", page.coverImage);
+      unlink(oldPath).catch(() => {}); // Best-effort cleanup
+    }
 
     return NextResponse.json({ url });
   } catch {
