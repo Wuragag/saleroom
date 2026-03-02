@@ -43,8 +43,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Guard against manual-override placeholder customer IDs
-    if (subscription.stripeCustomerId.startsWith("manual_override_")) {
+    // Guard against placeholder customer IDs (manual overrides or pending Stripe setup)
+    if (
+      subscription.stripeCustomerId.startsWith("manual_override_") ||
+      subscription.stripeCustomerId.startsWith("pending_")
+    ) {
       return NextResponse.json(
         { error: "No Stripe customer on file. Please contact support." },
         { status: 400 }

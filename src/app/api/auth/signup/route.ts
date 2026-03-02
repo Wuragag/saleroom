@@ -6,6 +6,16 @@ import { getStripe } from "@/lib/stripe";
 
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
+/** Try to get Stripe — returns null if STRIPE_SECRET_KEY is not configured */
+function tryGetStripe() {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) return null;
+    return getStripe();
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   // Rate limit: 3 signups per minute per IP
   const ip = getClientIp(request);
@@ -62,12 +72,21 @@ export async function POST(request: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
 
-    // Create Stripe customer OUTSIDE the transaction — orphaned customer is harmless
-    const stripeCustomer = await getStripe().customers.create({
-      email: normalizedEmail,
-      name,
-      metadata: { source: "signup" },
-    });
+    // Try to create Stripe customer — non-blocking if Stripe is not configured
+    const stripe = tryGetStripe();
+    let stripeCustomerId: string | null = null;
+    if (stripe) {
+      try {
+        const stripeCustomer = await stripe.customers.create({
+          email: normalizedEmail,
+          name,
+          metadata: { source: "signup" },
+        });
+        stripeCustomerId = stripeCustomer.id;
+      } catch (stripeErr) {
+        console.warn("Stripe customer creation failed (non-fatal):", stripeErr);
+      }
+    }
 
     // Create user + team + membership + subscription in a transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -89,20 +108,22 @@ export async function POST(request: Request) {
         },
       });
 
-      // Create FREE subscription with Stripe customer
+      // Create FREE subscription (with Stripe customer if available, otherwise placeholder)
       await tx.subscription.create({
         data: {
           teamId: team.id,
-          stripeCustomerId: stripeCustomer.id,
+          stripeCustomerId: stripeCustomerId ?? `pending_${team.id}`,
           plan: "FREE",
           status: "ACTIVE",
         },
       });
 
-      // Update Stripe customer with real IDs
-      await getStripe().customers.update(stripeCustomer.id, {
-        metadata: { teamId: team.id, userId: user.id },
-      });
+      // Update Stripe customer with real IDs (if Stripe was configured)
+      if (stripe && stripeCustomerId) {
+        await stripe.customers.update(stripeCustomerId, {
+          metadata: { teamId: team.id, userId: user.id },
+        });
+      }
 
       return { id: user.id, email: user.email, name: user.name };
     });
