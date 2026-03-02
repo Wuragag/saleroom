@@ -5,13 +5,18 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
 
-  // Always allow: auth pages, public pages, and all API routes (they self-protect)
+  // Always allow: marketing root, auth pages, public pages, and all API routes (they self-protect)
   if (
+    pathname === "/" ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/invite/")
   ) {
+    // Authenticated users hitting the marketing root get sent straight to the app
+    if (pathname === "/" && isLoggedIn) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
     return NextResponse.next();
   }
 
@@ -32,12 +37,8 @@ export default auth((req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // Redirect users who haven't completed onboarding
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = req.auth?.user as any;
-  if (user && user.onboardingCompleted === false) {
-    return NextResponse.redirect(new URL("/onboarding", req.url));
-  }
+  // NOTE: Onboarding check is handled in server components (not middleware)
+  // to avoid stale-JWT redirect loops. See dashboard page.tsx.
 
   return NextResponse.next();
 });
