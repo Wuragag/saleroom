@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { StepRole } from "./step-role";
 
@@ -18,20 +17,25 @@ interface Props {
 }
 
 export function OnboardingFlow({ userName }: Props) {
-  const router = useRouter();
   const { update } = useSession();
   const [role, setRole] = useState<OnboardingRole>(null);
 
   async function handleComplete(selectedRole: OnboardingRole) {
-    await fetch("/api/onboarding", {
+    const res = await fetch("/api/onboarding", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: selectedRole, onboardingCompleted: true }),
     });
+
+    if (!res.ok) {
+      console.error("Onboarding PATCH failed:", res.status);
+      return;
+    }
+
     // Refresh the JWT so middleware sees onboardingCompleted: true
     await update();
-    router.push("/");
-    router.refresh();
+    // Hard navigation ensures the browser sends the freshly-set cookie
+    window.location.href = "/";
   }
 
   return (
