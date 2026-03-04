@@ -17,6 +17,27 @@
   }
 }
 
+/* ── AI Feature Animations ── */
+@keyframes ai-sparkle-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+@keyframes ai-gradient-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@layer utilities {
+  .animate-ai-sparkle {
+    animation: ai-sparkle-pulse 2s ease-in-out infinite;
+  }
+  .animate-ai-shimmer {
+    background-size: 200% 100%;
+    animation: ai-gradient-shimmer 3s ease infinite;
+  }
+}
+
 /* Tiptap editor styles */
 .tiptap {
   @apply prose prose-lg max-w-none focus:outline-none min-h-[500px] p-6;

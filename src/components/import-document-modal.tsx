@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Upload, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,7 +45,10 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
+  const isProcessing = status === "uploading" || status === "processing";
+
   const handleOpenChange = (open: boolean) => {
+    if (!open && isProcessing) return; // prevent close during AI processing
     if (!open) {
       reset();
       onClose();
@@ -111,16 +114,15 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
     if (file) uploadFile(file);
   };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file) uploadFile(file);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  const uploadFileRef = useRef(uploadFile);
+  uploadFileRef.current = uploadFile;
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFileRef.current(file);
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -132,16 +134,22 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
     setIsDragging(false);
   };
 
-  const isProcessing = status === "uploading" || status === "processing";
-
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#003B22] to-[#0d9488] dark:from-[#0d7a5f] dark:to-[#14b8a6]" />
+
         <DialogHeader>
-          <DialogTitle>Import Document</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-[#003B22] to-[#0d9488] dark:from-[#0d7a5f] dark:to-[#14b8a6]">
+              <Sparkles className="h-3.5 w-3.5 text-white" />
+            </div>
+            AI Document Import
+          </DialogTitle>
           <DialogDescription>
-            Upload a PDF, DOCX, or PPTX file. AI will convert it into an
-            editable page.
+            Upload a PDF, DOCX, or PPTX file. Our AI will intelligently convert
+            it into a fully editable page.
           </DialogDescription>
         </DialogHeader>
 
@@ -155,13 +163,24 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
               isDragging
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/40 hover:bg-muted/50"
+                ? "border-primary bg-primary/5 shadow-[0_0_20px_-4px_rgba(0,59,34,0.15)] dark:shadow-[0_0_20px_-4px_rgba(20,184,166,0.15)]"
+                : "border-border hover:border-primary/40 hover:bg-muted/50 hover:shadow-[0_0_15px_-4px_rgba(0,59,34,0.08)] dark:hover:shadow-[0_0_15px_-4px_rgba(20,184,166,0.08)]"
             }`}
           >
-            <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+            <div className="relative mx-auto mb-3 w-12 h-12 flex items-center justify-center">
+              <div
+                className={`absolute inset-0 rounded-full transition-colors duration-200 ${
+                  isDragging ? "bg-primary/10" : "bg-muted"
+                }`}
+              />
+              <Upload
+                className={`relative h-6 w-6 transition-colors duration-200 ${
+                  isDragging ? "text-primary" : "text-muted-foreground"
+                }`}
+              />
+            </div>
             <p className="text-sm font-medium text-foreground mb-1">
               Drop your file here or click to browse
             </p>
@@ -172,7 +191,11 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
               {["PDF", "DOCX", "PPTX"].map((ext) => (
                 <span
                   key={ext}
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-colors duration-200 ${
+                    isDragging
+                      ? "bg-primary/10 text-primary dark:bg-primary/20"
+                      : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   {ext}
                 </span>
@@ -184,14 +207,19 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         {/* Processing state */}
         {isProcessing && (
           <div className="py-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-3" />
+            <div className="relative mx-auto mb-4 w-14 h-14 flex items-center justify-center">
+              {/* Gradient ring spinner */}
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#003B22] border-r-[#0d9488] dark:border-t-[#0d7a5f] dark:border-r-[#14b8a6] animate-spin" />
+              {/* Inner sparkle icon */}
+              <Sparkles className="h-5 w-5 text-primary animate-ai-sparkle" />
+            </div>
             <p className="text-sm font-medium text-foreground">
               {status === "uploading"
                 ? "Uploading document…"
-                : "AI is converting your document…"}
+                : "AI is analyzing and converting…"}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              This may take a moment
+              Extracting content, formatting, and structure
             </p>
           </div>
         )}
@@ -219,8 +247,11 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         {/* Footer hint */}
         {!isProcessing && status !== "error" && !limitError && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <FileText className="h-3.5 w-3.5 shrink-0" />
-            <span>Your document will be converted into editable content</span>
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+            <span>
+              AI extracts text, images, and formatting into a fully editable
+              page
+            </span>
           </div>
         )}
       </DialogContent>

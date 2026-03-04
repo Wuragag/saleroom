@@ -54,19 +54,22 @@ async function extractPdf(buffer: Buffer): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
 
-  const pages: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items
-      .filter((item) => "str" in item && typeof (item as { str: string }).str === "string")
-      .map((item) => (item as { str: string }).str)
-      .join(" ");
-    pages.push(text);
-  }
+  try {
+    const pages: string[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .filter((item) => "str" in item && typeof (item as { str: string }).str === "string")
+        .map((item) => (item as { str: string }).str)
+        .join(" ");
+      pages.push(text);
+    }
 
-  await doc.destroy();
-  return pages.join("\n\n");
+    return pages.join("\n\n");
+  } finally {
+    await doc.destroy();
+  }
 }
 
 async function extractDocx(buffer: Buffer): Promise<string> {

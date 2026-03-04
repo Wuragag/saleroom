@@ -9,6 +9,8 @@ import { DEFAULT_TAB_NAME } from "@/lib/constants";
 import slugify from "slugify";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const AI_MODEL = "claude-sonnet-4-5-20250514";
+const AI_TIMEOUT_MS = 55_000; // 55s — leave headroom for Vercel's 60s Pro limit
 
 function generateSlug(title: string): string {
   const base = slugify(title, { lower: true, strict: true }) || "imported";
@@ -123,29 +125,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: message }, { status: 422 });
     }
 
-    // Call Claude API
+    // Call Claude API with timeout
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20250514",
-      max_tokens: 8192,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Convert the following document text into Tiptap JSON:\n\n${text}`,
-        },
-      ],
-    });
+    const message = await anthropic.messages.create(
+      {
+        model: AI_MODEL,
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content: `Convert the following document text into Tiptap JSON:\n\n${text}`,
+          },
+        ],
+      },
+      { signal: AbortSignal.timeout(AI_TIMEOUT_MS) }
+    );
 
     // Extract text from Claude response
     const responseText =
       message.content[0].type === "text" ? message.content[0].text : "";
 
+    // Strip markdown code fences if Claude wrapped the JSON
+    let jsonStr = responseText.trim();
+    if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    }
+
     // Parse the JSON response
     let parsed: { title: string; content: Record<string, unknown> };
     try {
-      parsed = JSON.parse(responseText);
+      parsed = JSON.parse(jsonStr);
     } catch {
       console.error("Claude response was not valid JSON:", responseText.slice(0, 500));
       return NextResponse.json(
@@ -154,7 +165,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!parsed.title || !parsed.content) {
+    if (
+      !parsed.title ||
+      !parsed.content ||
+      (parsed.content as { type?: string }).type !== "doc"
+    ) {
       return NextResponse.json(
         { error: "Failed to process document. Please try again." },
         { status: 502 }
