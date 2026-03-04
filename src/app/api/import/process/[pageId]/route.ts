@@ -101,7 +101,7 @@ export async function POST(
 
     const message = await anthropic.messages.create({
       model: AI_MODEL,
-      max_tokens: 8192,
+      max_tokens: 16384,
       system: SYSTEM_PROMPT,
       messages: [
         {

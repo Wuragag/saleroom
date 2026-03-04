@@ -12,6 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { toast } from "sonner";
 
 const ACCEPTED_TYPES = [
   "application/pdf",
@@ -24,32 +25,59 @@ const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 const POLL_INTERVAL_MS = 2000; // poll every 2s
 const POLL_TIMEOUT_MS = 120_000; // give up after 2 minutes
 
-type Status = "idle" | "uploading" | "processing" | "error";
+type Status = "idle" | "uploading" | "error";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-async function pollForCompletion(
-  pageId: string
-): Promise<{ status: string; error?: string; title?: string }> {
+/**
+ * Polls import status in the background and updates the toast.
+ * Runs outside the modal — called after modal closes.
+ */
+function pollAndToast(pageId: string, toastId: string | number, router: ReturnType<typeof useRouter>) {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
-  while (Date.now() < deadline) {
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  const tick = async () => {
+    if (Date.now() > deadline) {
+      toast.error("Import is taking too long. Check the admin panel for status.", { id: toastId });
+      return;
+    }
 
-    const res = await fetch(`/api/import/status/${pageId}`);
-    if (!res.ok) throw new Error("Failed to check import status.");
+    try {
+      const res = await fetch(`/api/import/status/${pageId}`);
+      if (!res.ok) throw new Error("Failed to check status");
+      const data = await res.json();
 
-    const data = await res.json();
+      if (data.status === "complete") {
+        toast.success("Document imported successfully!", {
+          id: toastId,
+          duration: 6000,
+          action: {
+            label: "Open",
+            onClick: () => router.push(`/editor/${pageId}`),
+          },
+        });
+        return;
+      }
 
-    if (data.status === "complete") return data;
-    if (data.status === "error") return data;
-    // still "processing" — keep polling
-  }
+      if (data.status === "error") {
+        toast.error(data.error || "Import failed. Please try again.", {
+          id: toastId,
+          duration: 8000,
+        });
+        return;
+      }
 
-  throw new Error("Import is taking too long. Please try again later.");
+      // Still processing — poll again
+      setTimeout(tick, POLL_INTERVAL_MS);
+    } catch {
+      toast.error("Lost connection while checking import status.", { id: toastId });
+    }
+  };
+
+  setTimeout(tick, POLL_INTERVAL_MS);
 }
 
 export function ImportDocumentModal({ isOpen, onClose }: Props) {
@@ -68,10 +96,8 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
-  const isProcessing = status === "uploading" || status === "processing";
-
   const handleOpenChange = (open: boolean) => {
-    if (!open && isProcessing) return; // prevent close during AI processing
+    if (!open && status === "uploading") return; // prevent close during upload
     if (!open) {
       reset();
       onClose();
@@ -123,29 +149,23 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         return;
       }
 
-      setStatus("processing");
+      // Step 2: Close modal immediately — user is free!
+      reset();
+      onClose();
 
-      // Step 2: Trigger AI processing as a SEPARATE serverless function.
-      // We don't await this — it runs independently on the server.
-      // The frontend polls for completion instead.
+      // Step 3: Show a loading toast
+      const toastId = toast.loading("AI is converting your document…");
+
+      // Step 4: Trigger AI processing (fire-and-forget)
       fetch(`/api/import/process/${data.id}`, {
         method: "POST",
         keepalive: true,
       }).catch(() => {
-        // Silently ignore — we rely on polling to detect errors
+        // Silently ignore — polling will detect errors
       });
 
-      // Step 3: Poll for completion
-      const result = await pollForCompletion(data.id);
-
-      if (result.status === "error") {
-        setError(result.error || "Import failed. Please try again.");
-        setStatus("error");
-        return;
-      }
-
-      // Step 4: Success — navigate to editor
-      router.push(`/editor/${data.id}`);
+      // Step 5: Poll in background and update toast on completion
+      pollAndToast(data.id, toastId, router);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";
@@ -202,7 +222,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         {limitError && <UpgradePrompt message={limitError} />}
 
         {/* Drop zone */}
-        {!isProcessing && status !== "error" && !limitError && (
+        {status !== "uploading" && status !== "error" && !limitError && (
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -249,22 +269,18 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
           </div>
         )}
 
-        {/* Processing state */}
-        {isProcessing && (
+        {/* Uploading state (brief — only during file upload, not AI processing) */}
+        {status === "uploading" && (
           <div className="py-8 text-center">
             <div className="relative mx-auto mb-4 w-14 h-14 flex items-center justify-center">
-              {/* Gradient ring spinner */}
               <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#003B22] border-r-[#0d9488] dark:border-t-[#0d7a5f] dark:border-r-[#14b8a6] animate-spin" />
-              {/* Inner sparkle icon */}
               <Sparkles className="h-5 w-5 text-primary animate-ai-sparkle" />
             </div>
             <p className="text-sm font-medium text-foreground">
-              {status === "uploading"
-                ? "Uploading document…"
-                : "AI is analyzing and converting…"}
+              Uploading document…
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              This may take up to a minute for large documents
+              This will only take a moment
             </p>
           </div>
         )}
@@ -290,7 +306,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         />
 
         {/* Footer hint */}
-        {!isProcessing && status !== "error" && !limitError && (
+        {status !== "uploading" && status !== "error" && !limitError && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary/60" />
             <span>
