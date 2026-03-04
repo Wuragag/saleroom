@@ -9,7 +9,7 @@ import { DEFAULT_TAB_NAME } from "@/lib/constants";
 import slugify from "slugify";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const AI_MODEL = "claude-sonnet-4-5-20250514";
+const AI_MODEL = "claude-sonnet-4-6";
 const AI_TIMEOUT_MS = 55_000; // 55s — leave headroom for Vercel's 60s Pro limit
 
 function generateSlug(title: string): string {
