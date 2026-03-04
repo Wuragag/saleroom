@@ -8,6 +8,9 @@ import { extractText, isSupportedType } from "@/lib/document-parser";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
 import slugify from "slugify";
 
+// Allow up to 60s for AI document processing (Vercel default is 15s)
+export const maxDuration = 60;
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const AI_MODEL = "claude-sonnet-4-6";
 const AI_TIMEOUT_MS = 55_000; // 55s — leave headroom for Vercel's 60s Pro limit
