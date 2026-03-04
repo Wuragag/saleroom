@@ -83,14 +83,9 @@ export async function POST(
   }
 
   if (!page.importText) {
-    await prisma.page.update({
-      where: { id: pageId },
-      data: {
-        importStatus: "error",
-        importError: "No prompt found. Please try again.",
-      },
-    });
-    return NextResponse.json({ status: "error", error: "No prompt found" });
+    // No prompt — delete the broken page
+    await prisma.page.delete({ where: { id: pageId } });
+    return NextResponse.json({ status: "error", error: "No prompt found. Please try again." });
   }
 
   try {
@@ -176,15 +171,12 @@ export async function POST(
         "Claude response was not valid JSON:",
         responseText.slice(0, 500)
       );
-      await prisma.page.update({
-        where: { id: pageId },
-        data: {
-          importStatus: "error",
-          importError: `AI returned invalid output. Raw start: ${responseText.slice(0, 120)}`,
-          importText: null,
-        },
+      // Delete the page — don't leave broken pages in dashboard
+      await prisma.page.delete({ where: { id: pageId } });
+      return NextResponse.json({
+        status: "error",
+        error: "AI returned invalid output. Please try again.",
       });
-      return NextResponse.json({ status: "error" });
     }
 
     if (
@@ -192,19 +184,12 @@ export async function POST(
       !parsed.content ||
       (parsed.content as { type?: string }).type !== "doc"
     ) {
-      const keys = Object.keys(parsed).join(", ");
-      const contentType = parsed.content
-        ? (parsed.content as { type?: string }).type
-        : "missing";
-      await prisma.page.update({
-        where: { id: pageId },
-        data: {
-          importStatus: "error",
-          importError: `Unexpected structure: keys=[${keys}], content.type=${contentType}`,
-          importText: null,
-        },
+      // Delete the page — don't leave broken pages in dashboard
+      await prisma.page.delete({ where: { id: pageId } });
+      return NextResponse.json({
+        status: "error",
+        error: "AI generated an unexpected format. Please try again.",
       });
-      return NextResponse.json({ status: "error" });
     }
 
     // Update page with generated content
@@ -232,14 +217,15 @@ export async function POST(
   } catch (err) {
     console.error("AI Write processing error:", err);
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    await prisma.page.update({
-      where: { id: pageId },
-      data: {
-        importStatus: "error",
-        importError: `AI processing failed: ${errorMessage}`,
-        importText: null,
-      },
+    // Delete the page — don't leave broken pages in dashboard
+    try {
+      await prisma.page.delete({ where: { id: pageId } });
+    } catch {
+      // Page may already be deleted — ignore
+    }
+    return NextResponse.json({
+      status: "error",
+      error: `AI generation failed: ${errorMessage}`,
     });
-    return NextResponse.json({ status: "error", error: errorMessage });
   }
 }

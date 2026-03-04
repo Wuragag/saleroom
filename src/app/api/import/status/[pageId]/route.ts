@@ -25,7 +25,12 @@ export async function GET(
   });
 
   if (!page) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    // Page was deleted (AI write failure cleans up the page)
+    return NextResponse.json({
+      id: pageId,
+      status: "error",
+      error: "Page generation failed. Please try again.",
+    });
   }
 
   // Only the owner can check import status
