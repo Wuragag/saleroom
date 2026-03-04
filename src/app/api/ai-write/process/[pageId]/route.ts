@@ -139,12 +139,23 @@ export async function POST(
 
     const extractJson = (text: string) => {
       let str = text.trim();
-      const fenceMatch = str.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-      if (fenceMatch) str = fenceMatch[1].trim();
 
+      // Strip code fences: handle both complete (```json...```) and truncated (```json... no closing)
+      if (str.startsWith("```")) {
+        // Remove opening fence line
+        const firstNewline = str.indexOf("\n");
+        if (firstNewline !== -1) str = str.slice(firstNewline + 1);
+      }
+      if (str.endsWith("```")) {
+        str = str.slice(0, -3);
+      }
+      str = str.trim();
+
+      // 1. Try parsing directly
       try {
         return JSON.parse(str);
       } catch {
+        // 2. Try to find the outermost JSON object { ... }
         const firstBrace = str.indexOf("{");
         const lastBrace = str.lastIndexOf("}");
         if (firstBrace !== -1 && lastBrace > firstBrace) {
