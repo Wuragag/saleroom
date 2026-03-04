@@ -99,17 +99,38 @@ export async function POST(
   try {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const message = await anthropic.messages.create({
-      model: AI_MODEL,
-      max_tokens: 16384,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Convert the following document text into Tiptap JSON:\n\n${page.importText}`,
-        },
-      ],
-    });
+    // Retry with exponential backoff for transient errors (overloaded, rate limits)
+    const MAX_RETRIES = 3;
+    let message: Anthropic.Message | null = null;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        message = await anthropic.messages.create({
+          model: AI_MODEL,
+          max_tokens: 16384,
+          system: SYSTEM_PROMPT,
+          messages: [
+            {
+              role: "user",
+              content: `Convert the following document text into Tiptap JSON:\n\n${page.importText}`,
+            },
+          ],
+        });
+        break; // Success — exit retry loop
+      } catch (retryErr: unknown) {
+        const status = (retryErr as { status?: number })?.status;
+        const isRetryable = status === 429 || status === 529 || status === 503;
+
+        if (!isRetryable || attempt === MAX_RETRIES - 1) throw retryErr;
+
+        // Wait before retrying: 2s, 4s, 8s
+        const delay = Math.pow(2, attempt + 1) * 1000;
+        console.log(`Anthropic API returned ${status}, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    if (!message) throw new Error("No response from AI after retries");
 
     // Extract text from Claude response
     const responseText =
