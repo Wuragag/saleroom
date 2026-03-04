@@ -2,14 +2,16 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Users, Building2, BarChart2, Loader2 } from "lucide-react";
+import { Users, Building2, BarChart2, Sparkles, Loader2 } from "lucide-react";
 import { UsersPanel } from "@/components/admin/users-panel";
 import { TeamsPanel } from "@/components/admin/teams-panel";
 import { MetricsPanel } from "@/components/admin/metrics-panel";
+import { ImportsPanel } from "@/components/admin/imports-panel";
 
 const TABS = [
   { id: "users", label: "Users", icon: Users },
   { id: "teams", label: "Teams", icon: Building2 },
+  { id: "imports", label: "Imports", icon: Sparkles },
   { id: "metrics", label: "Metrics", icon: BarChart2 },
 ];
 
@@ -51,6 +53,7 @@ function AdminContent() {
       {/* Tab content */}
       {activeTab === "users" && <UsersPanel />}
       {activeTab === "teams" && <TeamsPanel />}
+      {activeTab === "imports" && <ImportsPanel />}
       {activeTab === "metrics" && <MetricsPanel />}
     </div>
   );
