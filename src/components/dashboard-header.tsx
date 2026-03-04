@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { TemplatePicker } from "@/components/template-picker";
+import { ImportDocumentModal } from "@/components/import-document-modal";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 
 export function DashboardHeader() {
   const router = useRouter();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
 
@@ -48,15 +50,26 @@ export function DashboardHeader() {
             Create, manage and share your sales pages
           </p>
         </div>
-        <Button
-          size="sm"
-          className="rounded-lg gap-1.5 shrink-0"
-          onClick={() => setIsPickerOpen(true)}
-          disabled={isCreating}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          {isCreating ? "Creating…" : "New Page"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-lg gap-1.5 shrink-0"
+            onClick={() => setIsImportOpen(true)}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Import
+          </Button>
+          <Button
+            size="sm"
+            className="rounded-lg gap-1.5 shrink-0"
+            onClick={() => setIsPickerOpen(true)}
+            disabled={isCreating}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {isCreating ? "Creating…" : "New Page"}
+          </Button>
+        </div>
       </div>
 
       {limitError && (
@@ -67,6 +80,11 @@ export function DashboardHeader() {
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onCreateBlank={createBlankPage}
+      />
+
+      <ImportDocumentModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
       />
     </>
   );
