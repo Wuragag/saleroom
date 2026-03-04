@@ -149,6 +149,8 @@ model Page {
   links         String         @default("[]")
   password      String?
   tags          String         @default("[]")
+  importStatus  String?        // null = normal, "processing", "complete", "error"
+  importError   String?        // error message if importStatus = "error"
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 

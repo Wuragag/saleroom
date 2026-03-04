@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { Upload, AlertCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,12 +21,33 @@ const ACCEPTED_TYPES = [
 
 const ACCEPTED_EXTENSIONS = ".pdf,.docx,.pptx";
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const POLL_INTERVAL_MS = 2000; // poll every 2s
+const POLL_TIMEOUT_MS = 120_000; // give up after 2 minutes
 
 type Status = "idle" | "uploading" | "processing" | "error";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+}
+
+async function pollForCompletion(pageId: string): Promise<{ status: string; error?: string; title?: string }> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+
+    const res = await fetch(`/api/import/status/${pageId}`);
+    if (!res.ok) throw new Error("Failed to check import status");
+
+    const data = await res.json();
+
+    if (data.status === "complete") return data;
+    if (data.status === "error") return data;
+    // still "processing" — keep polling
+  }
+
+  throw new Error("Import is taking too long. Please check back later.");
 }
 
 export function ImportDocumentModal({ isOpen, onClose }: Props) {
@@ -81,8 +102,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
       const formData = new FormData();
       formData.append("file", file);
 
-      setStatus("processing");
-
+      // Step 1: Upload file — returns immediately with page ID
       const res = await fetch("/api/import", {
         method: "POST",
         body: formData,
@@ -101,7 +121,17 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         return;
       }
 
-      // Success — navigate to editor
+      // Step 2: Poll for AI processing completion
+      setStatus("processing");
+      const result = await pollForCompletion(data.id);
+
+      if (result.status === "error") {
+        setError(result.error || "Import failed. Please try again.");
+        setStatus("error");
+        return;
+      }
+
+      // Step 3: Success — navigate to editor
       router.push(`/editor/${data.id}`);
     } catch {
       setError("Network error. Please check your connection and try again.");
@@ -219,7 +249,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
                 : "AI is analyzing and converting…"}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Extracting content, formatting, and structure
+              This may take up to a minute for large documents
             </p>
           </div>
         )}
