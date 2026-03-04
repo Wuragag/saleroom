@@ -50,12 +50,23 @@ export async function extractText(buffer: Buffer, mimeType: string): Promise<str
 }
 
 async function extractPdf(buffer: Buffer): Promise<string> {
-  // Dynamic import to avoid webpack bundling issues with pdfjs-dist
-  const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({ data: buffer });
-  const result = await parser.getText();
-  await parser.destroy();
-  return result.text;
+  // Use pdfjs-dist legacy build directly — works in Node.js without browser APIs
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+
+  const pages: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items
+      .filter((item) => "str" in item && typeof (item as { str: string }).str === "string")
+      .map((item) => (item as { str: string }).str)
+      .join(" ");
+    pages.push(text);
+  }
+
+  await doc.destroy();
+  return pages.join("\n\n");
 }
 
 async function extractDocx(buffer: Buffer): Promise<string> {
