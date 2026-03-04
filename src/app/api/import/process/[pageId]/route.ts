@@ -115,17 +115,37 @@ export async function POST(
     const responseText =
       message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Strip markdown code fences if Claude wrapped the JSON
-    let jsonStr = responseText.trim();
-    if (jsonStr.startsWith("```")) {
-      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-    }
+    // Robust JSON extraction — handle code fences, preamble text, etc.
+    let parsed: { title: string; content: Record<string, unknown> } | null =
+      null;
 
-    // Parse the JSON response
-    let parsed: { title: string; content: Record<string, unknown> };
-    try {
-      parsed = JSON.parse(jsonStr);
-    } catch {
+    const extractJson = (text: string) => {
+      // 1. Strip markdown code fences
+      let str = text.trim();
+      const fenceMatch = str.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+      if (fenceMatch) str = fenceMatch[1].trim();
+
+      // 2. Try parsing directly
+      try {
+        return JSON.parse(str);
+      } catch {
+        // 3. Try to find the outermost JSON object { ... }
+        const firstBrace = str.indexOf("{");
+        const lastBrace = str.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          try {
+            return JSON.parse(str.slice(firstBrace, lastBrace + 1));
+          } catch {
+            return null;
+          }
+        }
+        return null;
+      }
+    };
+
+    parsed = extractJson(responseText);
+
+    if (!parsed) {
       console.error(
         "Claude response was not valid JSON:",
         responseText.slice(0, 500)
@@ -134,8 +154,8 @@ export async function POST(
         where: { id: pageId },
         data: {
           importStatus: "error",
-          importError: "Failed to process document. AI returned invalid output.",
-          importText: null, // Clean up stored text
+          importError: `AI returned invalid output. Raw start: ${responseText.slice(0, 120)}`,
+          importText: null,
         },
       });
       return NextResponse.json({ status: "error" });
@@ -146,12 +166,15 @@ export async function POST(
       !parsed.content ||
       (parsed.content as { type?: string }).type !== "doc"
     ) {
+      const keys = Object.keys(parsed).join(", ");
+      const contentType = parsed.content
+        ? (parsed.content as { type?: string }).type
+        : "missing";
       await prisma.page.update({
         where: { id: pageId },
         data: {
           importStatus: "error",
-          importError:
-            "Failed to process document. AI returned unexpected structure.",
+          importError: `Unexpected structure: keys=[${keys}], content.type=${contentType}`,
           importText: null,
         },
       });
