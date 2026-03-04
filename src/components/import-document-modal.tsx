@@ -31,14 +31,16 @@ interface Props {
   onClose: () => void;
 }
 
-async function pollForCompletion(pageId: string): Promise<{ status: string; error?: string; title?: string }> {
+async function pollForCompletion(
+  pageId: string
+): Promise<{ status: string; error?: string; title?: string }> {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
     const res = await fetch(`/api/import/status/${pageId}`);
-    if (!res.ok) throw new Error("Failed to check import status");
+    if (!res.ok) throw new Error("Failed to check import status.");
 
     const data = await res.json();
 
@@ -47,7 +49,7 @@ async function pollForCompletion(pageId: string): Promise<{ status: string; erro
     // still "processing" — keep polling
   }
 
-  throw new Error("Import is taking too long. Please check back later.");
+  throw new Error("Import is taking too long. Please try again later.");
 }
 
 export function ImportDocumentModal({ isOpen, onClose }: Props) {
@@ -102,7 +104,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Step 1: Upload file — returns immediately with page ID
+      // Step 1: Upload file — creates page, extracts text, returns immediately
       const res = await fetch("/api/import", {
         method: "POST",
         body: formData,
@@ -121,8 +123,19 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         return;
       }
 
-      // Step 2: Poll for AI processing completion
       setStatus("processing");
+
+      // Step 2: Trigger AI processing as a SEPARATE serverless function.
+      // We don't await this — it runs independently on the server.
+      // The frontend polls for completion instead.
+      fetch(`/api/import/process/${data.id}`, {
+        method: "POST",
+        keepalive: true,
+      }).catch(() => {
+        // Silently ignore — we rely on polling to detect errors
+      });
+
+      // Step 3: Poll for completion
       const result = await pollForCompletion(data.id);
 
       if (result.status === "error") {
@@ -131,10 +144,12 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         return;
       }
 
-      // Step 3: Success — navigate to editor
+      // Step 4: Success — navigate to editor
       router.push(`/editor/${data.id}`);
-    } catch {
-      setError("Network error. Please check your connection and try again.");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
       setStatus("error");
     }
   };

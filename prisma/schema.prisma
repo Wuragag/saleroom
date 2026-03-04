@@ -151,6 +151,7 @@ model Page {
   tags          String         @default("[]")
   importStatus  String?        // null = normal, "processing", "complete", "error"
   importError   String?        // error message if importStatus = "error"
+  importText    String?        // raw extracted text for background AI processing
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
