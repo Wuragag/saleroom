@@ -19,13 +19,25 @@ import {
   Unlock,
   Users,
   EyeOff as EyeOffIcon,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const TEMPLATE_CATEGORIES = [
   { value: "post-call", label: "Post-Call" },
@@ -76,9 +89,12 @@ export function EditorHeader({
   onVisibilityChange,
   isCreator,
 }: EditorHeaderProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [lockLoading, setLockLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Save as Template modal state
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
@@ -185,6 +201,16 @@ export function EditorHeader({
       }
     } catch (err) {
       console.error("Failed to change visibility:", err);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await fetch(`/api/pages/${pageId}`, { method: "DELETE" });
+      router.push("/");
+    } catch {
+      setDeleting(false);
     }
   };
 
@@ -359,6 +385,20 @@ export function EditorHeader({
                     <BookmarkPlus className="h-4 w-4" />
                     Save as Template
                   </DropdownMenuItem>
+
+                  {/* Delete — only for creator */}
+                  {isCreator && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Page
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -375,6 +415,29 @@ export function EditorHeader({
           />
         </div>
       </header>
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &ldquo;{title || "Untitled Page"}&rdquo;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this page and all its content. This
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Save as Template Dialog ── */}
       <Dialog open={templateModalOpen} onOpenChange={setTemplateModalOpen}>

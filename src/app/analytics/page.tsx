@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { AppNav } from "@/components/app-nav";
 import { AnalyticsTable } from "@/components/analytics-table";
+import { AnalyticsStatCards } from "@/components/analytics-stat-cards";
 import { Eye, Clock, Link2, FileText, TrendingUp, Users, Target } from "lucide-react";
 
 function formatDuration(s: number) {
@@ -130,12 +131,12 @@ export default async function AnalyticsPage() {
   const maxDay = Math.max(...days.map((d) => d.count), 1);
 
   const statCards = [
-    { label: "Total Views",       value: totalViews.toLocaleString(),      icon: Eye,    color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-950/30" },
-    { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: Clock,  color: "text-violet-500",  bg: "bg-violet-50 dark:bg-violet-950/30" },
-    { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: Link2,  color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
-    { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: FileText, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/30" },
-    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: Users,  color: "text-sky-500",     bg: "bg-sky-50 dark:bg-sky-950/30" },
-    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: Target, color: "text-pink-500",    bg: "bg-pink-50 dark:bg-pink-950/30" },
+    { label: "Total Views",       value: totalViews.toLocaleString(),      icon: Eye,      color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-950/30",    description: "Total page views across all published pages" },
+    { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: Clock,    color: "text-violet-500",  bg: "bg-violet-50 dark:bg-violet-950/30", description: "Average time visitors spend viewing your pages" },
+    { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: Link2,    color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", description: "Number of times visitors clicked links in your pages" },
+    { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: FileText, color: "text-orange-500",  bg: "bg-orange-50 dark:bg-orange-950/30", description: "Total form responses submitted by visitors" },
+    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: Users,    color: "text-sky-500",     bg: "bg-sky-50 dark:bg-sky-950/30",      description: "Distinct visitors identified by email across all pages" },
+    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: Target,   color: "text-pink-500",    bg: "bg-pink-50 dark:bg-pink-950/30",    description: "Buyers who clicked a CTA or have a high engagement score" },
   ];
 
   return (
@@ -149,19 +150,7 @@ export default async function AnalyticsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          {statCards.map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
-              <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
-                <Icon className={color} style={{ width: "1rem", height: "1rem" }} />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-foreground tracking-tight">{value}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <AnalyticsStatCards cards={statCards} />
 
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
           <div className="flex items-center gap-2 mb-5">
