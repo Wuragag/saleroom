@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 // On Vercel Hobby: 60s, Pro: up to 300s.
 export const maxDuration = 60;
 
-const AI_MODEL = "claude-sonnet-4-6";
+const AI_MODEL = "claude-haiku-4";
 
 const SYSTEM_PROMPT = `You are a document-to-Tiptap converter. You receive raw text extracted from a document (PDF, DOCX, or PPTX) and must convert it into a Tiptap-compatible JSON structure.
 
