@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Keep pdfjs-dist out of the webpack bundle so the worker file resolves at runtime
-  serverExternalPackages: ["pdfjs-dist"],
   async headers() {
     return [
       {
