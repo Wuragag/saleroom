@@ -1,16 +1,20 @@
 "use client";
 
-import { type LucideIcon } from "lucide-react";
+import { Eye, Clock, Link2, FileText, Users, Target, type LucideIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
 
+const iconMap: Record<string, LucideIcon> = {
+  Eye, Clock, Link2, FileText, Users, Target,
+};
+
 interface StatCard {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: string;
   color: string;
   bg: string;
   description: string;
@@ -19,7 +23,9 @@ interface StatCard {
 export function AnalyticsStatCards({ cards }: { cards: StatCard[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-      {cards.map(({ label, value, icon: Icon, color, bg, description }) => (
+      {cards.map(({ label, value, icon, color, bg, description }) => {
+        const Icon = iconMap[icon] ?? Eye;
+        return (
         <Tooltip key={label}>
           <TooltipTrigger asChild>
             <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 cursor-default">
@@ -45,7 +51,8 @@ export function AnalyticsStatCards({ cards }: { cards: StatCard[] }) {
             <p>{description}</p>
           </TooltipContent>
         </Tooltip>
-      ))}
+        );
+      })}
     </div>
   );
 }
