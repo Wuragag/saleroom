@@ -23,6 +23,11 @@ export default function SignUpPage() {
     e.preventDefault();
     setError("");
 
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
     if (password !== confirm) {
       setError("Passwords do not match");
       return;
@@ -43,16 +48,15 @@ export default function SignUpPage() {
       return;
     }
 
-    // Auto sign-in after registration
+    // Auto sign-in after registration — keep loading=true during navigation
     const signInRes = await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
 
-    setLoading(false);
-
     if (signInRes?.error) {
+      setLoading(false);
       router.push("/auth/signin");
     } else {
       router.push("/onboarding");
@@ -74,7 +78,7 @@ export default function SignUpPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error */}
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
                 {error}
               </div>
             )}

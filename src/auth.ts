@@ -4,6 +4,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 import { verifyImpersonateToken } from "@/lib/impersonation";
+import { rateLimit } from "@/lib/rate-limit";
+
+// Rate limit sign-in: 5 failed attempts per email per minute
+const signInLimiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -48,8 +52,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // ── Normal email/password path ───────────────────────────────────────
         if (!credentials?.email || !credentials?.password) return null;
 
+        const normalizedEmail = (credentials.email as string).toLowerCase().trim();
+
+        // Rate limit by email to prevent brute-force
+        const { success } = signInLimiter.check(`signin:${normalizedEmail}`, 5);
+        if (!success) return null;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email: normalizedEmail },
         });
 
         if (!user || !user.password) return null;

@@ -76,7 +76,9 @@ function LoadingScreen() {
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  // Validate callbackUrl is a safe relative path (prevent open redirect)
+  const rawCallback = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -123,7 +125,7 @@ function SignInForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error */}
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
                 {error}
               </div>
             )}
