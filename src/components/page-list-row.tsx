@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -43,15 +44,27 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
 
   const handleDelete = async () => {
     setDeleting(true);
-    await fetch(`/api/pages/${page.id}`, { method: "DELETE" });
-    onDeleted();
+    try {
+      await fetch(`/api/pages/${page.id}`, { method: "DELETE" });
+      toast.success("Page deleted");
+      onDeleted();
+    } catch {
+      toast.error("Failed to delete page");
+      setDeleting(false);
+    }
   };
 
   const handleDuplicate = async () => {
     setDuplicating(true);
-    await fetch(`/api/pages/${page.id}/duplicate`, { method: "POST" });
-    setDuplicating(false);
-    onDuplicated();
+    try {
+      await fetch(`/api/pages/${page.id}/duplicate`, { method: "POST" });
+      toast.success("Page duplicated");
+      onDuplicated();
+    } catch {
+      toast.error("Failed to duplicate page");
+    } finally {
+      setDuplicating(false);
+    }
   };
 
   return (

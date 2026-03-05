@@ -14,11 +14,16 @@ import {
   X,
 } from "lucide-react";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: {
+  href: string;
+  label: string;
+  icon: typeof LayoutGrid;
+  tourId?: string;
+}[] = [
   { href: "/", label: "Pages", icon: LayoutGrid },
-  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/analytics", label: "Analytics", icon: BarChart2, tourId: "nav-analytics" },
   { href: "/submissions", label: "Submissions", icon: FileText },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings", label: "Settings", icon: Settings, tourId: "nav-settings" },
 ];
 
 export function AppNav() {
@@ -61,11 +66,11 @@ export function AppNav() {
 
           {/* Desktop nav links — hidden on mobile */}
           <nav className="hidden md:flex items-center gap-0.5">
-            {NAV_ITEMS.map(({ href, label }) => {
+            {NAV_ITEMS.map(({ href, label, tourId }) => {
               const isActive =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
-                <Link key={href} href={href}>
+                <Link key={href} href={href} {...(tourId ? { "data-tour": tourId } : {})}>
                   <span
                     className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                       isActive

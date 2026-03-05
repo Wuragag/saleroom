@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Zap, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface UpgradePromptProps {
   message: string;
@@ -28,8 +29,8 @@ export function UpgradePrompt({
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (err) {
-      console.error("Checkout error:", err);
+    } catch {
+      toast.error("Failed to start checkout");
     } finally {
       setLoading(false);
     }

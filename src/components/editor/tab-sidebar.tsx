@@ -20,10 +20,12 @@ import { Plus, AlertCircle } from "lucide-react";
 import { SortableTabItem } from "./sortable-tab-item";
 import { StylePanel } from "./style-panel";
 import { LinksEditor } from "./links-editor";
+import { MapPanel } from "./map-panel";
 import type { TabData, PageLink } from "@/types";
 import type { PageStyle } from "@/lib/page-styles";
 
 interface TabSidebarProps {
+  pageId: string;
   tabs: TabData[];
   activeTabId: string;
   onSelectTab: (tabId: string) => void;
@@ -43,6 +45,7 @@ interface TabSidebarProps {
 }
 
 export function TabSidebar({
+  pageId,
   tabs,
   activeTabId,
   onSelectTab,
@@ -138,6 +141,10 @@ export function TabSidebar({
 
       <div className="border-t border-border flex-shrink-0">
         <LinksEditor links={links} onChange={onLinksChange} />
+      </div>
+
+      <div className="border-t border-border flex-shrink-0">
+        <MapPanel pageId={pageId} />
       </div>
 
       <div className="border-t border-border flex-shrink-0">

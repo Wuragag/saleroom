@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface UserRow {
   id: string;
@@ -85,7 +86,7 @@ export function UsersPanel() {
         );
       } else {
         const data = await res.json();
-        alert(data.error ?? "Failed to update admin status");
+        toast.error(data.error ?? "Failed to update admin status");
       }
     } finally {
       setTogglingId(null);
@@ -100,7 +101,7 @@ export function UsersPanel() {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error ?? "Failed to start impersonation");
+        toast.error(data.error ?? "Failed to start impersonation");
         return;
       }
       const { token } = await res.json();

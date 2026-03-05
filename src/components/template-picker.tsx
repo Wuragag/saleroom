@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { X, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import type { TemplateData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 
@@ -92,11 +93,13 @@ export function TemplatePicker({
             setIsCreating(false);
             return;
           }
+          toast.error(data.error || "Failed to create page from template");
           setIsCreating(false);
           return;
         }
         router.push(`/editor/${data.pageId}`);
       } catch {
+        toast.error("Failed to create page");
         setIsCreating(false);
       }
     },

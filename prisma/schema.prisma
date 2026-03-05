@@ -139,6 +139,7 @@ model Page {
   events        PageEvent[]
   submissions   FormSubmission[]
   buyerVisitors BuyerVisitor[]
+  mutualActionPlan MutualActionPlan?
   font          String         @default("inter")
   accentColor   String         @default("slate")
   layoutWidth   String         @default("default")
@@ -285,4 +286,33 @@ model BuyerEvent {
   createdAt DateTime     @default(now())
 
   @@index([sessionId, type])
+}
+
+// ──── Mutual Action Plan ────
+
+model MutualActionPlan {
+  id        String    @id @default(cuid())
+  pageId    String    @unique
+  page      Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title     String    @default("Mutual Action Plan")
+  closeDate DateTime?
+  items     MapItem[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model MapItem {
+  id        String            @id @default(cuid())
+  mapId     String
+  map       MutualActionPlan  @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  title     String
+  ownerType String            @default("seller")
+  ownerName String            @default("")
+  dueDate   DateTime?
+  completed Boolean           @default(false)
+  order     Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([mapId, order])
 }

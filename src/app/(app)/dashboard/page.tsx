@@ -5,6 +5,7 @@ import { AppNav } from "@/components/app-nav";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { SortableDashboard } from "@/components/sortable-dashboard";
 import { getUserTeamId } from "@/lib/team-auth";
+import { ProductTour } from "@/components/tour/product-tour";
 import type { PageAnalytics, PageListItem } from "@/types";
 
 export default async function Dashboard() {
@@ -90,6 +91,7 @@ export default async function Dashboard() {
           <SortableDashboard pages={pageItems} analyticsMap={analyticsMap} />
         </div>
       </div>
+      <ProductTour />
     </main>
   );
 }

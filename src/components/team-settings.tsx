@@ -11,6 +11,7 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { TeamMemberData, TeamInviteData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 
@@ -48,8 +49,8 @@ export function TeamSettings() {
         const data = await invitesRes.json();
         setInvites(data);
       }
-    } catch (err) {
-      console.error("Failed to fetch team:", err);
+    } catch {
+      toast.error("Failed to load team data");
     } finally {
       setLoading(false);
     }
@@ -70,9 +71,12 @@ export function TeamSettings() {
       });
       if (res.ok) {
         setEditingName(false);
+        toast.success("Team name updated");
+      } else {
+        toast.error("Failed to save team name");
       }
-    } catch (err) {
-      console.error("Failed to save team name:", err);
+    } catch {
+      toast.error("Failed to save team name");
     } finally {
       setSavingName(false);
     }
@@ -117,9 +121,12 @@ export function TeamSettings() {
       });
       if (res.ok) {
         setMembers((prev) => prev.filter((m) => m.id !== memberId));
+        toast.success("Member removed");
+      } else {
+        toast.error("Failed to remove member");
       }
-    } catch (err) {
-      console.error("Failed to remove member:", err);
+    } catch {
+      toast.error("Failed to remove member");
     }
   }
 
@@ -130,9 +137,12 @@ export function TeamSettings() {
       });
       if (res.ok) {
         setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+        toast.success("Invite cancelled");
+      } else {
+        toast.error("Failed to cancel invite");
       }
-    } catch (err) {
-      console.error("Failed to cancel invite:", err);
+    } catch {
+      toast.error("Failed to cancel invite");
     }
   }
 

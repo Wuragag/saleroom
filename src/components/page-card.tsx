@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -88,12 +89,16 @@ function TagEditor({
   };
 
   const save = async () => {
-    await fetch(`/api/pages/${pageId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tags: JSON.stringify(localTags) }),
-    });
-    onSave(localTags);
+    try {
+      await fetch(`/api/pages/${pageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: JSON.stringify(localTags) }),
+      });
+      onSave(localTags);
+    } catch {
+      toast.error("Failed to save tags");
+    }
   };
 
   return (
@@ -150,15 +155,27 @@ export function PageCard({ page, analytics }: PageCardProps) {
 
   const handleDelete = async () => {
     setDeleting(true);
-    await fetch(`/api/pages/${page.id}`, { method: "DELETE" });
-    router.refresh();
+    try {
+      await fetch(`/api/pages/${page.id}`, { method: "DELETE" });
+      toast.success("Page deleted");
+      router.refresh();
+    } catch {
+      toast.error("Failed to delete page");
+      setDeleting(false);
+    }
   };
 
   const handleDuplicate = async () => {
     setDuplicating(true);
-    await fetch(`/api/pages/${page.id}/duplicate`, { method: "POST" });
-    router.refresh();
-    setDuplicating(false);
+    try {
+      await fetch(`/api/pages/${page.id}/duplicate`, { method: "POST" });
+      toast.success("Page duplicated");
+      router.refresh();
+    } catch {
+      toast.error("Failed to duplicate page");
+    } finally {
+      setDuplicating(false);
+    }
   };
 
   return (

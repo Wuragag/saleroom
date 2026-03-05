@@ -7,6 +7,7 @@ import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
+import { MapViewer } from "@/components/map-viewer";
 
 export default async function PublishedPage({
   params,
@@ -226,6 +227,9 @@ export default async function PublishedPage({
           tabPlacement={page.tabPlacement as "top" | "left"}
           isDark={isDark}
         />
+
+        {/* Mutual Action Plan */}
+        <MapViewer slug={slug} accentColor={accentColor} isDark={isDark} />
       </div>
 
       {/* ── Footer ── */}

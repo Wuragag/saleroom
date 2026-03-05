@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ImportRow {
   id: string;
@@ -118,7 +119,7 @@ export function ImportsPanel() {
         );
       } else {
         const data = await res.json();
-        alert(data.error ?? "Failed to retry import");
+        toast.error(data.error ?? "Failed to retry import");
       }
     } finally {
       setRetryingId(null);

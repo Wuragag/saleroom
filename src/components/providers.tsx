@@ -11,7 +11,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TooltipProvider delayDuration={300}>
         {children}
         <ImpersonationBanner />
-        <Toaster richColors position="bottom-right" />
+        <Toaster
+          richColors
+          position="bottom-right"
+          duration={4000}
+          visibleToasts={5}
+          closeButton
+          toastOptions={{ className: "text-sm" }}
+        />
       </TooltipProvider>
     </SessionProvider>
   );

@@ -110,6 +110,31 @@ export interface BuyerAnalyticsResponse {
   visitors: BuyerVisitorRow[];
 }
 
+// ──── Mutual Action Plan types ────
+
+export interface MapItemData {
+  id: string;
+  mapId: string;
+  title: string;
+  ownerType: "seller" | "buyer";
+  ownerName: string;
+  dueDate: string | null;
+  completed: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MutualActionPlanData {
+  id: string;
+  pageId: string;
+  title: string;
+  closeDate: string | null;
+  items: MapItemData[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ──── Team types ────
 
 export interface TeamData {

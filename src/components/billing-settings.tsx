@@ -11,6 +11,7 @@ import {
   ExternalLink,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface BillingData {
   plan: "FREE" | "PRO" | "TEAM";
@@ -118,10 +119,13 @@ export function BillingSettings() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || "Failed to start checkout");
+        const msg = data.error || "Failed to start checkout";
+        setError(msg);
+        toast.error(msg);
       }
     } catch {
       setError("Failed to start checkout. Please try again.");
+      toast.error("Failed to start checkout");
     } finally {
       setCheckoutLoading(null);
     }
@@ -138,10 +142,13 @@ export function BillingSettings() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || "Failed to open billing portal");
+        const msg = data.error || "Failed to open billing portal";
+        setError(msg);
+        toast.error(msg);
       }
     } catch {
       setError("Failed to open billing portal. Please try again.");
+      toast.error("Failed to open billing portal");
     } finally {
       setPortalLoading(false);
     }

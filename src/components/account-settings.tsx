@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { Loader2, Camera, Check } from "lucide-react";
+import { Loader2, Camera } from "lucide-react";
+import { toast } from "sonner";
 
 export function AccountSettings() {
   const { data: session, update } = useSession();
@@ -13,7 +14,6 @@ export function AccountSettings() {
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
-  const [profileSuccess, setProfileSuccess] = useState(false);
   const [profileError, setProfileError] = useState("");
 
   // Password state
@@ -21,7 +21,6 @@ export function AccountSettings() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
   // Avatar state
@@ -43,21 +42,6 @@ export function AccountSettings() {
     load();
   }, []);
 
-  // Clear success messages after 3s
-  useEffect(() => {
-    if (profileSuccess) {
-      const t = setTimeout(() => setProfileSuccess(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [profileSuccess]);
-
-  useEffect(() => {
-    if (passwordSuccess) {
-      const t = setTimeout(() => setPasswordSuccess(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [passwordSuccess]);
-
   async function handleProfileSave(e: React.FormEvent) {
     e.preventDefault();
     setProfileError("");
@@ -74,10 +58,11 @@ export function AccountSettings() {
 
     if (!res.ok) {
       setProfileError(json.error ?? "Something went wrong");
+      toast.error(json.error ?? "Failed to save profile");
       return;
     }
 
-    setProfileSuccess(true);
+    toast.success("Profile updated");
     await update(); // Refresh session
   }
 
@@ -103,10 +88,11 @@ export function AccountSettings() {
 
     if (!res.ok) {
       setPasswordError(json.error ?? "Something went wrong");
+      toast.error(json.error ?? "Failed to update password");
       return;
     }
 
-    setPasswordSuccess(true);
+    toast.success("Password updated");
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -130,7 +116,10 @@ export function AccountSettings() {
 
     if (res.ok && json.url) {
       setAvatarUrl(json.url);
+      toast.success("Avatar updated");
       await update(); // Refresh session so nav avatar updates
+    } else {
+      toast.error("Failed to upload avatar");
     }
 
     // Reset file input
@@ -257,12 +246,6 @@ export function AccountSettings() {
               {profileLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {profileLoading ? "Saving…" : "Save changes"}
             </button>
-            {profileSuccess && (
-              <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-                <Check className="h-4 w-4" />
-                Saved
-              </span>
-            )}
           </div>
         </form>
       </div>
@@ -350,12 +333,6 @@ export function AccountSettings() {
               )}
               {passwordLoading ? "Updating…" : "Update password"}
             </button>
-            {passwordSuccess && (
-              <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-                <Check className="h-4 w-4" />
-                Password updated
-              </span>
-            )}
           </div>
         </form>
       </div>

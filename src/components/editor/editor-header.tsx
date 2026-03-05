@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const TEMPLATE_CATEGORIES = [
   { value: "post-call", label: "Post-Call" },
@@ -135,6 +136,9 @@ export function EditorHeader({
         body: JSON.stringify({ published: next }),
       });
       onPublishedChange(next);
+      toast.success(next ? "Page published" : "Page unpublished");
+    } catch {
+      toast.error("Failed to update publish status");
     } finally {
       setPublishing(false);
     }
@@ -168,6 +172,8 @@ export function EditorHeader({
         setTemplateModalOpen(false);
         setSaveSuccess(false);
       }, 1800);
+    } catch {
+      toast.error("Failed to save template");
     } finally {
       setIsSaving(false);
     }
@@ -183,7 +189,12 @@ export function EditorHeader({
       });
       if (res.ok) {
         onLockChange?.(!isLocked);
+        toast.success(!isLocked ? "Page locked" : "Page unlocked");
+      } else {
+        toast.error("Failed to update lock status");
       }
+    } catch {
+      toast.error("Failed to update lock status");
     } finally {
       setLockLoading(false);
     }
@@ -198,9 +209,12 @@ export function EditorHeader({
       });
       if (res.ok) {
         onVisibilityChange?.(newVisibility);
+        toast.success(newVisibility === "PRIVATE" ? "Page set to private" : "Page visible to team");
+      } else {
+        toast.error("Failed to change visibility");
       }
-    } catch (err) {
-      console.error("Failed to change visibility:", err);
+    } catch {
+      toast.error("Failed to change visibility");
     }
   };
 
@@ -208,8 +222,10 @@ export function EditorHeader({
     setDeleting(true);
     try {
       await fetch(`/api/pages/${pageId}`, { method: "DELETE" });
+      toast.success("Page deleted");
       router.push("/");
     } catch {
+      toast.error("Failed to delete page");
       setDeleting(false);
     }
   };
