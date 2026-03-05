@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Users, TrendingUp, Target, Clock, RefreshCw } from "lucide-react";
 import type { BuyerVisitorRow, BuyerAnalyticsSummary } from "@/types";
+import { formatDuration } from "@/lib/format-utils";
 
 interface BuyerAnalyticsPanelProps {
   pageId: string;
@@ -45,12 +46,7 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return s > 0 ? `${m}m ${s}s` : `${m}m`;
-}
+// formatDuration imported from @/lib/format-utils
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {

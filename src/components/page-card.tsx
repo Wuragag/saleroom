@@ -66,10 +66,8 @@ export function timeAgo(dateStr: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function formatDuration(s: number) {
-  if (s < 60) return `${s}s`;
-  return `${Math.floor(s / 60)}m`;
-}
+import { formatDuration } from "@/lib/format-utils";
+export { formatDuration };
 
 // ── Tag editor (shown inline inside DropdownMenuContent) ─────────────────────
 function TagEditor({

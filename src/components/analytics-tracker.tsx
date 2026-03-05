@@ -8,17 +8,25 @@ interface AnalyticsTrackerProps {
 }
 
 export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
-  const mountTime = useRef(Date.now());
+  // Track only visible time — pause when tab is hidden
+  const visibleDuration = useRef(0); // accumulated seconds while visible
+  const lastVisibleAt = useRef(Date.now()); // timestamp when tab last became visible
   const sending = useRef(false);
 
   useEffect(() => {
+    const accumulateDuration = () => {
+      if (document.visibilityState !== "hidden") {
+        // Tab is visible, accumulate time since last visible timestamp
+        visibleDuration.current += (Date.now() - lastVisibleAt.current) / 1000;
+        lastVisibleAt.current = Date.now();
+      }
+    };
+
     const sendDuration = () => {
-      // Debounce concurrent sends but allow re-sending on future events
-      // so the duration stays accurate when the user tabs away and back.
+      accumulateDuration();
       if (sending.current) return;
       sending.current = true;
-      const duration = Math.round((Date.now() - mountTime.current) / 1000);
-      // Use fetch with keepalive instead of sendBeacon so we can send PATCH
+      const duration = Math.round(visibleDuration.current);
       fetch(`/api/analytics/view/${viewId}`, {
         method: "PATCH",
         keepalive: true,
@@ -30,7 +38,13 @@ export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") sendDuration();
+      if (document.visibilityState === "hidden") {
+        // Tab hidden — accumulate and send
+        sendDuration();
+      } else {
+        // Tab visible again — reset the "last visible" timestamp
+        lastVisibleAt.current = Date.now();
+      }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -42,13 +56,15 @@ export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
     };
   }, [viewId]);
 
+  // Fix #5: Track only truly external link clicks
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = (e.target as Element).closest("a[href]");
       if (!target) return;
       const href = (target as HTMLAnchorElement).href;
-      // Only track external links
-      if (!href || href.startsWith(window.location.origin + "/p/")) return;
+      if (!href) return;
+      // Skip all internal links (same origin)
+      if (href.startsWith(window.location.origin)) return;
       fetch("/api/analytics/event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

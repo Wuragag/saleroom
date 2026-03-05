@@ -75,11 +75,13 @@ export async function GET(
       const totalDuration = v.sessions.reduce((sum, s) => sum + s.duration, 0);
       const allTabViews = v.sessions.flatMap((s) => s.tabViews);
 
-      // Find most viewed tab by duration
+      // Find most viewed tab by accumulated duration across sessions
       const tabDurationMap = new Map<string, { name: string; duration: number }>();
       for (const tv of allTabViews) {
         const existing = tabDurationMap.get(tv.tabId);
-        if (!existing || tv.duration > existing.duration) {
+        if (existing) {
+          existing.duration += tv.duration;
+        } else {
           tabDurationMap.set(tv.tabId, { name: tv.tabName, duration: tv.duration });
         }
       }

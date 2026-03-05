@@ -3,24 +3,19 @@
 import { useState } from "react";
 import { Eye, Clock, Link2, Globe, FileX, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { BuyerAnalyticsPanel } from "@/components/buyer-analytics-panel";
+import { formatDuration } from "@/lib/format-utils";
 
 interface PageStat {
   id: string;
   title: string;
   slug: string;
   published: boolean;
-  updatedAt: Date;
+  updatedAt: string;
   views: number;
   avgDuration: number;
   linkClicks: number;
   uniqueBuyers: number;
   highIntentCount: number;
-}
-
-function formatDuration(s: number) {
-  if (!s) return "—";
-  if (s < 60) return `${s}s`;
-  return `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
 function timeAgo(dateStr: string | Date) {
