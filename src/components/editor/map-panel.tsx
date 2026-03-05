@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Calendar, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Calendar, User, ChevronDown, ChevronUp, CheckCircle2, Circle, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMap } from "@/hooks/use-map";
 import type { MapItemData } from "@/types";
@@ -22,227 +22,137 @@ export function MapPanel({ pageId }: MapPanelProps) {
     deleteItem,
   } = useMap(pageId);
 
-  const [expanded, setExpanded] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   if (loading) return null;
 
-  return (
-    <div className="p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-          Action Plan
+  if (!map) {
+    return (
+      <div className="mt-6 border border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-center">
+        <ClipboardList className="h-8 w-8 text-muted-foreground mb-3" />
+        <h3 className="text-sm font-semibold text-foreground mb-1">
+          Mutual Action Plan
         </h3>
-        {map ? (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {expanded ? (
-              <ChevronUp className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5" />
-            )}
-          </button>
-        ) : null}
-      </div>
-
-      {!map ? (
-        <div className="space-y-1.5">
-          <p className="text-[10px] text-muted-foreground">
-            Add a shared action plan to track milestones with your buyer.
-          </p>
-          <Button size="sm" className="h-6 text-xs w-full" onClick={enableMap}>
-            Enable Action Plan
-          </Button>
-        </div>
-      ) : expanded ? (
-        <MapEditor
-          map={map}
-          onUpdateMap={updateMap}
-          onAddItem={addItem}
-          onUpdateItem={updateItem}
-          onDeleteItem={deleteItem}
-          onDisable={disableMap}
-        />
-      ) : (
-        <p className="text-[10px] text-muted-foreground">
-          {map.items.length} item{map.items.length !== 1 ? "s" : ""} ·{" "}
-          {map.items.filter((i) => i.completed).length} done
+        <p className="text-xs text-muted-foreground mb-4 max-w-sm">
+          Add a shared action plan to track milestones with your buyer. Both sides can see progress and check off tasks.
         </p>
-      )}
-    </div>
-  );
-}
-
-// ── Inline editor for the MAP ──
-
-interface MapEditorProps {
-  map: { title: string; closeDate: string | null; items: MapItemData[] };
-  onUpdateMap: (patch: { title?: string; closeDate?: string | null }) => void;
-  onAddItem: (item: {
-    title: string;
-    ownerType: "seller" | "buyer";
-    ownerName: string;
-    dueDate?: string | null;
-  }) => void;
-  onUpdateItem: (itemId: string, patch: Partial<MapItemData>) => void;
-  onDeleteItem: (itemId: string) => void;
-  onDisable: () => void;
-}
-
-function MapEditor({
-  map,
-  onUpdateMap,
-  onAddItem,
-  onUpdateItem,
-  onDeleteItem,
-  onDisable,
-}: MapEditorProps) {
-  const [adding, setAdding] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newOwnerType, setNewOwnerType] = useState<"seller" | "buyer">("seller");
-  const [newOwnerName, setNewOwnerName] = useState("");
-  const [newDueDate, setNewDueDate] = useState("");
-
-  const handleAdd = () => {
-    if (!newTitle.trim()) return;
-    onAddItem({
-      title: newTitle.trim(),
-      ownerType: newOwnerType,
-      ownerName: newOwnerName.trim(),
-      dueDate: newDueDate || null,
-    });
-    setNewTitle("");
-    setNewOwnerName("");
-    setNewDueDate("");
-    setAdding(false);
-  };
+        <Button size="sm" onClick={enableMap}>
+          Enable Action Plan
+        </Button>
+      </div>
+    );
+  }
 
   const completedCount = map.items.filter((i) => i.completed).length;
   const totalCount = map.items.length;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="space-y-2">
-      {/* Title */}
-      <input
-        value={map.title}
-        onChange={(e) => onUpdateMap({ title: e.target.value })}
-        placeholder="Plan title"
-        className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring font-medium"
-      />
-
-      {/* Close date */}
-      <div className="flex items-center gap-1.5">
-        <Calendar className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-        <input
-          type="date"
-          value={map.closeDate ? map.closeDate.split("T")[0] : ""}
-          onChange={(e) =>
-            onUpdateMap({ closeDate: e.target.value || null })
-          }
-          className="flex-1 text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
-          placeholder="Target close date"
-        />
-      </div>
-
-      {/* Progress bar */}
-      {totalCount > 0 && (
-        <div className="space-y-0.5">
-          <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>{completedCount}/{totalCount} complete</span>
-            <span>{progress}%</span>
-          </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+    <div className="mt-6 border border-border rounded-xl bg-card shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 flex items-center justify-between border-b border-border">
+        <div className="flex items-center gap-3">
+          <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground">Action Plan</h3>
+          {totalCount > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {completedCount}/{totalCount} complete · {progress}%
+            </span>
+          )}
         </div>
-      )}
-
-      {/* Items */}
-      <div className="space-y-1">
-        {map.items.map((item) => (
-          <MapItemRow
-            key={item.id}
-            item={item}
-            onUpdate={(patch) => onUpdateItem(item.id, patch)}
-            onDelete={() => onDeleteItem(item.id)}
-          />
-        ))}
-      </div>
-
-      {/* Add item */}
-      {adding ? (
-        <div className="space-y-1.5 pt-1 border-t border-border">
-          <input
-            autoFocus
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Task title"
-            className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAdd();
-              if (e.key === "Escape") setAdding(false);
-            }}
-          />
-          <div className="flex gap-1">
-            <select
-              value={newOwnerType}
-              onChange={(e) => setNewOwnerType(e.target.value as "seller" | "buyer")}
-              className="text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="seller">Seller</option>
-              <option value="buyer">Buyer</option>
-            </select>
-            <input
-              value={newOwnerName}
-              onChange={(e) => setNewOwnerName(e.target.value)}
-              placeholder="Name"
-              className="flex-1 text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <input
-            type="date"
-            value={newDueDate}
-            onChange={(e) => setNewDueDate(e.target.value)}
-            className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
-          />
-          <div className="flex gap-1">
-            <Button size="sm" className="h-6 text-xs flex-1" onClick={handleAdd}>
-              Add
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 text-xs flex-1"
-              onClick={() => setAdding(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start rounded-lg text-muted-foreground hover:text-foreground h-7 text-xs"
-          onClick={() => setAdding(true)}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
         >
-          <Plus className="h-3 w-3 mr-1.5" />
-          Add Item
-        </Button>
-      )}
+          {collapsed ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronUp className="h-4 w-4" />
+          )}
+        </button>
+      </div>
 
-      {/* Disable */}
-      <button
-        onClick={onDisable}
-        className="w-full text-[10px] text-muted-foreground hover:text-destructive transition-colors pt-1"
-      >
-        Remove Action Plan
-      </button>
+      {!collapsed && (
+        <div className="p-5 space-y-5">
+          {/* Title + Close Date row */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                Plan Title
+              </label>
+              <input
+                value={map.title}
+                onChange={(e) => updateMap({ title: e.target.value })}
+                placeholder="Mutual Action Plan"
+                className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-medium"
+              />
+            </div>
+            <div className="w-48">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                Target Close Date
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  type="date"
+                  value={map.closeDate ? map.closeDate.split("T")[0] : ""}
+                  onChange={(e) => updateMap({ closeDate: e.target.value || null })}
+                  className="w-full text-sm pl-9 pr-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          {totalCount > 0 && (
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+
+          {/* Items table */}
+          {map.items.length > 0 && (
+            <div className="border border-border rounded-lg overflow-hidden">
+              {/* Table header */}
+              <div className="grid grid-cols-[32px_1fr_110px_130px_120px_36px] gap-0 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/50 border-b border-border">
+                <div className="px-2 py-2.5" />
+                <div className="px-3 py-2.5">Task</div>
+                <div className="px-3 py-2.5">Owner</div>
+                <div className="px-3 py-2.5">Assigned To</div>
+                <div className="px-3 py-2.5">Due Date</div>
+                <div className="px-2 py-2.5" />
+              </div>
+
+              {/* Items */}
+              {map.items.map((item, i) => (
+                <MapItemRow
+                  key={item.id}
+                  item={item}
+                  isLast={i === map.items.length - 1}
+                  onUpdate={(patch) => updateItem(item.id, patch)}
+                  onDelete={() => deleteItem(item.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Add item inline */}
+          <AddItemRow onAdd={addItem} />
+
+          {/* Disable action plan */}
+          <div className="flex justify-end">
+            <button
+              onClick={disableMap}
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              Remove Action Plan
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -251,100 +161,213 @@ function MapEditor({
 
 function MapItemRow({
   item,
+  isLast,
   onUpdate,
   onDelete,
 }: {
   item: MapItemData;
+  isLast: boolean;
   onUpdate: (patch: Partial<MapItemData>) => void;
   onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const isOverdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
 
-  const ownerBadge = item.ownerType === "buyer"
-    ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300";
+  return (
+    <div
+      className={`group grid grid-cols-[32px_1fr_110px_130px_120px_36px] gap-0 items-center hover:bg-muted/30 transition-colors ${
+        !isLast ? "border-b border-border" : ""
+      }`}
+    >
+      {/* Checkbox */}
+      <div className="px-2 py-2.5 flex justify-center">
+        <button
+          onClick={() => onUpdate({ completed: !item.completed })}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {item.completed ? (
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+          ) : (
+            <Circle className="h-4 w-4" />
+          )}
+        </button>
+      </div>
 
-  if (editing) {
-    return (
-      <div className="space-y-1 p-1.5 rounded-lg bg-muted/50 border border-border">
-        <input
-          autoFocus
-          value={item.title}
-          onChange={(e) => onUpdate({ title: e.target.value })}
-          className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-        />
-        <div className="flex gap-1">
-          <select
-            value={item.ownerType}
-            onChange={(e) => onUpdate({ ownerType: e.target.value as "seller" | "buyer" })}
-            className="text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="seller">Seller</option>
-            <option value="buyer">Buyer</option>
-          </select>
+      {/* Title */}
+      <div className="px-3 py-2.5">
+        {editing ? (
           <input
-            value={item.ownerName}
-            onChange={(e) => onUpdate({ ownerName: e.target.value })}
-            placeholder="Name"
-            className="flex-1 text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            autoFocus
+            value={item.title}
+            onChange={(e) => onUpdate({ title: e.target.value })}
+            onBlur={() => setEditing(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") setEditing(false);
+            }}
+            className="w-full text-sm px-2 py-1 -ml-2 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
           />
-        </div>
+        ) : (
+          <span
+            onClick={() => setEditing(true)}
+            className={`text-sm cursor-pointer ${
+              item.completed
+                ? "line-through text-muted-foreground"
+                : "text-foreground"
+            }`}
+          >
+            {item.title}
+          </span>
+        )}
+      </div>
+
+      {/* Owner type */}
+      <div className="px-3 py-2.5">
+        <select
+          value={item.ownerType}
+          onChange={(e) => onUpdate({ ownerType: e.target.value as "seller" | "buyer" })}
+          className="text-xs px-2 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring w-full"
+        >
+          <option value="seller">Seller</option>
+          <option value="buyer">Buyer</option>
+        </select>
+      </div>
+
+      {/* Owner name */}
+      <div className="px-3 py-2.5">
+        <input
+          value={item.ownerName}
+          onChange={(e) => onUpdate({ ownerName: e.target.value })}
+          placeholder="Name"
+          className="w-full text-xs px-2 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+      </div>
+
+      {/* Due date */}
+      <div className="px-3 py-2.5">
         <input
           type="date"
           value={item.dueDate ? item.dueDate.split("T")[0] : ""}
           onChange={(e) => onUpdate({ dueDate: e.target.value || null })}
-          className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
+          className={`w-full text-xs px-2 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring ${
+            isOverdue ? "text-red-500" : "text-muted-foreground"
+          }`}
         />
-        <Button size="sm" className="h-6 text-xs w-full" onClick={() => setEditing(false)}>
-          Done
-        </Button>
       </div>
+
+      {/* Delete */}
+      <div className="px-2 py-2.5 flex justify-center">
+        <button
+          onClick={onDelete}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Inline add-item row ──
+
+function AddItemRow({
+  onAdd,
+}: {
+  onAdd: (item: {
+    title: string;
+    ownerType: "seller" | "buyer";
+    ownerName: string;
+    dueDate?: string | null;
+  }) => void;
+}) {
+  const [active, setActive] = useState(false);
+  const [title, setTitle] = useState("");
+  const [ownerType, setOwnerType] = useState<"seller" | "buyer">("seller");
+  const [ownerName, setOwnerName] = useState("");
+  const [dueDate, setDueDate] = useState("");
+
+  const handleAdd = () => {
+    if (!title.trim()) return;
+    onAdd({
+      title: title.trim(),
+      ownerType,
+      ownerName: ownerName.trim(),
+      dueDate: dueDate || null,
+    });
+    setTitle("");
+    setOwnerName("");
+    setDueDate("");
+    // Keep active so user can add multiple items quickly
+  };
+
+  if (!active) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start text-muted-foreground hover:text-foreground"
+        onClick={() => setActive(true)}
+      >
+        <Plus className="h-3.5 w-3.5 mr-2" />
+        Add Item
+      </Button>
     );
   }
 
   return (
-    <div className="group flex items-start gap-1.5 py-0.5">
-      <input
-        type="checkbox"
-        checked={item.completed}
-        onChange={(e) => onUpdate({ completed: e.target.checked })}
-        className="mt-0.5 h-3.5 w-3.5 rounded border-border accent-primary flex-shrink-0"
-      />
-      <div
-        className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => setEditing(true)}
-      >
-        <p
-          className={`text-xs leading-tight ${
-            item.completed ? "line-through text-muted-foreground" : "text-foreground"
-          }`}
-        >
-          {item.title}
-        </p>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <span className={`text-[9px] px-1 py-0 rounded ${ownerBadge}`}>
-            {item.ownerType === "buyer" ? "Buyer" : "Seller"}
-          </span>
-          {item.ownerName && (
-            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-              <User className="h-2 w-2" />
-              {item.ownerName}
-            </span>
-          )}
-          {item.dueDate && (
-            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-              <Calendar className="h-2 w-2" />
-              {new Date(item.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-            </span>
-          )}
+    <div className="border border-border rounded-lg p-3 bg-muted/20 space-y-3">
+      <div className="grid grid-cols-[1fr_110px_130px_120px] gap-2 items-end">
+        <div>
+          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Task</label>
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What needs to happen?"
+            className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAdd();
+              if (e.key === "Escape") setActive(false);
+            }}
+          />
+        </div>
+        <div>
+          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Owner</label>
+          <select
+            value={ownerType}
+            onChange={(e) => setOwnerType(e.target.value as "seller" | "buyer")}
+            className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="seller">Seller</option>
+            <option value="buyer">Buyer</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Assigned To</label>
+          <input
+            value={ownerName}
+            onChange={(e) => setOwnerName(e.target.value)}
+            placeholder="Name"
+            className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Due Date</label>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground"
+          />
         </div>
       </div>
-      <button
-        onClick={onDelete}
-        className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive flex-shrink-0"
-      >
-        <Trash2 className="h-3 w-3" />
-      </button>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={handleAdd}>
+          Add Item
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setActive(false)}>
+          Done
+        </Button>
+      </div>
     </div>
   );
 }

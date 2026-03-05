@@ -23,6 +23,7 @@ import type { PageData, PageLink } from "@/types";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle } from "@/lib/page-styles";
 import { CoverImageEditor } from "./cover-image-editor";
+import { MapPanel } from "./map-panel";
 
 interface TiptapEditorProps {
   page: PageData;
@@ -193,7 +194,6 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
       style={{ "--page-accent": getAccentColor(pageStyle.accentColor) } as React.CSSProperties}
     >
       <TabSidebar
-        pageId={page.id}
         tabs={tabs}
         activeTabId={activeTabId}
         onSelectTab={handleSelectTab}
@@ -242,6 +242,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
           >
             <EditorContent editor={editor} />
           </div>
+          <MapPanel pageId={page.id} />
         </div>
       </div>
     </div>
