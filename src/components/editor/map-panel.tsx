@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Calendar, User, ChevronDown, ChevronUp, CheckCircle2, Circle, ClipboardList } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, CheckCircle2, Circle, ClipboardList } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useMap } from "@/hooks/use-map";
 import type { MapItemData } from "@/types";
 
@@ -87,19 +89,16 @@ export function MapPanel({ pageId }: MapPanelProps) {
                 className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-medium"
               />
             </div>
-            <div className="w-48">
+            <div className="w-52">
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
                 Target Close Date
               </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                <input
-                  type="date"
-                  value={map.closeDate ? map.closeDate.split("T")[0] : ""}
-                  onChange={(e) => updateMap({ closeDate: e.target.value || null })}
-                  className="w-full text-sm pl-9 pr-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground"
-                />
-              </div>
+              <DatePicker
+                value={map.closeDate ? new Date(map.closeDate) : null}
+                onChange={(date) => updateMap({ closeDate: date ? date.toISOString().split("T")[0] : null })}
+                placeholder="Set close date"
+                className="w-full"
+              />
             </div>
           </div>
 
@@ -244,13 +243,12 @@ function MapItemRow({
 
       {/* Due date */}
       <div className="px-3 py-2.5">
-        <input
-          type="date"
-          value={item.dueDate ? item.dueDate.split("T")[0] : ""}
-          onChange={(e) => onUpdate({ dueDate: e.target.value || null })}
-          className={`w-full text-xs px-2 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring ${
-            isOverdue ? "text-red-500" : "text-muted-foreground"
-          }`}
+        <DatePicker
+          value={item.dueDate ? new Date(item.dueDate) : null}
+          onChange={(date) => onUpdate({ dueDate: date ? date.toISOString().split("T")[0] : null })}
+          placeholder="Due date"
+          compact
+          className={cn("w-full", isOverdue && "text-red-500 border-red-200")}
         />
       </div>
 
@@ -352,11 +350,11 @@ function AddItemRow({
         </div>
         <div>
           <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Due Date</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground"
+          <DatePicker
+            value={dueDate ? new Date(dueDate) : null}
+            onChange={(date) => setDueDate(date ? date.toISOString().split("T")[0] : "")}
+            placeholder="Due date"
+            className="w-full"
           />
         </div>
       </div>
