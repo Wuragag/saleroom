@@ -28,6 +28,8 @@ export function UpgradePrompt({
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        toast.error(data.error ?? "Failed to start checkout");
       }
     } catch {
       toast.error("Failed to start checkout");

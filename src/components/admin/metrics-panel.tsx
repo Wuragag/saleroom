@@ -34,7 +34,10 @@ export function MetricsPanel() {
 
   useEffect(() => {
     fetch("/api/admin/metrics")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load metrics");
+        return r.json();
+      })
       .then((data) => {
         setMetrics(data);
         setLoading(false);

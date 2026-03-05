@@ -91,9 +91,12 @@ export function ImportsPanel() {
         ...(statusFilter ? { status: statusFilter } : {}),
       });
       const res = await fetch(`/api/admin/imports?${params}`);
+      if (!res.ok) throw new Error("Failed to load imports");
       const data = await res.json();
       setImports(data.imports ?? []);
       setTotal(data.total ?? 0);
+    } catch {
+      toast.error("Failed to load imports");
     } finally {
       setLoading(false);
     }

@@ -50,12 +50,18 @@ export function TemplatePicker({
     if (!isOpen) return;
     setLoadingTemplates(true);
     fetch("/api/templates")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load templates");
+        return r.json();
+      })
       .then((data) => {
         setTemplates(data);
         setLoadingTemplates(false);
       })
-      .catch(() => setLoadingTemplates(false));
+      .catch(() => {
+        toast.error("Failed to load templates");
+        setLoadingTemplates(false);
+      });
   }, [isOpen]);
 
   // Reset state when modal opens

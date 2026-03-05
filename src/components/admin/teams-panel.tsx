@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface TeamRow {
   id: string;
@@ -63,9 +64,12 @@ export function TeamsPanel() {
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
       });
       const res = await fetch(`/api/admin/teams?${params}`);
+      if (!res.ok) throw new Error("Failed to load teams");
       const data = await res.json();
       setTeams(data.teams ?? []);
       setTotal(data.total ?? 0);
+    } catch {
+      toast.error("Failed to load teams");
     } finally {
       setLoading(false);
     }
@@ -91,7 +95,7 @@ export function TeamsPanel() {
         setSavedId(teamId);
         setTimeout(() => setSavedId(null), 2000);
       } else {
-        // Roll back on error
+        toast.error("Failed to update plan");
         fetchTeams();
       }
     } finally {

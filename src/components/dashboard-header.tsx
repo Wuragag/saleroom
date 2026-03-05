@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, Sparkles, PenLine } from "lucide-react";
+import { toast } from "sonner";
 import { TemplatePicker } from "@/components/template-picker";
 import { ImportDocumentModal } from "@/components/import-document-modal";
 import { AiWriteModal } from "@/components/ai-write-modal";
@@ -33,6 +34,7 @@ export function DashboardHeader() {
           setLimitError(data.error);
           return;
         }
+        toast.error(data.error ?? "Failed to create page");
         return;
       }
       router.push(`/editor/${data.id}`);

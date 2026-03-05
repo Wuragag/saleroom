@@ -19,6 +19,7 @@ import { EditorHeader } from "./editor-header";
 import { TabSidebar } from "./tab-sidebar";
 import { useTabs } from "@/hooks/use-tabs";
 import { useAutoSave } from "@/hooks/use-auto-save";
+import { toast } from "sonner";
 import type { PageData, PageLink } from "@/types";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle } from "@/lib/page-styles";
@@ -160,7 +161,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
-      });
+      }).catch(() => toast.error("Failed to save style"));
     }, 800);
   };
 
@@ -172,7 +173,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: value }),
-      });
+      }).catch(() => toast.error("Failed to save password"));
     }, 800);
   };
 
@@ -184,7 +185,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ links: JSON.stringify(next) }),
-      });
+      }).catch(() => toast.error("Failed to save links"));
     }, 800);
   };
 

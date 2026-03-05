@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import type { TabData } from "@/types";
 
 interface UseTabsReturn {
@@ -31,55 +32,80 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
 
   const addTab = useCallback(async () => {
     setTabLimitError(null);
-    const res = await fetch(`/api/pages/${pageId}/tabs`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: `Tab ${tabs.length + 1}` }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      if (data.code === "PLAN_LIMIT") {
-        setTabLimitError(data.error);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/tabs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `Tab ${tabs.length + 1}` }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.code === "PLAN_LIMIT") {
+          setTabLimitError(data.error);
+        } else {
+          toast.error(data.error ?? "Failed to add tab");
+        }
+        return;
       }
-      return;
+      const tab: TabData = data;
+      setTabs((prev) => [...prev, tab]);
+      setActiveTabId(tab.id);
+    } catch {
+      toast.error("Failed to add tab");
     }
-    const tab: TabData = data;
-    setTabs((prev) => [...prev, tab]);
-    setActiveTabId(tab.id);
   }, [pageId, tabs.length]);
 
   const renameTab = useCallback(async (tabId: string, name: string) => {
-    await fetch(`/api/tabs/${tabId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
+    // Optimistic update
     setTabs((prev) =>
       prev.map((t) => (t.id === tabId ? { ...t, name } : t))
     );
+    try {
+      const res = await fetch(`/api/tabs/${tabId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to rename tab");
+      }
+    } catch {
+      toast.error("Failed to rename tab");
+    }
   }, []);
 
   const deleteTab = useCallback(
     async (tabId: string) => {
       if (tabs.length <= 1) return;
 
-      await fetch(`/api/tabs/${tabId}`, { method: "DELETE" });
-
+      // Optimistic update
+      const prevTabs = tabs;
       setTabs((prev) => {
         const updated = prev.filter((t) => t.id !== tabId);
-        // If we deleted the active tab, switch to the first remaining
         if (tabId === activeTabId && updated.length > 0) {
           setActiveTabId(updated[0].id);
         }
         return updated;
       });
+
+      try {
+        const res = await fetch(`/api/tabs/${tabId}`, { method: "DELETE" });
+        if (!res.ok) {
+          toast.error("Failed to delete tab");
+          setTabs(prevTabs);
+        }
+      } catch {
+        toast.error("Failed to delete tab");
+        setTabs(prevTabs);
+      }
     },
-    [tabs.length, activeTabId]
+    [tabs, activeTabId]
   );
 
   const reorderTabs = useCallback(
     async (tabIds: string[]) => {
       // Optimistic update
+      const prevTabs = tabs;
       setTabs((prev) => {
         const tabMap = new Map(prev.map((t) => [t.id, t]));
         return tabIds
@@ -90,25 +116,40 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
           .filter(Boolean) as TabData[];
       });
 
-      await fetch(`/api/pages/${pageId}/tabs/reorder`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tabIds }),
-      });
+      try {
+        const res = await fetch(`/api/pages/${pageId}/tabs/reorder`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tabIds }),
+        });
+        if (!res.ok) {
+          toast.error("Failed to reorder tabs");
+          setTabs(prevTabs);
+        }
+      } catch {
+        toast.error("Failed to reorder tabs");
+        setTabs(prevTabs);
+      }
     },
-    [pageId]
+    [pageId, tabs]
   );
 
   const saveTabContent = useCallback(
     async (tabId: string, content: string) => {
-      await fetch(`/api/tabs/${tabId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      setTabs((prev) =>
-        prev.map((t) => (t.id === tabId ? { ...t, content } : t))
-      );
+      try {
+        const res = await fetch(`/api/tabs/${tabId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        if (res.ok) {
+          setTabs((prev) =>
+            prev.map((t) => (t.id === tabId ? { ...t, content } : t))
+          );
+        }
+      } catch {
+        // Content save failures are handled by the auto-save status indicator
+      }
     },
     []
   );

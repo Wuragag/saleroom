@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck, KeyRound } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ export function UsersPanel() {
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
 
@@ -60,9 +61,12 @@ export function UsersPanel() {
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
       });
       const res = await fetch(`/api/admin/users?${params}`);
+      if (!res.ok) throw new Error("Failed to load users");
       const data = await res.json();
       setUsers(data.users ?? []);
       setTotal(data.total ?? 0);
+    } catch {
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -108,6 +112,33 @@ export function UsersPanel() {
       await signIn("credentials", { impersonateToken: token, callbackUrl: "/" });
     } finally {
       setImpersonatingId(null);
+    }
+  };
+
+  const handleResetPassword = async (user: UserRow) => {
+    const password = window.prompt(`New password for ${user.email} (min 8 chars):`);
+    if (!password) return;
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setResettingId(user.id);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        toast.success(`Password reset for ${user.email}`);
+      } else {
+        const data = await res.json();
+        toast.error(data.error ?? "Failed to reset password");
+      }
+    } catch {
+      toast.error("Failed to reset password");
+    } finally {
+      setResettingId(null);
     }
   };
 
@@ -199,21 +230,36 @@ export function UsersPanel() {
                       )}
                     </button>
                   </td>
-                  {/* Impersonate */}
+                  {/* Actions */}
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleImpersonate(user)}
-                      disabled={impersonatingId === user.id}
-                      title="Log in as this user"
-                      className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                    >
-                      {impersonatingId === user.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <UserCheck className="h-3.5 w-3.5" />
-                      )}
-                      <span>Login as</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleResetPassword(user)}
+                        disabled={resettingId === user.id}
+                        title="Reset password"
+                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                      >
+                        {resettingId === user.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <KeyRound className="h-3.5 w-3.5" />
+                        )}
+                        <span>Reset pwd</span>
+                      </button>
+                      <button
+                        onClick={() => handleImpersonate(user)}
+                        disabled={impersonatingId === user.id}
+                        title="Log in as this user"
+                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                      >
+                        {impersonatingId === user.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <UserCheck className="h-3.5 w-3.5" />
+                        )}
+                        <span>Login as</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

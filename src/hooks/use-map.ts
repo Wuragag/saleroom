@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import type { MutualActionPlanData, MapItemData } from "@/types";
 
 export function useMap(pageId: string) {
@@ -23,31 +24,51 @@ export function useMap(pageId: string) {
   }, [fetchMap]);
 
   const enableMap = async () => {
-    const res = await fetch(`/api/pages/${pageId}/map`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setMap(data.map);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMap(data.map);
+      } else {
+        toast.error("Failed to enable action plan");
+      }
+    } catch {
+      toast.error("Failed to enable action plan");
     }
   };
 
   const disableMap = async () => {
-    const res = await fetch(`/api/pages/${pageId}/map`, { method: "DELETE" });
-    if (res.ok) setMap(null);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map`, { method: "DELETE" });
+      if (res.ok) {
+        setMap(null);
+      } else {
+        toast.error("Failed to remove action plan");
+      }
+    } catch {
+      toast.error("Failed to remove action plan");
+    }
   };
 
   const updateMap = async (patch: { title?: string; closeDate?: string | null }) => {
-    const res = await fetch(`/api/pages/${pageId}/map`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setMap(data.map);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMap(data.map);
+      } else {
+        toast.error("Failed to update action plan");
+      }
+    } catch {
+      toast.error("Failed to update action plan");
     }
   };
 
@@ -57,17 +78,23 @@ export function useMap(pageId: string) {
     ownerName: string;
     dueDate?: string | null;
   }) => {
-    const res = await fetch(`/api/pages/${pageId}/map/items`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(item),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setMap((prev) =>
-        prev ? { ...prev, items: [...prev.items, data.item] } : prev
-      );
-      return data.item;
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMap((prev) =>
+          prev ? { ...prev, items: [...prev.items, data.item] } : prev
+        );
+        return data.item;
+      } else {
+        toast.error("Failed to add item");
+      }
+    } catch {
+      toast.error("Failed to add item");
     }
   };
 
@@ -83,13 +110,18 @@ export function useMap(pageId: string) {
       };
     });
 
-    const res = await fetch(`/api/pages/${pageId}/map/items/${itemId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) {
-      // Revert on failure
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map/items/${itemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        toast.error("Failed to update item");
+        fetchMap();
+      }
+    } catch {
+      toast.error("Failed to update item");
       fetchMap();
     }
   };
@@ -101,10 +133,18 @@ export function useMap(pageId: string) {
       return { ...prev, items: prev.items.filter((item) => item.id !== itemId) };
     });
 
-    const res = await fetch(`/api/pages/${pageId}/map/items/${itemId}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) fetchMap();
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map/items/${itemId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Failed to delete item");
+        fetchMap();
+      }
+    } catch {
+      toast.error("Failed to delete item");
+      fetchMap();
+    }
   };
 
   const reorderItems = async (itemIds: string[]) => {
@@ -120,11 +160,20 @@ export function useMap(pageId: string) {
       return { ...prev, items: ordered };
     });
 
-    await fetch(`/api/pages/${pageId}/map/items/reorder`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIds }),
-    });
+    try {
+      const res = await fetch(`/api/pages/${pageId}/map/items/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to reorder items");
+        fetchMap();
+      }
+    } catch {
+      toast.error("Failed to reorder items");
+      fetchMap();
+    }
   };
 
   return {

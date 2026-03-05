@@ -47,13 +47,17 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
       };
     });
 
-    const res = await fetch(`/api/map/${slug}/toggle`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, completed }),
-    });
+    try {
+      const res = await fetch(`/api/map/${slug}/toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, completed }),
+      });
 
-    if (!res.ok) fetchMap(); // Revert on error
+      if (!res.ok) fetchMap(); // Revert on error
+    } catch {
+      fetchMap(); // Revert on error
+    }
   };
 
   return (

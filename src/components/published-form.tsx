@@ -74,6 +74,28 @@ export function PublishedFormHydrator({
               body: JSON.stringify({ pageId, formId, data }),
             });
 
+            const resetBtn = () => {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent =
+                  form
+                    .closest('div[data-type="form-block"]')
+                    ?.getAttribute("data-submit-label") || "Submit";
+              }
+            };
+
+            const showError = (message: string) => {
+              resetBtn();
+              // Remove any previous error
+              form.querySelector("[data-form-error]")?.remove();
+              const err = document.createElement("p");
+              err.setAttribute("data-form-error", "true");
+              err.style.cssText =
+                "color:#dc2626;font-size:13px;margin-top:8px;text-align:center;";
+              err.textContent = message;
+              form.appendChild(err);
+            };
+
             if (res.ok) {
               // Show success message — use textContent to prevent XSS
               while (form.firstChild) form.removeChild(form.firstChild);
@@ -105,6 +127,10 @@ export function PublishedFormHydrator({
               wrapper.appendChild(msg);
               form.appendChild(wrapper);
             } else {
+              showError("Something went wrong. Please try again.");
+            }
+          } catch {
+            const resetBtn2 = () => {
               if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.textContent =
@@ -112,15 +138,16 @@ export function PublishedFormHydrator({
                     .closest('div[data-type="form-block"]')
                     ?.getAttribute("data-submit-label") || "Submit";
               }
-            }
-          } catch {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent =
-                form
-                  .closest('div[data-type="form-block"]')
-                  ?.getAttribute("data-submit-label") || "Submit";
-            }
+            };
+            resetBtn2();
+            // Remove any previous error
+            form.querySelector("[data-form-error]")?.remove();
+            const err = document.createElement("p");
+            err.setAttribute("data-form-error", "true");
+            err.style.cssText =
+              "color:#dc2626;font-size:13px;margin-top:8px;text-align:center;";
+            err.textContent = "Something went wrong. Please try again.";
+            form.appendChild(err);
           }
         },
         { signal: controller.signal }

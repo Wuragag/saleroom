@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { StepRole } from "./step-role";
 
 export type OnboardingRole =
@@ -28,7 +29,7 @@ export function OnboardingFlow({ userName }: Props) {
     });
 
     if (!res.ok) {
-      console.error("Onboarding PATCH failed:", res.status);
+      toast.error("Something went wrong. Please try again.");
       return;
     }
 
