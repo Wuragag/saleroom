@@ -273,7 +273,7 @@ export async function GET(
     }
 
     // ── Apply type filter ──
-    let filtered = typeFilter?.length
+    const filtered = typeFilter?.length
       ? events.filter((e) => typeFilter.includes(e.type))
       : events;
 
