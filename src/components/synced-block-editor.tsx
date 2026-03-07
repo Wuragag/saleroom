@@ -20,6 +20,7 @@ interface BlockData {
   id: string;
   name: string;
   content: string;
+  updatedAt?: string;
 }
 
 interface SyncedBlockEditorProps {
