@@ -30,6 +30,7 @@ import {
   List,
   Search,
   SlidersHorizontal,
+  Tag,
   Trash2,
   User,
   X,
@@ -276,12 +277,37 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
           </DropdownMenu>
         )}
 
-        {/* Tag chips */}
-        {allTags.map((tag) => (
-          <Pill key={tag} active={activeTag === tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
-            {tag}
-          </Pill>
-        ))}
+        {/* Tag filter */}
+        {allTags.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors shrink-0 ${
+                  activeTag
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                }`}
+              >
+                <Tag className="h-3 w-3" />
+                {activeTag ?? "Tag"}
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-44">
+              <DropdownMenuItem onClick={() => setActiveTag(null)} className="gap-2 cursor-pointer">
+                <span className="w-4 shrink-0">{activeTag === null && <Check className="h-3.5 w-3.5 text-primary" />}</span>
+                All tags
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {allTags.map((tag) => (
+                <DropdownMenuItem key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} className="gap-2 cursor-pointer">
+                  <span className="w-4 shrink-0">{activeTag === tag && <Check className="h-3.5 w-3.5 text-primary" />}</span>
+                  {tag}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Clear filters */}
         {activeFilterCount > 0 && (
@@ -387,6 +413,7 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
             />
             <span className="w-2 hidden sm:block shrink-0" />
             <span className="flex-1 text-xs font-medium text-muted-foreground">Page</span>
+            <span className="hidden lg:flex text-xs font-medium text-muted-foreground shrink-0 w-40">Tags</span>
             <span className="hidden md:flex text-xs font-medium text-muted-foreground shrink-0 w-[7.5rem] justify-end pr-1">Views</span>
             <span className="text-xs font-medium text-muted-foreground shrink-0 hidden sm:block w-20 text-center">Status</span>
             <span className="text-xs font-medium text-muted-foreground shrink-0 w-6 hidden sm:block" />

@@ -70,7 +70,7 @@ import { formatDuration } from "@/lib/format-utils";
 export { formatDuration };
 
 // ── Tag editor (shown inline inside DropdownMenuContent) ─────────────────────
-function TagEditor({
+export function TagEditor({
   pageId, tags, onSave,
 }: { pageId: string; tags: string[]; onSave: (tags: string[]) => void }) {
   const [localTags, setLocalTags] = useState<string[]>(tags);

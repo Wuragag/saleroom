@@ -13,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Pencil, ExternalLink, Eye, MoreVertical, Trash2, Copy, Clock, Link2, Tag } from "lucide-react";
-import { tagColor, timeAgo, formatDuration } from "@/components/page-card";
+import { tagColor, timeAgo, formatDuration, TagEditor } from "@/components/page-card";
 import type { PageAnalytics, PageListItem } from "@/types";
 import { getAccentColor } from "@/lib/page-styles";
 
@@ -39,6 +39,9 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [tags, setTags] = useState<string[]>(page.tags);
+  const [showTagEditor, setShowTagEditor] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const accent = getAccentColor(page.accentColor);
 
@@ -87,29 +90,33 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
           style={{ backgroundColor: accent }}
         />
 
-        {/* Title + tags */}
+        {/* Title */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <Link href={`/editor/${page.id}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate">
-              {page.title}
-            </Link>
-            {page.tags.length > 0 && (
-              <div className="flex items-center gap-1 shrink-0">
-                {page.tags.slice(0, 3).map((t) => {
-                  const c = tagColor(t);
-                  return (
-                    <span key={t} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full hidden sm:inline-flex" style={{ backgroundColor: c.bg, color: c.text }}>
-                      {t}
-                    </span>
-                  );
-                })}
-                {page.tags.length > 3 && (
-                  <span className="text-[10px] text-muted-foreground hidden sm:inline">+{page.tags.length - 3}</span>
-                )}
-              </div>
-            )}
-          </div>
+          <Link href={`/editor/${page.id}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block">
+            {page.title}
+          </Link>
           <p className="text-[11px] text-muted-foreground mt-0.5">{timeAgo(page.updatedAt)}</p>
+        </div>
+
+        {/* Tags column */}
+        <div className="hidden lg:flex items-center gap-1 shrink-0 w-40">
+          {tags.length > 0 ? (
+            <>
+              {tags.slice(0, 3).map((t) => {
+                const c = tagColor(t);
+                return (
+                  <span key={t} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full truncate max-w-[4.5rem]" style={{ backgroundColor: c.bg, color: c.text }}>
+                    {t}
+                  </span>
+                );
+              })}
+              {tags.length > 3 && (
+                <span className="text-[10px] text-muted-foreground">+{tags.length - 3}</span>
+              )}
+            </>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">—</span>
+          )}
         </div>
 
         {/* Analytics */}
@@ -171,25 +178,29 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
               </Button>
             </Link>
           )}
-          <DropdownMenu>
+          <DropdownMenu open={menuOpen} onOpenChange={(o) => { if (!o) setShowTagEditor(false); setMenuOpen(o); }}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/editor/${page.id}`} className="cursor-pointer gap-2">
-                  <Tag className="h-4 w-4" />Edit tags
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="cursor-pointer gap-2">
-                <Copy className="h-4 w-4" />{duplicating ? "Duplicating…" : "Duplicate"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive focus:text-destructive cursor-pointer gap-2">
-                <Trash2 className="h-4 w-4" />Delete
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">
+              {showTagEditor ? (
+                <TagEditor pageId={page.id} tags={tags} onSave={(t) => { setTags(t); setShowTagEditor(false); setMenuOpen(false); }} />
+              ) : (
+                <div className="py-1">
+                  <DropdownMenuItem className="cursor-pointer gap-2 mx-1 rounded-md" onClick={(e) => { e.preventDefault(); setShowTagEditor(true); }}>
+                    <Tag className="h-4 w-4" />Manage tags
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="cursor-pointer gap-2 mx-1 rounded-md">
+                    <Copy className="h-4 w-4" />{duplicating ? "Duplicating…" : "Duplicate"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { setMenuOpen(false); setShowDeleteDialog(true); }} className="text-destructive focus:text-destructive cursor-pointer gap-2 mx-1 rounded-md">
+                    <Trash2 className="h-4 w-4" />Delete
+                  </DropdownMenuItem>
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
