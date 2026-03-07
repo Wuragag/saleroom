@@ -7,6 +7,7 @@ export interface PlanLimits {
   maxPages: number; // -1 = unlimited
   maxTabsPerPage: number; // -1 = unlimited
   maxTeamMembers: number; // -1 = unlimited
+  maxSyncedBlocks: number; // -1 = unlimited
   passwordProtection: boolean;
   canInvite: boolean;
 }
@@ -16,6 +17,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxPages: 1,
     maxTabsPerPage: 3,
     maxTeamMembers: 1,
+    maxSyncedBlocks: 0,
     passwordProtection: false,
     canInvite: false,
   },
@@ -23,6 +25,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxPages: -1,
     maxTabsPerPage: -1,
     maxTeamMembers: 3,
+    maxSyncedBlocks: 20,
     passwordProtection: true,
     canInvite: true,
   },
@@ -30,6 +33,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxPages: -1,
     maxTabsPerPage: -1,
     maxTeamMembers: -1,
+    maxSyncedBlocks: -1,
     passwordProtection: true,
     canInvite: true,
   },
@@ -129,6 +133,33 @@ export async function canAddTeamMember(
         : undefined,
     current: total,
     limit: maxTeamMembers,
+  };
+}
+
+/** Can this team create a new synced block? */
+export async function canCreateSyncedBlock(
+  teamId: string
+): Promise<LimitCheckResult> {
+  const { maxSyncedBlocks, plan } = await getTeamPlanLimits(teamId);
+  if (maxSyncedBlocks === -1) return { allowed: true, current: 0, limit: -1 };
+  if (maxSyncedBlocks === 0) {
+    return {
+      allowed: false,
+      reason: `Synced blocks are not available on the ${plan} plan. Upgrade to Pro or Team.`,
+      current: 0,
+      limit: 0,
+    };
+  }
+
+  const count = await prisma.syncedBlock.count({ where: { teamId } });
+  return {
+    allowed: count < maxSyncedBlocks,
+    reason:
+      count >= maxSyncedBlocks
+        ? `Your ${plan} plan allows ${maxSyncedBlocks} synced block${maxSyncedBlocks === 1 ? "" : "s"}. Upgrade to create more.`
+        : undefined,
+    current: count,
+    limit: maxSyncedBlocks,
   };
 }
 

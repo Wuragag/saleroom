@@ -8,6 +8,7 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
+import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
 
 export default async function PublishedPage({
   params,
@@ -42,11 +43,13 @@ export default async function PublishedPage({
 
   const pageView = await prisma.pageView.create({ data: { pageId: page.id } });
 
-  const tabs = page.tabs.map((tab) => ({
-    id: tab.id,
-    name: tab.name,
-    content: JSON.parse(tab.content),
-  }));
+  const tabs = await Promise.all(
+    page.tabs.map(async (tab) => {
+      const parsed = JSON.parse(tab.content);
+      const resolved = await resolveSyncedBlocks(parsed);
+      return { id: tab.id, name: tab.name, content: resolved };
+    })
+  );
 
   const bgHex = getBgHex(page.background);
   const fontStyle = getFontStyle(page.font);

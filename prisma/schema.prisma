@@ -59,6 +59,7 @@ model User {
   teamMemberships     TeamMember[]
   sentInvites         TeamInvite[] @relation("InvitedBy")
   lockedPages         Page[]       @relation("LockedBy")
+  syncedBlocks        SyncedBlock[]
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -69,6 +70,7 @@ model Team {
   members      TeamMember[]
   invites      TeamInvite[]
   pages        Page[]
+  syncedBlocks SyncedBlock[]
   subscription Subscription?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -225,6 +227,22 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ──── Synced Content Blocks ────
+
+model SyncedBlock {
+  id          String   @id @default(cuid())
+  name        String
+  content     String   @default("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}")
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([teamId])
 }
 
 // ──── Buyer Analytics ────

@@ -23,6 +23,8 @@ import {
   Quote,
   FileText,
   UserRound,
+  Blocks,
+  Megaphone,
 } from "lucide-react";
 import type { SlashCommandItem } from "./slash-command-suggestion";
 
@@ -42,6 +44,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Quote,
   FileText,
   UserRound,
+  Blocks,
+  Megaphone,
 };
 
 interface SlashCommandListProps {

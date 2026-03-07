@@ -12,7 +12,7 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import { EmbedNode, CTAButtonNode, LogoGridNode, FormNode, ContactCardNode, BannerNode } from "./extensions";
+import { EmbedNode, CTAButtonNode, LogoGridNode, FormNode, ContactCardNode, BannerNode, SyncedBlockNode } from "./extensions";
 import { SlashCommand } from "./extensions/slash-command";
 import { EditorToolbar } from "./editor-toolbar";
 import { EditorHeader } from "./editor-header";
@@ -25,6 +25,7 @@ import { DEFAULT_CONTENT } from "@/lib/constants";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle } from "@/lib/page-styles";
 import { CoverImageEditor } from "./cover-image-editor";
 import { MapPanel } from "./map-panel";
+import { SyncedBlockPicker } from "./synced-block-picker";
 
 interface TiptapEditorProps {
   page: PageData;
@@ -109,6 +110,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
       FormNode,
       ContactCardNode,
       BannerNode,
+      SyncedBlockNode,
       SlashCommand,
     ],
     content: initialContent,
@@ -246,6 +248,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
           <MapPanel pageId={page.id} />
         </div>
       </div>
+      <SyncedBlockPicker editor={editor} />
     </div>
   );
 }

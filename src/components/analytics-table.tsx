@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, Clock, Link2, Globe, FileX, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { BuyerAnalyticsPanel } from "@/components/buyer-analytics-panel";
+import { ActivityTimeline } from "@/components/activity-timeline";
 import { formatDuration } from "@/lib/format-utils";
 
 interface PageStat {
@@ -123,10 +124,11 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
             </button>
           </div>
 
-          {/* Expandable buyer panel */}
+          {/* Expandable buyer panel + activity timeline */}
           {expanded === p.id && (
-            <div className="px-6 pb-6 bg-muted/20">
+            <div className="px-6 pb-6 bg-muted/20 space-y-4">
               <BuyerAnalyticsPanel pageId={p.id} />
+              <ActivityTimeline pageId={p.id} />
             </div>
           )}
         </div>

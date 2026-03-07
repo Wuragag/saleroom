@@ -560,6 +560,38 @@ function createBannerNode(accentColor: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Synced Block fallback — content is normally resolved before generateHTML,
+// but this handles any unresolved references gracefully.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SyncedBlockServerFallback = Node.create({
+  name: "syncedBlock",
+  group: "block",
+  atom: true,
+  addAttributes() {
+    return {
+      syncedBlockId: { default: null },
+      blockName: { default: "" },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'div[data-type="synced-block"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "synced-block",
+        "data-synced-block-id": HTMLAttributes.syncedBlockId || "",
+        style:
+          "padding:12px 16px;border:1px dashed #cbd5e1;border-radius:8px;color:#94a3b8;font-size:13px;",
+      }),
+      `[Synced: ${escapeHtml(HTMLAttributes.blockName) || "Unknown block"}]`,
+    ];
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PageRenderer
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -589,6 +621,7 @@ export function PageRenderer({
     createFormBlockNode(isDark, accentColor),
     createContactCardNode(isDark, accentColor),
     createBannerNode(accentColor),
+    SyncedBlockServerFallback,
   ];
 
   const rawHtml = generateHTML(
@@ -617,6 +650,8 @@ export function PageRenderer({
       "data-bg-style",
       "data-link",
       "data-link-label",
+      "data-synced-block-id",
+      "data-block-name",
     ],
     ALLOWED_URI_REGEXP:
       /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,

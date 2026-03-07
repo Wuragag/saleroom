@@ -80,6 +80,26 @@ export interface PageListItem {
   lockedByName?: string | null;
 }
 
+// ──── Synced Block types ────
+
+export interface SyncedBlockData {
+  id: string;
+  name: string;
+  content: string;
+  teamId: string;
+  createdById: string;
+  createdBy?: { name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SyncedBlockListItem {
+  id: string;
+  name: string;
+  updatedAt: string;
+  createdBy: { name: string };
+}
+
 // ──── Buyer Analytics types ────
 
 export type IntentLabel = "High Intent" | "Warm" | "Cold";
@@ -166,4 +186,39 @@ export interface TeamInviteData {
   invitedBy: {
     name: string;
   };
+}
+
+// ──── Activity Timeline types ────
+
+export type TimelineEventType =
+  | "first_visit"
+  | "return_visit"
+  | "tab_viewed"
+  | "cta_clicked"
+  | "form_submitted"
+  | "file_downloaded"
+  | "link_shared"
+  | "map_item_completed";
+
+export interface TimelineEvent {
+  id: string;
+  type: TimelineEventType;
+  timestamp: string;
+  visitorHash: string | null;
+  visitorId: string | null;
+  visitorEmail: string | null;
+  detail: Record<string, string | number | boolean>;
+  isSeller: boolean;
+}
+
+export interface TimelineVisitor {
+  id: string;
+  hash: string;
+  email: string | null;
+}
+
+export interface TimelineResponse {
+  events: TimelineEvent[];
+  nextCursor: string | null;
+  visitors: TimelineVisitor[];
 }

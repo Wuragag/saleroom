@@ -9,6 +9,7 @@ import {
   BarChart2,
   Settings,
   FileText,
+  Blocks,
   LogOut,
   Menu,
   X,
@@ -23,6 +24,7 @@ const NAV_ITEMS: {
   { href: "/", label: "Pages", icon: LayoutGrid },
   { href: "/analytics", label: "Analytics", icon: BarChart2, tourId: "nav-analytics" },
   { href: "/submissions", label: "Submissions", icon: FileText },
+  { href: "/library", label: "Library", icon: Blocks },
   { href: "/settings", label: "Settings", icon: Settings, tourId: "nav-settings" },
 ];
 

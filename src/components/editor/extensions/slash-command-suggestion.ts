@@ -249,6 +249,18 @@ const COMMANDS: SlashCommandItem[] = [
         .run();
     },
   },
+  {
+    title: "Synced Block",
+    description: "Insert a reusable content block",
+    icon: "Blocks",
+    aliases: ["synced", "block", "reusable", "library", "shared"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      window.dispatchEvent(
+        new CustomEvent("sr:insert-synced-block", { detail: { editor } })
+      );
+    },
+  },
 ];
 
 export const slashCommandSuggestion = {
