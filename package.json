@@ -50,6 +50,7 @@
     "isomorphic-dompurify": "^3.0.0",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.11.0",
+    "nanoid": "^5.1.6",
     "next": "^15.5.12",
     "next-auth": "^5.0.0-beta.30",
     "react": "^18",

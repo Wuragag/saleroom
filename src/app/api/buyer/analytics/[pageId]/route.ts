@@ -49,13 +49,14 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch visitors with their sessions and tab views
+    // Fetch visitors with their sessions, tab views, and linked contacts
     const visitors = await prisma.buyerVisitor.findMany({
       where: {
         pageId,
         ...(sinceDate ? { lastSeenAt: { gte: sinceDate } } : {}),
       },
       include: {
+        contact: { select: { name: true, email: true } },
         sessions: {
           include: {
             tabViews: true,
@@ -107,6 +108,8 @@ export async function GET(
         ctaClicked: v.ctaClicked,
         pricingTabViewed,
         intent,
+        contactName: v.contact?.name ?? null,
+        contactEmail: v.contact?.email ?? null,
       };
     });
 

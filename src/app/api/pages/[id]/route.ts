@@ -87,6 +87,7 @@ export async function PUT(
   }
   if (body.tags !== undefined) updateData.tags = body.tags;
   if (body.visibility !== undefined) updateData.visibility = body.visibility;
+  if (body.requireEmail !== undefined) updateData.requireEmail = !!body.requireEmail;
 
   const page = await prisma.page.update({
     where: { id },

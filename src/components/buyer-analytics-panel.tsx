@@ -176,8 +176,31 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
             <tbody className="divide-y divide-border">
               {visitors.map((v) => (
                 <tr key={v.visitorId} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                    #{v.visitorHash}
+                  <td className="px-4 py-3 text-xs">
+                    {v.contactName || v.contactEmail ? (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-5 w-5 rounded-full flex items-center justify-center text-white shrink-0"
+                          style={{
+                            backgroundColor: `hsl(${(v.contactEmail || "").length * 37 % 360}, 60%, 50%)`,
+                            fontSize: "8px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {(v.contactName || v.contactEmail || "?")[0].toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">
+                            {v.contactName || v.contactEmail}
+                          </p>
+                          {v.contactName && v.contactEmail && (
+                            <p className="text-[10px] text-muted-foreground truncate">{v.contactEmail}</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="font-mono text-muted-foreground">#{v.visitorHash}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs font-semibold tabular-nums">{v.sessions}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">

@@ -20,7 +20,10 @@ import {
   Users,
   EyeOff as EyeOffIcon,
   Trash2,
+  Share2,
+  Mail,
 } from "lucide-react";
+import { ShareModal } from "@/components/share-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +74,8 @@ interface EditorHeaderProps {
   visibility?: "TEAM" | "PRIVATE";
   onVisibilityChange?: (visibility: "TEAM" | "PRIVATE") => void;
   isCreator?: boolean;
+  requireEmail?: boolean;
+  onRequireEmailChange?: (requireEmail: boolean) => void;
 }
 
 export function EditorHeader({
@@ -89,6 +94,8 @@ export function EditorHeader({
   visibility,
   onVisibilityChange,
   isCreator,
+  requireEmail,
+  onRequireEmailChange,
 }: EditorHeaderProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -96,6 +103,9 @@ export function EditorHeader({
   const [lockLoading, setLockLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Share modal state
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // Save as Template modal state
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
@@ -218,6 +228,25 @@ export function EditorHeader({
     }
   };
 
+  const handleRequireEmailToggle = async () => {
+    const next = !requireEmail;
+    try {
+      const res = await fetch(`/api/pages/${pageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requireEmail: next }),
+      });
+      if (res.ok) {
+        onRequireEmailChange?.(next);
+        toast.success(next ? "Email gate enabled" : "Email gate disabled");
+      } else {
+        toast.error("Failed to update email gate setting");
+      }
+    } catch {
+      toast.error("Failed to update email gate setting");
+    }
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -317,6 +346,15 @@ export function EditorHeader({
                 )}
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg gap-1.5"
+                onClick={() => setShareModalOpen(true)}
+              >
+                <Share2 className="h-3 w-3" />
+                Share
+              </Button>
+              <Button
                 size="sm"
                 variant={published ? "outline" : "default"}
                 className="rounded-lg gap-1.5"
@@ -395,6 +433,14 @@ export function EditorHeader({
                   )}
 
                   <DropdownMenuItem
+                    onClick={handleRequireEmailToggle}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Mail className="h-4 w-4" />
+                    {requireEmail ? "Disable Email Gate" : "Require Email to View"}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
                     onClick={openSaveAsTemplate}
                     className="gap-2 cursor-pointer"
                   >
@@ -454,6 +500,15 @@ export function EditorHeader({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Share Modal ── */}
+      <ShareModal
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        pageId={pageId}
+        slug={slug}
+        pageTitle={title || "Untitled Page"}
+      />
 
       {/* ── Save as Template Dialog ── */}
       <Dialog open={templateModalOpen} onOpenChange={setTemplateModalOpen}>

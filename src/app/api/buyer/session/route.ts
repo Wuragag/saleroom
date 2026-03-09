@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { visitorId, pageId } = body as { visitorId?: string; pageId?: string };
+    const { visitorId, pageId, refToken } = body as {
+      visitorId?: string;
+      pageId?: string;
+      refToken?: string;
+    };
 
     if (!visitorId || !pageId) {
       return NextResponse.json({ error: "Missing visitorId or pageId" }, { status: 400 });
@@ -44,6 +48,18 @@ export async function POST(req: NextRequest) {
     const page = await prisma.page.findUnique({ where: { id: pageId }, select: { id: true } });
     if (!page) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
+    // Resolve refToken to a contactId (if valid)
+    let contactId: string | null = null;
+    if (refToken) {
+      const contact = await prisma.pageContact.findUnique({
+        where: { refToken },
+        select: { id: true, pageId: true },
+      });
+      if (contact?.pageId === pageId) {
+        contactId = contact.id;
+      }
     }
 
     const visitorHash = hashVisitorId(visitorId, pageId);
@@ -58,6 +74,7 @@ export async function POST(req: NextRequest) {
         create: {
           visitorHash,
           pageId,
+          contactId,
           firstSeenAt: now,
           lastSeenAt: now,
           totalSessions: 0,
@@ -65,6 +82,14 @@ export async function POST(req: NextRequest) {
           ctaClicked: false,
         },
       });
+
+      // If visitor exists but has no contact, link them now
+      if (contactId && !visitor.contactId) {
+        await tx.buyerVisitor.update({
+          where: { id: visitor.id },
+          data: { contactId },
+        });
+      }
 
       // Check for a recent session (within timeout window)
       const recentSession = await tx.buyerSession.findFirst({

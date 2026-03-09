@@ -15,7 +15,7 @@ export default async function PublishedPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ name?: string; company?: string }>;
+  searchParams: Promise<{ name?: string; company?: string; ref?: string }>;
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
@@ -26,9 +26,32 @@ export default async function PublishedPage({
 
   if (!page) notFound();
 
+  // ── Ref token tracking ──
+  // If ?ref= is present, redirect through /api/ref to set the cookie
+  // (Server Components cannot set cookies — only Route Handlers can).
+  const rawRef = resolvedSearchParams.ref ?? null;
+  if (rawRef) {
+    const target = new URL("/api/ref", process.env.NEXTAUTH_URL ?? "http://localhost:3000");
+    target.searchParams.set("token", rawRef);
+    target.searchParams.set("slug", slug);
+    if (resolvedSearchParams.name) target.searchParams.set("name", resolvedSearchParams.name);
+    if (resolvedSearchParams.company) target.searchParams.set("company", resolvedSearchParams.company);
+    redirect(target.toString());
+  }
+
+  // Read existing ref cookie (set by /api/ref on a prior visit)
+  const cookieStore = await cookies();
+  const refToken: string | null = cookieStore.get(`sr_ref_${page.id}`)?.value ?? null;
+
+  // ── Email gate ──
+  if (page.requireEmail && !refToken) {
+    // No valid ref → show email gate
+    const { EmailGate } = await import("@/components/email-gate");
+    return <EmailGate pageId={page.id} slug={page.slug} />;
+  }
+
   // Password gate — HMAC with server secret so DB leak alone can't forge tokens
   if (page.password) {
-    const cookieStore = await cookies();
     const token = cookieStore.get(`page_auth_${page.id}`)?.value;
     const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
     if (!secret) throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be set");
@@ -260,6 +283,7 @@ export default async function PublishedPage({
         pageId={page.id}
         initialTabId={tabs[0]?.id}
         initialTabName={tabs[0]?.name}
+        refToken={refToken ?? undefined}
       />
       <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
     </main>

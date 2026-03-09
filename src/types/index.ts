@@ -116,6 +116,21 @@ export interface BuyerVisitorRow {
   ctaClicked: boolean;
   pricingTabViewed: boolean;
   intent: IntentLabel;
+  contactName?: string | null;
+  contactEmail?: string | null;
+}
+
+export interface PageContactRow {
+  id: string;
+  email: string;
+  name: string | null;
+  company: string | null;
+  refToken: string;
+  createdAt: string;
+  engagementScore: number;
+  totalSessions: number;
+  lastSeenAt: string | null;
+  intent: IntentLabel | null;
 }
 
 export interface BuyerAnalyticsSummary {

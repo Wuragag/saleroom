@@ -49,6 +49,52 @@ export async function sendPasswordResetEmail(
   });
 }
 
+export async function sendSharePageEmail(
+  email: string,
+  pageUrl: string,
+  pageName: string,
+  senderName: string,
+  recipientName?: string
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.log(
+      `\n[Share Page — dev mode]\nEmail: ${email}\nPage: ${pageName}\nSender: ${senderName}\nLink: ${pageUrl}\n`
+    );
+    return;
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `${senderName} shared "${pageName}" with you`,
+    html: `
+<!DOCTYPE html>
+<html>
+  <body style="font-family:sans-serif;background:#f4f4f5;margin:0;padding:40px 16px;">
+    <div style="max-width:420px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
+      <h1 style="font-size:20px;font-weight:700;margin:0 0 8px;color:#09090b;">
+        ${senderName} shared a page with you
+      </h1>
+      <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
+        ${greeting} <strong>${senderName}</strong> shared
+        <strong>&ldquo;${pageName}&rdquo;</strong> with you on SalesRoom.
+      </p>
+      <a href="${pageUrl}"
+         style="display:inline-block;background:#09090b;color:#fff;font-size:14px;font-weight:600;padding:10px 24px;border-radius:8px;text-decoration:none;">
+        View page
+      </a>
+      <p style="font-size:12px;color:#a1a1aa;margin:24px 0 0;line-height:1.5;">
+        This link is unique to you. If you weren&apos;t expecting this, you can safely ignore this email.
+      </p>
+    </div>
+  </body>
+</html>`,
+  });
+}
+
 export async function sendTeamInviteEmail(
   email: string,
   token: string,

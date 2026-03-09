@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from "next/server";
+import { nanoid } from "nanoid";
+import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+
+/**
+ * POST /api/pages/[id]/gate
+ * Email gate submission: creates/finds a PageContact and sets a ref cookie.
+ * Body: { email: string, name?: string }
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const ip = getClientIp(req);
+    const { success } = limiter.check(ip, 10);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
+    const { id: pageId } = await params;
+    const body = await req.json();
+    const email = (body.email as string)?.trim().toLowerCase();
+    const name = (body.name as string)?.trim() || null;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+    }
+
+    // Verify the page exists and requires email
+    const page = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: { id: true, requireEmail: true },
+    });
+
+    if (!page) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
+    // Upsert the contact
+    const contact = await prisma.pageContact.upsert({
+      where: { pageId_email: { pageId, email } },
+      update: { ...(name ? { name } : {}) },
+      create: {
+        pageId,
+        email,
+        name,
+        refToken: nanoid(12),
+      },
+    });
+
+    // Set the ref cookie so future visits bypass the gate
+    const cookieStore = await cookies();
+    cookieStore.set(`sr_ref_${pageId}`, contact.refToken, {
+      httpOnly: true,
+      path: "/p/",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[gate POST]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

@@ -44,6 +44,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
   const [isLocked, setIsLocked] = useState(!!(page as any).lockedById);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [visibility, setVisibility] = useState<"TEAM" | "PRIVATE">((page as any).visibility ?? "TEAM");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [requireEmail, setRequireEmail] = useState<boolean>(!!(page as any).requireEmail);
   const [pageStyle, setPageStyle] = useState<PageStyle>({
     font: page.font ?? DEFAULT_PAGE_STYLE.font,
     accentColor: page.accentColor ?? DEFAULT_PAGE_STYLE.accentColor,
@@ -231,6 +233,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
           visibility={visibility}
           onVisibilityChange={setVisibility}
           isCreator={isCreator}
+          requireEmail={requireEmail}
+          onRequireEmailChange={setRequireEmail}
         />
         <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-4">
           <CoverImageEditor

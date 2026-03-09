@@ -141,6 +141,8 @@ model Page {
   events        PageEvent[]
   submissions   FormSubmission[]
   buyerVisitors BuyerVisitor[]
+  contacts     PageContact[]
+  requireEmail Boolean        @default(false)
   mutualActionPlan MutualActionPlan?
   font          String         @default("inter")
   accentColor   String         @default("slate")
@@ -245,6 +247,23 @@ model SyncedBlock {
   @@index([teamId])
 }
 
+// ──── Page Contacts (share tracking) ────
+
+model PageContact {
+  id        String         @id @default(cuid())
+  pageId    String
+  page      Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  email     String
+  name      String?
+  company   String?
+  refToken  String         @unique
+  visitors  BuyerVisitor[]
+  createdAt DateTime       @default(now())
+
+  @@unique([pageId, email])
+  @@index([pageId])
+}
+
 // ──── Buyer Analytics ────
 
 model BuyerVisitor {
@@ -252,6 +271,8 @@ model BuyerVisitor {
   visitorHash     String
   pageId          String
   page            Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  contactId       String?
+  contact         PageContact?   @relation(fields: [contactId], references: [id])
   sessions        BuyerSession[]
   firstSeenAt     DateTime       @default(now())
   lastSeenAt      DateTime       @default(now())
@@ -261,6 +282,7 @@ model BuyerVisitor {
 
   @@unique([visitorHash, pageId])
   @@index([pageId])
+  @@index([contactId])
 }
 
 model BuyerSession {

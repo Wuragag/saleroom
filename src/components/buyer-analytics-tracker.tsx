@@ -52,9 +52,10 @@ interface Props {
   pageId: string;
   initialTabId?: string;
   initialTabName?: string;
+  refToken?: string;
 }
 
-export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: Props) {
+export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, refToken }: Props) {
   // Refs are stable across renders — no re-renders needed for tracker state
   const sessionIdRef   = useRef<string | null>(null);
   const pageStartRef   = useRef<number>(Date.now());
@@ -181,7 +182,7 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName }: 
         const res = await fetch(SESSION_API, {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ visitorId, pageId }),
+          body:    JSON.stringify({ visitorId, pageId, ...(refToken ? { refToken } : {}) }),
         });
         if (!res.ok || aborted) return;
         const data = await res.json();

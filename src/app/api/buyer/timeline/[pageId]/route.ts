@@ -82,7 +82,7 @@ export async function GET(
           ...(visitorIds ? { visitorId: { in: visitorIds } } : {}),
           ...dateFilter("startedAt"),
         },
-        include: { visitor: { select: { id: true, visitorHash: true } } },
+        include: { visitor: { select: { id: true, visitorHash: true, contact: { select: { email: true, name: true } } } } },
         orderBy: { startedAt: "desc" },
         take: limit + 1,
       }),
@@ -96,7 +96,7 @@ export async function GET(
           ...dateFilter("startedAt"),
         },
         include: {
-          visitor: { select: { id: true, visitorHash: true, totalSessions: true } },
+          visitor: { select: { id: true, visitorHash: true, totalSessions: true, contact: { select: { email: true, name: true } } } },
         },
         orderBy: { startedAt: "desc" },
         take: limit + 1,
@@ -114,7 +114,7 @@ export async function GET(
         },
         include: {
           session: {
-            select: { visitor: { select: { id: true, visitorHash: true } } },
+            select: { visitor: { select: { id: true, visitorHash: true, contact: { select: { email: true, name: true } } } } },
           },
         },
         orderBy: { lastViewedAt: "desc" },
@@ -133,7 +133,7 @@ export async function GET(
         },
         include: {
           session: {
-            select: { visitor: { select: { id: true, visitorHash: true } } },
+            select: { visitor: { select: { id: true, visitorHash: true, contact: { select: { email: true, name: true } } } } },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -183,8 +183,8 @@ export async function GET(
         timestamp: s.startedAt.toISOString(),
         visitorHash: s.visitor.visitorHash.slice(0, 8),
         visitorId: s.visitor.id,
-        visitorEmail: null,
-        detail: {},
+        visitorEmail: s.visitor.contact?.email ?? null,
+        detail: { ...(s.visitor.contact?.name ? { contactName: s.visitor.contact.name } : {}) },
         isSeller: false,
       });
     }
@@ -196,8 +196,8 @@ export async function GET(
         timestamp: s.startedAt.toISOString(),
         visitorHash: s.visitor.visitorHash.slice(0, 8),
         visitorId: s.visitor.id,
-        visitorEmail: null,
-        detail: { totalSessions: s.visitor.totalSessions },
+        visitorEmail: s.visitor.contact?.email ?? null,
+        detail: { totalSessions: s.visitor.totalSessions, ...(s.visitor.contact?.name ? { contactName: s.visitor.contact.name } : {}) },
         isSeller: false,
       });
     }
@@ -209,7 +209,7 @@ export async function GET(
         timestamp: tv.lastViewedAt.toISOString(),
         visitorHash: tv.session.visitor.visitorHash.slice(0, 8),
         visitorId: tv.session.visitor.id,
-        visitorEmail: null,
+        visitorEmail: tv.session.visitor.contact?.email ?? null,
         detail: { tabName: tv.tabName, duration: tv.duration },
         isSeller: false,
       });
@@ -226,7 +226,7 @@ export async function GET(
         timestamp: ev.createdAt.toISOString(),
         visitorHash: ev.session.visitor.visitorHash.slice(0, 8),
         visitorId: ev.session.visitor.id,
-        visitorEmail: null,
+        visitorEmail: ev.session.visitor.contact?.email ?? null,
         detail: meta,
         isSeller: false,
       });
@@ -290,13 +290,13 @@ export async function GET(
     if (!cursor) {
       const allVisitors = await prisma.buyerVisitor.findMany({
         where: { pageId },
-        select: { id: true, visitorHash: true },
+        select: { id: true, visitorHash: true, contact: { select: { email: true, name: true } } },
         orderBy: { lastSeenAt: "desc" },
       });
       visitors = allVisitors.map((v) => ({
         id: v.id,
-        hash: v.visitorHash.slice(0, 8),
-        email: null,
+        hash: v.contact?.name ?? v.contact?.email ?? v.visitorHash.slice(0, 8),
+        email: v.contact?.email ?? null,
       }));
     }
 
