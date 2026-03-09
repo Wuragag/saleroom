@@ -23,6 +23,12 @@ export default function SignUpPage() {
     e.preventDefault();
     setError("");
 
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("Name is required");
+      return;
+    }
+
     if (password.length < 8) {
       setError("Password must be at least 8 characters");
       return;
@@ -38,7 +44,7 @@ export default function SignUpPage() {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, company }),
+      body: JSON.stringify({ name: trimmedName, email, password, company }),
     });
 
     if (!res.ok) {

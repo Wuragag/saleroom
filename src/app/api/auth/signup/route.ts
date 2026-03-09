@@ -27,14 +27,26 @@ export async function POST(request: Request) {
     );
   }
 
+  let body: Record<string, unknown>;
   try {
-    const body = await request.json();
-    const { name, email, password, company } = body as {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { name: rawName, email, password, company } = body as {
       name: string;
       email: string;
       password: string;
       company?: string;
     };
+
+    // Trim name to prevent whitespace-only values
+    const name = typeof rawName === "string" ? rawName.trim() : "";
 
     if (!name || !email || !password) {
       return NextResponse.json(

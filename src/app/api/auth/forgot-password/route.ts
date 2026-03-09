@@ -18,11 +18,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { email } = await request.json() as { email: string };
+    const { email: rawEmail } = await request.json() as { email: string };
 
-    if (!email) {
+    if (!rawEmail) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
+
+    // Normalize email to match how signup stores it
+    const email = rawEmail.toLowerCase().trim();
 
     // Always return success to avoid leaking whether the email exists
     const user = await prisma.user.findUnique({ where: { email } });
