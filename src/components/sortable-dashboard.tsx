@@ -92,6 +92,8 @@ function Pill({
 export function SortableDashboard({ pages: initialPages, analyticsMap }: SortableDashboardProps) {
   const router = useRouter();
   const [pages, setPages] = useState<PageListItem[]>(initialPages);
+  // Sync server-rendered data into state when it changes (e.g. after router.refresh())
+  useEffect(() => { setPages(initialPages); }, [initialPages]);
   const [sort, setSort] = useState<SortKey>("updatedAt");
   const [view, setView] = useState<ViewMode>("card");
 

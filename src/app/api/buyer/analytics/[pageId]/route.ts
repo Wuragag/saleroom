@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getIntentLabel } from "@/lib/engagement-score";
+import { getUserTeamId } from "@/lib/team-auth";
 
 function getRangeDate(range: string): Date | null {
   const now = new Date();
@@ -40,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const teamId = (session.user as { teamId?: string }).teamId;
+    const teamId = await getUserTeamId(session.user.id);
     const hasAccess =
       page.userId === session.user.id ||
       (teamId && page.teamId === teamId);

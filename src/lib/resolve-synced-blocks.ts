@@ -10,7 +10,7 @@ type TipTapNode = Record<string, any>;
  * Only resolves one level deep — synced block content itself is never
  * scanned for nested synced blocks (prevents circular references).
  */
-export async function resolveSyncedBlocks(doc: TipTapNode): Promise<TipTapNode> {
+export async function resolveSyncedBlocks(doc: TipTapNode, teamId?: string | null): Promise<TipTapNode> {
   if (!doc?.content) return doc;
 
   // 1. Collect all synced block IDs
@@ -23,9 +23,9 @@ export async function resolveSyncedBlocks(doc: TipTapNode): Promise<TipTapNode> 
 
   if (ids.size === 0) return doc;
 
-  // 2. Batch fetch from DB
+  // 2. Batch fetch from DB (scoped to team to prevent cross-team leakage)
   const blocks = await prisma.syncedBlock.findMany({
-    where: { id: { in: Array.from(ids) } },
+    where: { id: { in: Array.from(ids) }, ...(teamId ? { teamId } : {}) },
     select: { id: true, content: true },
   });
   const blockMap = new Map(

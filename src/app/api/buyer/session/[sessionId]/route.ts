@@ -41,12 +41,16 @@ export async function PATCH(
     const { sessionId } = await params;
     const body = await req.json();
     const {
-      duration = 0,
-      tabViews = [] as TabViewInput[],
+      duration: rawDuration = 0,
+      tabViews: rawTabViews = [] as TabViewInput[],
       ctaClicked = false,
       pricingTabViewed = false,
       fileDownloaded = false,
     } = body;
+
+    // Clamp duration and limit tabViews to prevent abuse
+    const duration = Math.max(0, Math.min(Number(rawDuration) || 0, 86400));
+    const tabViews = Array.isArray(rawTabViews) ? rawTabViews.slice(0, 50) : [];
 
     // Fetch session + visitor
     const session = await prisma.buyerSession.findUnique({

@@ -69,7 +69,7 @@ export default async function PublishedPage({
   const tabs = await Promise.all(
     page.tabs.map(async (tab) => {
       const parsed = JSON.parse(tab.content);
-      const resolved = await resolveSyncedBlocks(parsed);
+      const resolved = await resolveSyncedBlocks(parsed, page.teamId);
       return { id: tab.id, name: tab.name, content: resolved };
     })
   );

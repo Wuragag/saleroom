@@ -23,6 +23,16 @@ export async function POST() {
       );
     }
 
+    if (
+      subscription.stripeCustomerId.startsWith("manual_override_") ||
+      subscription.stripeCustomerId.startsWith("pending_")
+    ) {
+      return NextResponse.json(
+        { error: "No Stripe customer on file. Please contact support." },
+        { status: 400 }
+      );
+    }
+
     const appUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";

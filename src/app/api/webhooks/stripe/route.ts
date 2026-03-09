@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
   } catch (err) {
     console.error(`Stripe webhook error processing ${event.type}:`, err);
-    // Still return 200 so Stripe doesn't retry indefinitely
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
@@ -68,7 +68,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const sub = await getWebhookStripe().subscriptions.retrieve(subscriptionId);
   const priceId = sub.items.data[0]?.price.id;
   const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null;
-  const plan: BillingPlan = (resolvedPlan as BillingPlan | null) ?? "FREE";
+  if (!resolvedPlan) {
+    console.error(`Unknown price ID ${priceId} from subscription ${subscriptionId} — cannot resolve plan`);
+    throw new Error(`Unknown price ID: ${priceId}`);
+  }
+  const plan: BillingPlan = resolvedPlan as BillingPlan;
 
   await prisma.subscription.update({
     where: { teamId },
@@ -100,7 +104,7 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     data: {
       stripePriceId: priceId ?? subscription.stripePriceId,
       plan: plan ?? subscription.plan,
-      status: STRIPE_STATUS_MAP[sub.status] ?? "ACTIVE",
+      status: STRIPE_STATUS_MAP[sub.status] ?? "INCOMPLETE",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentPeriodStart: new Date(((sub as any).current_period_start ?? 0) * 1000),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,8 +142,9 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subId = (invoice as any).subscription as string;
   if (!subId) return;
+  // Only reactivate if the subscription is not already canceled
   await prisma.subscription.updateMany({
-    where: { stripeSubscriptionId: subId },
+    where: { stripeSubscriptionId: subId, status: { not: "CANCELED" } },
     data: { status: "ACTIVE" },
   });
 }

@@ -37,12 +37,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     return NextResponse.json({ error: "MAP not found" }, { status: 404 });
   }
 
-  // Only allow toggling items that belong to this MAP
+  // Only allow toggling buyer-owned items that belong to this MAP
   const item = await prisma.mapItem.findFirst({
     where: { id: itemId, mapId: map.id },
   });
   if (!item) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
+  }
+  if (item.ownerType !== "buyer") {
+    return NextResponse.json({ error: "Only buyer items can be toggled" }, { status: 403 });
   }
 
   const updated = await prisma.mapItem.update({

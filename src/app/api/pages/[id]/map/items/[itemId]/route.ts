@@ -14,6 +14,12 @@ export async function PUT(
     return NextResponse.json({ error: access.reason }, { status });
   }
 
+  // Verify item belongs to this page's MAP
+  const map = await prisma.mutualActionPlan.findUnique({ where: { pageId: id }, select: { id: true } });
+  if (!map) return NextResponse.json({ error: "MAP not found" }, { status: 404 });
+  const existing = await prisma.mapItem.findFirst({ where: { id: itemId, mapId: map.id } });
+  if (!existing) return NextResponse.json({ error: "Item not found" }, { status: 404 });
+
   const body = await request.json();
   const updateData: Record<string, unknown> = {};
   if (body.title !== undefined) updateData.title = body.title;
@@ -42,6 +48,12 @@ export async function DELETE(
     const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
     return NextResponse.json({ error: access.reason }, { status });
   }
+
+  // Verify item belongs to this page's MAP
+  const map = await prisma.mutualActionPlan.findUnique({ where: { pageId: id }, select: { id: true } });
+  if (!map) return NextResponse.json({ error: "MAP not found" }, { status: 404 });
+  const existing = await prisma.mapItem.findFirst({ where: { id: itemId, mapId: map.id } });
+  if (!existing) return NextResponse.json({ error: "Item not found" }, { status: 404 });
 
   await prisma.mapItem.delete({ where: { id: itemId } });
   return new NextResponse(null, { status: 204 });

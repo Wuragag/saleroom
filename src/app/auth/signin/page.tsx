@@ -91,19 +91,24 @@ function SignInForm() {
     setError("");
     setLoading(true);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (res?.error) {
+      if (res?.error) {
+        setLoading(false);
+        setError("Invalid email or password");
+      } else {
+        // Keep loading=true while navigating
+        router.push(callbackUrl);
+        router.refresh();
+      }
+    } catch {
       setLoading(false);
-      setError("Invalid email or password");
-    } else {
-      // Keep loading=true while navigating
-      router.push(callbackUrl);
-      router.refresh();
+      setError("Something went wrong. Please try again.");
     }
   }
 

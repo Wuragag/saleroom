@@ -31,7 +31,7 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   const [emailInput, setEmailInput] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [contacts, setContacts] = useState<PageContactRow[]>([]);
   const [loading, setLoading] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -120,11 +120,11 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
     }
   };
 
-  const copyContactLink = async (refToken: string) => {
+  const copyContactLink = async (contactId: string, refToken: string) => {
     const link = `${window.location.origin}/p/${slug}?ref=${refToken}`;
     await navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setCopiedId(contactId);
+    setTimeout(() => setCopiedId(null), 1500);
   };
 
   return (
@@ -230,11 +230,11 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                     {/* Actions */}
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => copyContactLink(c.refToken)}
+                        onClick={() => copyContactLink(c.id, c.refToken)}
                         className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted"
                         title="Copy link"
                       >
-                        {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                        {copiedId === c.id ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
                       </button>
                       <a
                         href={`/p/${slug}?ref=${c.refToken}`}

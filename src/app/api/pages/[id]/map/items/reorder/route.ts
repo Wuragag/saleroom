@@ -19,8 +19,18 @@ export async function PUT(
     return NextResponse.json({ error: "itemIds array required" }, { status: 400 });
   }
 
+  // Verify all items belong to this page's MAP
+  const map = await prisma.mutualActionPlan.findUnique({ where: { pageId: id }, select: { id: true } });
+  if (!map) return NextResponse.json({ error: "MAP not found" }, { status: 404 });
+  const validItems = await prisma.mapItem.findMany({
+    where: { mapId: map.id, id: { in: itemIds } },
+    select: { id: true },
+  });
+  const validIds = new Set(validItems.map((i) => i.id));
+  const filteredIds = itemIds.filter((id: string) => validIds.has(id));
+
   await prisma.$transaction(
-    itemIds.map((itemId: string, index: number) =>
+    filteredIds.map((itemId: string, index: number) =>
       prisma.mapItem.update({
         where: { id: itemId },
         data: { order: index },
