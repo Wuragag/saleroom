@@ -5,8 +5,8 @@ import { getUserTeamId } from "@/lib/team-auth";
 import { AppNav } from "@/components/app-nav";
 import { AnalyticsTable } from "@/components/analytics-table";
 import { AnalyticsStatCards } from "@/components/analytics-stat-cards";
+import { ViewsChart } from "@/components/views-chart";
 import { formatDuration } from "@/lib/format-utils";
-import { TrendingUp } from "lucide-react";
 
 const PAGE_SIZE = 50;
 
@@ -175,7 +175,7 @@ export default async function AnalyticsPage({
     const label = d.toLocaleDateString("en-US", { weekday: "short" });
     days.push({ label, count: dailyMap.get(key) ?? 0 });
   }
-  const maxDay = Math.max(...days.map((d) => d.count), 1);
+
 
   const statCards = [
     { label: "Total Views",       value: totalViews.toLocaleString(),      icon: "Eye",      color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-950/30",    description: "Total page views across all published pages" },
@@ -199,27 +199,7 @@ export default async function AnalyticsPage({
 
         <AnalyticsStatCards cards={statCards} />
 
-        <div className="bg-card border border-border rounded-xl p-6 mb-8">
-          <div className="flex items-center gap-2 mb-5">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-foreground">Views — last 7 days</h3>
-          </div>
-          <div className="flex items-end gap-2 h-24">
-            {days.map(({ label, count }) => (
-              <div key={label} className="flex-1 flex flex-col items-center gap-1.5">
-                <div
-                  className="w-full rounded-t-sm bg-primary/80 transition-all"
-                  style={{
-                    height:    `${Math.max(4, (count / maxDay) * 80)}px`,
-                    minHeight: count > 0 ? "8px" : "3px",
-                    opacity:   count === 0 ? 0.25 : 1,
-                  }}
-                />
-                <span className="text-[10px] text-muted-foreground">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ViewsChart days={days} />
 
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
