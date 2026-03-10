@@ -3,6 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canSetPassword } from "@/lib/plan-limits";
 import bcrypt from "bcryptjs";
+import slugify from "slugify";
+
+function generateSlug(title: string): string {
+  const base = slugify(title, { lower: true, strict: true });
+  const suffix = Math.random().toString(36).substring(2, 6);
+  return `${base}-${suffix}`;
+}
 
 export async function GET(
   request: Request,
@@ -58,7 +65,30 @@ export async function PUT(
 
   const updateData: Record<string, unknown> = {};
 
-  if (body.title !== undefined) updateData.title = body.title;
+  if (body.title !== undefined) {
+    updateData.title = body.title;
+
+    // Auto-update slug when title changes, unless the caller is explicitly
+    // setting a custom slug in the same request.
+    if (body.slug === undefined && access.page) {
+      const currentTitle = access.page.title ?? "";
+      const newTitle = body.title as string;
+      if (newTitle && newTitle !== currentTitle) {
+        let newSlug = generateSlug(newTitle);
+        // Retry if slug collision (up to 5 attempts)
+        let attempts = 0;
+        while (attempts < 5) {
+          const existing = await prisma.page.findUnique({ where: { slug: newSlug } });
+          if (!existing || existing.id === id) break;
+          newSlug = generateSlug(newTitle);
+          attempts++;
+        }
+        if (attempts < 5) {
+          updateData.slug = newSlug;
+        }
+      }
+    }
+  }
   if (body.content !== undefined) updateData.content = body.content;
   if (body.published !== undefined) updateData.published = body.published;
   if (body.slug !== undefined) updateData.slug = body.slug;

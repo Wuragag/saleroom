@@ -50,11 +50,28 @@ export function useProductTour(): ProductTourHook {
   const [steps, setSteps] = useState<TourStep[]>([]);
   const rafRef = useRef<number>(0);
 
-  // Initialize: check localStorage and set initial state
+  // Initialize: check localStorage first (instant), then verify with server
   useEffect(() => {
     const completed = localStorage.getItem(STORAGE_KEY);
-    if (!completed) {
-      setState("welcome");
+    if (completed) {
+      // Already dismissed locally — stay idle
+      setState("idle");
+    } else {
+      // Check server in case tour was completed on another device/browser
+      fetch("/api/tour")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.hasSeenTour) {
+            localStorage.setItem(STORAGE_KEY, "true");
+            setState("idle");
+          } else {
+            setState("welcome");
+          }
+        })
+        .catch(() => {
+          // Network error — show tour to be safe
+          setState("welcome");
+        });
     }
     setSteps(getFilteredSteps());
   }, []);
@@ -104,6 +121,10 @@ export function useProductTour(): ProductTourHook {
 
   const markComplete = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, "true");
+    // Persist to server so the state survives across browsers/devices
+    fetch("/api/tour", { method: "POST" }).catch(() => {
+      // Silently ignore — localStorage will still prevent re-showing locally
+    });
   }, []);
 
   const startTour = useCallback(() => {
