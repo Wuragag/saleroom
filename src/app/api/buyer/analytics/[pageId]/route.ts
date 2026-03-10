@@ -22,7 +22,6 @@ export const GET = withErrorHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ pageId: string }> }
 ) => {
-  try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,8 +59,8 @@ export const GET = withErrorHandler(async (
       ...(sinceDate ? { lastSeenAt: { gte: sinceDate } } : {}),
     };
 
-    // Fetch paginated visitors + total count in parallel
-    const [visitors, totalVisitorCount] = await Promise.all([
+    // Fetch paginated visitors + global summary stats in parallel
+    const [visitors, totalVisitorCount, globalReturning, globalHighIntent, globalScoreAgg] = await Promise.all([
       prisma.buyerVisitor.findMany({
         where: visitorWhere,
         take: limit,
@@ -83,6 +82,22 @@ export const GET = withErrorHandler(async (
         orderBy: { lastSeenAt: "desc" },
       }),
       prisma.buyerVisitor.count({ where: visitorWhere }),
+      // Global: return visitors (totalSessions > 1)
+      prisma.buyerVisitor.count({
+        where: { ...visitorWhere, totalSessions: { gt: 1 } },
+      }),
+      // Global: high intent visitors
+      prisma.buyerVisitor.count({
+        where: {
+          ...visitorWhere,
+          OR: [{ ctaClicked: true }, { engagementScore: { gte: 70 } }],
+        },
+      }),
+      // Global: average engagement score
+      prisma.buyerVisitor.aggregate({
+        where: visitorWhere,
+        _avg: { engagementScore: true },
+      }),
     ]);
 
     // Build response rows
@@ -127,16 +142,13 @@ export const GET = withErrorHandler(async (
       };
     });
 
-    // Summary stats (from current page of results — for global stats use totalVisitorCount)
-    const uniqueReturning = rows.filter((r) => r.sessions > 1).length;
-    const highIntentCount = rows.filter((r) => r.intent === "High Intent").length;
-    const avgScore =
-      rows.length > 0
-        ? Math.round(rows.reduce((s, r) => s + r.engagementScore, 0) / rows.length)
-        : 0;
-
     return NextResponse.json({
-      summary: { totalVisitors: totalVisitorCount, uniqueReturning, highIntentCount, avgScore },
+      summary: {
+        totalVisitors: totalVisitorCount,
+        uniqueReturning: globalReturning,
+        highIntentCount: globalHighIntent,
+        avgScore: Math.round(globalScoreAgg._avg.engagementScore ?? 0),
+      },
       visitors: rows,
       pagination: {
         page: pageParam,
@@ -145,8 +157,4 @@ export const GET = withErrorHandler(async (
         totalPages: Math.ceil(totalVisitorCount / limit),
       },
     });
-  } catch (err) {
-    console.error("[buyer/analytics GET]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { TimelineEvent, TimelineEventType, TimelineVisitor } from "@/types";
 
 type Range = "7d" | "30d" | "all";
@@ -139,7 +139,7 @@ export function useActivityTimeline(pageId: string): UseActivityTimelineReturn {
     fetchEvents({ reset: true });
   }, [fetchEvents]);
 
-  const sessionGroups = groupIntoSessions(events);
+  const sessionGroups = useMemo(() => groupIntoSessions(events), [events]);
 
   return {
     events,

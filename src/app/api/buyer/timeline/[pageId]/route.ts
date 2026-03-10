@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserTeamId } from "@/lib/team-auth";
 import { extractEmailFromFormData } from "@/lib/timeline-utils";
 import { withErrorHandler } from "@/lib/api-error";
 import type { TimelineEvent, TimelineEventType, TimelineVisitor } from "@/types";
@@ -22,7 +23,6 @@ export const GET = withErrorHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ pageId: string }> }
 ) => {
-  try {
     const session = await auth();
     if (!session?.user?.id)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,7 +30,7 @@ export const GET = withErrorHandler(async (
     const { pageId } = await params;
     const url = req.nextUrl.searchParams;
     const range = url.get("range") ?? "30d";
-    const cursor = url.get("cursor"); // ISO timestamp
+    const cursorParam = url.get("cursor"); // "timestamp|lastId" or legacy ISO timestamp
     const limit = Math.min(Number(url.get("limit") ?? 50), 100);
     const visitorFilter = url.get("visitorId");
     const typeFilter = url.get("types")?.split(",").filter(Boolean) as TimelineEventType[] | undefined;
@@ -42,18 +42,31 @@ export const GET = withErrorHandler(async (
     });
     if (!page) return NextResponse.json({ error: "Page not found" }, { status: 404 });
 
-    const teamId = (session.user as { teamId?: string }).teamId;
+    const teamId = await getUserTeamId(session.user.id);
     const hasAccess = page.userId === session.user.id || (teamId && page.teamId === teamId);
     if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const sinceDate = getRangeDate(range);
-    const cursorDate = cursor ? new Date(cursor) : undefined;
 
-    // Build date filter helper
+    // Parse composite cursor: "timestamp|lastEventId"
+    let cursorDate: Date | undefined;
+    let cursorLastId: string | undefined;
+    if (cursorParam) {
+      const pipeIdx = cursorParam.indexOf("|");
+      if (pipeIdx !== -1) {
+        cursorDate = new Date(cursorParam.slice(0, pipeIdx));
+        cursorLastId = cursorParam.slice(pipeIdx + 1);
+      } else {
+        // Legacy: plain ISO timestamp
+        cursorDate = new Date(cursorParam);
+      }
+    }
+
+    // Build date filter — use lte for cursor to include same-timestamp events
     const dateFilter = (field: string) => {
       const conditions: Record<string, Date>[] = [];
       if (sinceDate) conditions.push({ gte: sinceDate });
-      if (cursorDate) conditions.push({ lt: cursorDate });
+      if (cursorDate) conditions.push({ lte: cursorDate });
       return conditions.length > 0
         ? { [field]: Object.assign({}, ...conditions) }
         : {};
@@ -278,21 +291,36 @@ export const GET = withErrorHandler(async (
       ? events.filter((e) => typeFilter.includes(e.type))
       : events;
 
-    // ── Sort desc by timestamp ──
-    filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // ── Sort desc by timestamp, stable by id ──
+    filtered.sort((a, b) => {
+      const diff = new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      return diff !== 0 ? diff : a.id.localeCompare(b.id);
+    });
+
+    // ── Skip past the cursor's last seen event ──
+    let startIdx = 0;
+    if (cursorLastId) {
+      const idx = filtered.findIndex((e) => e.id === cursorLastId);
+      if (idx !== -1) startIdx = idx + 1;
+    }
 
     // ── Cursor-based pagination ──
-    const hasMore = filtered.length > limit;
-    const page_events = filtered.slice(0, limit);
-    const nextCursor = hasMore ? page_events[page_events.length - 1].timestamp : null;
+    const remaining = filtered.slice(startIdx);
+    const hasMore = remaining.length > limit;
+    const page_events = remaining.slice(0, limit);
+    const lastEvent = page_events[page_events.length - 1];
+    const nextCursor = hasMore && lastEvent
+      ? `${lastEvent.timestamp}|${lastEvent.id}`
+      : null;
 
     // ── Build visitor list for filter dropdown (first request only) ──
     let visitors: TimelineVisitor[] = [];
-    if (!cursor) {
+    if (!cursorParam) {
       const allVisitors = await prisma.buyerVisitor.findMany({
         where: { pageId },
         select: { id: true, visitorHash: true, contact: { select: { email: true, name: true } } },
         orderBy: { lastSeenAt: "desc" },
+        take: 100,
       });
       visitors = allVisitors.map((v) => ({
         id: v.id,
@@ -306,8 +334,4 @@ export const GET = withErrorHandler(async (
       nextCursor,
       visitors,
     });
-  } catch (err) {
-    console.error("[buyer/timeline GET]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
 });
