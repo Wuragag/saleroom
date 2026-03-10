@@ -38,33 +38,41 @@ export default async function Dashboard() {
     },
   });
 
-  const analyticsMap = Object.fromEntries(
-    await Promise.all(
-      pages.map(async (page) => {
-        const [viewStats, eventStats] = await Promise.all([
-          prisma.pageView.aggregate({
-            where: { pageId: page.id },
-            _count: { id: true },
-            _avg: { duration: true },
-          }),
-          prisma.pageEvent.groupBy({
-            by: ["type"],
-            where: { pageId: page.id },
-            _count: { id: true },
-          }),
-        ]);
-        const analytics: PageAnalytics = {
-          views: viewStats._count.id,
-          avgDuration: Math.round(viewStats._avg.duration ?? 0),
-          linkClicks:
-            eventStats.find((e) => e.type === "link_click")?._count.id ?? 0,
-          shares:
-            eventStats.find((e) => e.type === "share")?._count.id ?? 0,
-        };
-        return [page.id, analytics] as const;
-      })
-    )
-  );
+  const pageIds = pages.map((p) => p.id);
+
+  // Batched analytics: 2 queries instead of 2*N
+  const [viewsByPage, eventsByPage] = await Promise.all([
+    prisma.pageView.groupBy({
+      by: ["pageId"],
+      where: { pageId: { in: pageIds } },
+      _count: { id: true },
+      _avg: { duration: true },
+    }),
+    prisma.pageEvent.groupBy({
+      by: ["pageId", "type"],
+      where: { pageId: { in: pageIds } },
+      _count: { id: true },
+    }),
+  ]);
+
+  const viewsMap = new Map(viewsByPage.map((v) => [v.pageId, v]));
+  const linkClicksMap = new Map<string, number>();
+  const sharesMap = new Map<string, number>();
+  for (const e of eventsByPage) {
+    if (e.type === "link_click") linkClicksMap.set(e.pageId, e._count.id);
+    if (e.type === "share") sharesMap.set(e.pageId, e._count.id);
+  }
+
+  const analyticsMap: Record<string, PageAnalytics> = {};
+  for (const page of pages) {
+    const vs = viewsMap.get(page.id);
+    analyticsMap[page.id] = {
+      views: vs?._count.id ?? 0,
+      avgDuration: Math.round(vs?._avg.duration ?? 0),
+      linkClicks: linkClicksMap.get(page.id) ?? 0,
+      shares: sharesMap.get(page.id) ?? 0,
+    };
+  }
 
   const pageItems: PageListItem[] = pages.map((p) => ({
     id: p.id,

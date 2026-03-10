@@ -7,7 +7,7 @@ import { verifyImpersonateToken } from "@/lib/impersonation";
 import { rateLimit } from "@/lib/rate-limit";
 
 // Rate limit sign-in: 5 failed attempts per email per minute
-const signInLimiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const signInLimiter = rateLimit({ limit: 5, window: "60s" });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -55,7 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const normalizedEmail = (credentials.email as string).toLowerCase().trim();
 
         // Rate limit by email to prevent brute-force
-        const { success } = signInLimiter.check(`signin:${normalizedEmail}`, 5);
+        const { success } = await signInLimiter.limit(`signin:${normalizedEmail}`);
         if (!success) return null;
 
         const user = await prisma.user.findUnique({

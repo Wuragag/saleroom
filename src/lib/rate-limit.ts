@@ -1,90 +1,141 @@
 /**
- * Simple in-memory sliding-window rate limiter.
+ * Rate limiter with Upstash Redis (production) and in-memory fallback (local dev).
  *
- * ⚠️  SERVERLESS LIMITATION: This limiter uses an in-memory Map that is NOT
- * shared across serverless function instances. On platforms like Vercel, each
- * cold-start creates a fresh Map, so a determined attacker can bypass limits
- * by hitting different instances. This still provides *best-effort* protection
- * against naive abuse (bots, accidental loops, etc.).
+ * When UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set, uses a
+ * distributed sliding-window limiter shared across all serverless instances.
  *
- * For production-grade rate limiting, replace this with a shared store such as:
- *  - Upstash Redis (`@upstash/ratelimit`)
- *  - Vercel KV / Redis
- *  - Cloudflare Workers KV or Durable Objects
+ * Without those env vars, falls back to a simple in-memory sliding-window
+ * limiter (best-effort, resets on cold-start).
  *
  * Usage:
- *   const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
- *   const { success } = await limiter.check(ip, 10); // 10 requests per interval
+ *   const limiter = rateLimit({ limit: 10, window: "60s" });
+ *   const { success } = await limiter.limit(ip);
  */
 
-interface RateLimitOptions {
-  /** Time window in milliseconds (default: 60 000 = 1 min). */
-  interval?: number;
-  /** Max number of unique tokens (IPs) tracked per interval (LRU eviction). */
-  uniqueTokenPerInterval?: number;
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+// ── Types ──
+
+interface RateLimitResult {
+  success: boolean;
+  remaining: number;
 }
+
+interface RateLimiter {
+  limit(token: string): Promise<RateLimitResult>;
+}
+
+type WindowDuration = `${number}${"s" | "m" | "h" | "d"}`;
+
+interface RateLimitConfig {
+  /** Max requests per window (e.g. 10). */
+  limit: number;
+  /** Time window as a duration string (e.g. "60s", "1m", "1h"). */
+  window: WindowDuration;
+  /** Optional prefix for Redis keys (default: "rl"). */
+  prefix?: string;
+}
+
+// ── Upstash Redis singleton ──
+
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redis) return redis;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  redis = new Redis({ url, token });
+  return redis;
+}
+
+// ── In-memory fallback ──
 
 interface TokenBucket {
   count: number;
   expiresAt: number;
 }
 
-export function rateLimit(opts: RateLimitOptions = {}) {
-  const interval = opts.interval ?? 60_000;
-  const maxTokens = opts.uniqueTokenPerInterval ?? 500;
+function parseWindowMs(window: WindowDuration): number {
+  const match = window.match(/^(\d+)(s|m|h|d)$/);
+  if (!match) return 60_000;
+  const value = parseInt(match[1], 10);
+  switch (match[2]) {
+    case "s": return value * 1_000;
+    case "m": return value * 60_000;
+    case "h": return value * 3_600_000;
+    case "d": return value * 86_400_000;
+    default: return 60_000;
+  }
+}
 
+function createInMemoryLimiter(config: RateLimitConfig): RateLimiter {
+  const intervalMs = parseWindowMs(config.window);
   const tokenCache = new Map<string, TokenBucket>();
 
-  // Periodic cleanup to prevent memory leaks
-  const cleanup = () => {
+  // Periodic cleanup
+  const timer = setInterval(() => {
     const now = Date.now();
     tokenCache.forEach((bucket, key) => {
-      if (bucket.expiresAt <= now) {
-        tokenCache.delete(key);
-      }
+      if (bucket.expiresAt <= now) tokenCache.delete(key);
     });
-  };
-
-  // Run cleanup every interval
-  if (typeof globalThis !== "undefined") {
-    const timer = setInterval(cleanup, interval);
-    // Allow process to exit without waiting for this timer
-    if (timer && typeof timer === "object" && "unref" in timer) {
-      (timer as NodeJS.Timeout).unref();
-    }
+  }, intervalMs);
+  if (timer && typeof timer === "object" && "unref" in timer) {
+    (timer as NodeJS.Timeout).unref();
   }
 
   return {
-    check(token: string, limit: number): { success: boolean; remaining: number } {
+    async limit(token: string): Promise<RateLimitResult> {
       const now = Date.now();
 
-      // Evict expired entry
+      // Evict expired
       const existing = tokenCache.get(token);
       if (existing && existing.expiresAt <= now) {
         tokenCache.delete(token);
       }
 
       const bucket = tokenCache.get(token);
-
       if (!bucket) {
-        // Enforce LRU eviction if cache is full
-        if (tokenCache.size >= maxTokens) {
+        // LRU eviction if too many tokens
+        if (tokenCache.size >= 500) {
           const firstKey = tokenCache.keys().next().value;
           if (firstKey) tokenCache.delete(firstKey);
         }
-
-        tokenCache.set(token, { count: 1, expiresAt: now + interval });
-        return { success: true, remaining: limit - 1 };
+        tokenCache.set(token, { count: 1, expiresAt: now + intervalMs });
+        return { success: true, remaining: config.limit - 1 };
       }
 
-      if (bucket.count >= limit) {
+      if (bucket.count >= config.limit) {
         return { success: false, remaining: 0 };
       }
 
       bucket.count += 1;
-      return { success: true, remaining: limit - bucket.count };
+      return { success: true, remaining: config.limit - bucket.count };
     },
   };
+}
+
+// ── Factory ──
+
+export function rateLimit(config: RateLimitConfig): RateLimiter {
+  const r = getRedis();
+  if (r) {
+    const upstash = new Ratelimit({
+      redis: r,
+      limiter: Ratelimit.slidingWindow(config.limit, config.window),
+      prefix: config.prefix ?? "rl",
+    });
+    return {
+      async limit(token: string): Promise<RateLimitResult> {
+        const result = await upstash.limit(token);
+        return { success: result.success, remaining: result.remaining };
+      },
+    };
+  }
+
+  // Fallback for local development
+  return createInMemoryLimiter(config);
 }
 
 /**

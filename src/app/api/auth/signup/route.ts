@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { getStripe } from "@/lib/stripe";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 3, window: "60s" });
 
 /** Try to get Stripe — returns null if STRIPE_SECRET_KEY is not configured */
 function tryGetStripe() {
@@ -19,7 +19,7 @@ function tryGetStripe() {
 export async function POST(request: Request) {
   // Rate limit: 3 signups per minute per IP
   const ip = getClientIp(request);
-  const { success } = limiter.check(ip, 3);
+  const { success } = await limiter.limit(ip);
   if (!success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

@@ -18,7 +18,7 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
 // Rate limit: 60 heartbeats per minute per IP (client sends every ~30s)
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 60, window: "60s" });
 
 interface TabViewInput {
   tabId: string;
@@ -34,7 +34,7 @@ export const PATCH = withErrorHandler(async (
   try {
     // Rate limit check
     const ip = getClientIp(req);
-    const { success } = limiter.check(ip, 60);
+    const { success } = await limiter.limit(ip);
     if (!success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }

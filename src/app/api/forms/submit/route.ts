@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 5, window: "60s" });
 
 /** Max total size of the serialised form data (bytes). */
 const MAX_DATA_SIZE = 16_384; // 16 KB
@@ -11,7 +11,7 @@ const MAX_DATA_SIZE = 16_384; // 16 KB
 export const POST = withErrorHandler(async (req: Request) => {
   // Rate limit: 5 form submissions per minute per IP
   const ip = getClientIp(req);
-  const { success } = limiter.check(ip, 5);
+  const { success } = await limiter.limit(ip);
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
