@@ -53,6 +53,7 @@ model User {
   avatarUrl           String       @default("")
   role                String?
   onboardingCompleted Boolean      @default(false)
+  hasSeenTour         Boolean      @default(false)
   company             String       @default("")
   isAdmin             Boolean      @default(false)
   pages               Page[]

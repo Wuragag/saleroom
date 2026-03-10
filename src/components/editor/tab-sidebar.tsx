@@ -16,7 +16,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle, X } from "lucide-react";
 import { SortableTabItem } from "./sortable-tab-item";
 import { StylePanel } from "./style-panel";
 import { LinksEditor } from "./links-editor";
@@ -129,9 +129,18 @@ export function TabSidebar({
         {tabLimitError && (
           <div className="mt-1.5 flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
             <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-tight">
+            <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-tight flex-1">
               {tabLimitError}
             </p>
+            {onClearTabLimitError && (
+              <button
+                onClick={onClearTabLimitError}
+                className="shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
+                aria-label="Dismiss"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
         )}
       </div>

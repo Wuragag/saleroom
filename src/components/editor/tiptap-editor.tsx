@@ -152,6 +152,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
       // navigates away before the next auto-save fires.
       saveTabContent(activeTabId, content).catch(() => {});
     }
+    // Clear any stale tab-limit warning when switching tabs
+    clearTabLimitError();
     setActiveTabId(tabId);
   };
 
