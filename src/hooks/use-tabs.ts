@@ -110,14 +110,13 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
 
   const saveTabContent = useCallback(
     async (tabId: string, content: string) => {
-      try {
-        await apiClient.put(`/api/tabs/${tabId}`, { content });
-        setTabs((prev) =>
-          prev.map((t) => (t.id === tabId ? { ...t, content } : t))
-        );
-      } catch {
-        // Content save failures are handled by the auto-save status indicator
-      }
+      // Always update local state so tab switching shows the latest content,
+      // even if the server request fails.
+      setTabs((prev) =>
+        prev.map((t) => (t.id === tabId ? { ...t, content } : t))
+      );
+      // Let errors propagate so the auto-save hook can show the correct status.
+      await apiClient.put(`/api/tabs/${tabId}`, { content });
     },
     []
   );

@@ -126,21 +126,30 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
     saveTabContent,
   });
 
-  // Update editor content when active tab changes
+  // Track the tab ID the editor was initialised with so we can detect
+  // whether a setContent call is needed when the editor first becomes ready.
+  const initialTabIdRef = useRef(activeTabId);
+
+  // Update editor content when active tab changes (or when editor becomes ready)
   useEffect(() => {
+    if (!editor || !activeTab) return;
+
+    // On the very first run after the editor is ready, skip setContent ONLY
+    // if the active tab is still the one useEditor was initialised with.
+    // If the user switched tabs before the editor was created, we must load
+    // the correct tab now.
     if (isFirstMount.current) {
       isFirstMount.current = false;
-      return;
+      if (activeTabId === initialTabIdRef.current) return;
     }
-    if (editor && activeTab) {
-      try {
-        const content = JSON.parse(activeTab.content);
-        editor.commands.setContent(content, { emitUpdate: false });
-      } catch {
-        editor.commands.setContent(DEFAULT_CONTENT, { emitUpdate: false });
-      }
+
+    try {
+      const content = JSON.parse(activeTab.content);
+      editor.commands.setContent(content, { emitUpdate: false });
+    } catch {
+      editor.commands.setContent(DEFAULT_CONTENT, { emitUpdate: false });
     }
-  }, [activeTabId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTabId, editor, activeTab]); // re-run when editor becomes ready or tab changes
 
   const handleSelectTab = (tabId: string) => {
     if (tabId === activeTabId) return;
