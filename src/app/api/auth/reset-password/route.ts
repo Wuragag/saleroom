@@ -3,12 +3,12 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 5, window: "60s" });
 
 export async function POST(request: Request) {
   // Rate limit: 5 reset attempts per minute per IP
   const ip = getClientIp(request);
-  const { success } = limiter.check(ip, 5);
+  const { success } = await limiter.limit(ip);
   if (!success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

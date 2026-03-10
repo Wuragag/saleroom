@@ -32,6 +32,10 @@ export const GET = withErrorHandler(async (
     const range = req.nextUrl.searchParams.get("range") ?? "30d";
     const sinceDate = getRangeDate(range);
 
+    // Pagination
+    const pageParam = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.nextUrl.searchParams.get("limit") ?? "50", 10) || 50));
+
     // Verify access: page must belong to the user's team or user directly
     const page = await prisma.page.findUnique({
       where: { id: pageId },
@@ -51,27 +55,35 @@ export const GET = withErrorHandler(async (
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch visitors with their sessions, tab views, and linked contacts
-    const visitors = await prisma.buyerVisitor.findMany({
-      where: {
-        pageId,
-        ...(sinceDate ? { lastSeenAt: { gte: sinceDate } } : {}),
-      },
-      include: {
-        contact: { select: { name: true, email: true } },
-        sessions: {
-          include: {
-            tabViews: true,
-            events: {
-              where: { type: { in: ["CTA_CLICK", "FILE_DOWNLOAD", "TAB_VIEW"] } },
-              select: { type: true, metadata: true },
+    const visitorWhere = {
+      pageId,
+      ...(sinceDate ? { lastSeenAt: { gte: sinceDate } } : {}),
+    };
+
+    // Fetch paginated visitors + total count in parallel
+    const [visitors, totalVisitorCount] = await Promise.all([
+      prisma.buyerVisitor.findMany({
+        where: visitorWhere,
+        take: limit,
+        skip: (pageParam - 1) * limit,
+        include: {
+          contact: { select: { name: true, email: true } },
+          sessions: {
+            take: 10, // limit nested sessions to most recent 10
+            include: {
+              tabViews: true,
+              events: {
+                where: { type: { in: ["CTA_CLICK", "FILE_DOWNLOAD", "TAB_VIEW"] } },
+                select: { type: true, metadata: true },
+              },
             },
+            orderBy: { startedAt: "desc" },
           },
-          orderBy: { startedAt: "desc" },
         },
-      },
-      orderBy: { lastSeenAt: "desc" },
-    });
+        orderBy: { lastSeenAt: "desc" },
+      }),
+      prisma.buyerVisitor.count({ where: visitorWhere }),
+    ]);
 
     // Build response rows
     const rows = visitors.map((v) => {
@@ -115,8 +127,7 @@ export const GET = withErrorHandler(async (
       };
     });
 
-    // Summary stats
-    const totalVisitors = rows.length;
+    // Summary stats (from current page of results — for global stats use totalVisitorCount)
     const uniqueReturning = rows.filter((r) => r.sessions > 1).length;
     const highIntentCount = rows.filter((r) => r.intent === "High Intent").length;
     const avgScore =
@@ -125,8 +136,14 @@ export const GET = withErrorHandler(async (
         : 0;
 
     return NextResponse.json({
-      summary: { totalVisitors, uniqueReturning, highIntentCount, avgScore },
+      summary: { totalVisitors: totalVisitorCount, uniqueReturning, highIntentCount, avgScore },
       visitors: rows,
+      pagination: {
+        page: pageParam,
+        limit,
+        total: totalVisitorCount,
+        totalPages: Math.ceil(totalVisitorCount / limit),
+      },
     });
   } catch (err) {
     console.error("[buyer/analytics GET]", err);

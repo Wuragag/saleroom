@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 20, window: "60s" });
 
 export const PATCH = withErrorHandler(async (
   req: Request,
@@ -13,7 +13,7 @@ export const PATCH = withErrorHandler(async (
 
   // Rate limit: 20 duration updates per minute per IP
   const ip = getClientIp(req);
-  const { success } = limiter.check(ip, 20);
+  const { success } = await limiter.limit(ip);
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

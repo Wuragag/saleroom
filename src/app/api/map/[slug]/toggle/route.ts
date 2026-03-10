@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 30, window: "60s" });
 
 /** POST /api/map/[slug]/toggle — buyer toggles a MAP item (public, rate-limited) */
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const ip = getClientIp(req);
-  const { success } = limiter.check(ip, 30);
+  const { success } = await limiter.limit(ip);
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

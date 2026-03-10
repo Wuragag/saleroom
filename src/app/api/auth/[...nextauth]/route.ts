@@ -2,7 +2,7 @@ import { handlers } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 5, window: "60s" });
 
 const { GET, POST: originalPost } = handlers;
 
@@ -16,7 +16,7 @@ async function POST(request: NextRequest) {
 
   if (isSignIn) {
     const ip = getClientIp(request);
-    const { success } = limiter.check(ip, 5);
+    const { success } = await limiter.limit(ip);
     if (!success) {
       return NextResponse.json(
         { error: "Too many login attempts. Please try again later." },

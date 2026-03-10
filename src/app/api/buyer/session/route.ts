@@ -19,7 +19,7 @@ import { withErrorHandler } from "@/lib/api-error";
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 // Rate limit: 20 session creations per minute per IP
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 20, window: "60s" });
 
 function hashVisitorId(raw: string, pageId: string): string {
   return createHash("sha256").update(`${raw}:${pageId}`).digest("hex");
@@ -29,7 +29,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   try {
     // Rate limit check
     const ip = getClientIp(req);
-    const { success } = limiter.check(ip, 20);
+    const { success } = await limiter.limit(ip);
     if (!success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }

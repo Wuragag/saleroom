@@ -105,6 +105,7 @@ model TeamMember {
 
   @@unique([userId, teamId])
   @@index([teamId])
+  @@index([userId])
 }
 
 model TeamInvite {
@@ -185,6 +186,7 @@ model PageView {
   createdAt DateTime @default(now())
 
   @@index([pageId])
+  @@index([pageId, createdAt])
 }
 
 model PageEvent {
@@ -207,6 +209,7 @@ model FormSubmission {
   createdAt DateTime @default(now())
 
   @@index([pageId, formId])
+  @@index([pageId, createdAt])
 }
 
 model Template {
@@ -245,6 +248,7 @@ model SyncedBlock {
   updatedAt   DateTime @updatedAt
 
   @@index([teamId])
+  @@index([createdById])
 }
 
 // ──── Page Contacts (share tracking) ────

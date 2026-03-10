@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 30, window: "60s" });
 
 export const POST = withErrorHandler(async (req: Request) => {
   // Rate limit: 30 events per minute per IP
   const ip = getClientIp(req);
-  const { success } = limiter.check(ip, 30);
+  const { success } = await limiter.limit(ip);
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

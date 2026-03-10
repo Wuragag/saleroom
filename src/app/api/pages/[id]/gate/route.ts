@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
+const limiter = rateLimit({ limit: 10, window: "60s" });
 
 /**
  * POST /api/pages/[id]/gate
@@ -18,7 +18,7 @@ export const POST = withErrorHandler(async (
 ) => {
   try {
     const ip = getClientIp(req);
-    const { success } = limiter.check(ip, 10);
+    const { success } = await limiter.limit(ip);
     if (!success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
