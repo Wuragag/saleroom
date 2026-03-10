@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -41,15 +42,10 @@ export default function SignUpPage() {
 
     setLoading(true);
 
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: trimmedName, email, password, company }),
-    });
-
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError(json.error ?? "Something went wrong. Please try again.");
+    try {
+      await apiClient.post("/api/auth/signup", { name: trimmedName, email, password, company });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
       setLoading(false);
       return;
     }

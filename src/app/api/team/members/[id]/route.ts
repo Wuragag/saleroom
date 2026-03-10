@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTeamOwner } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 // DELETE /api/team/members/[id] — remove a member (owner only)
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id: memberId } = await params;
   const { authorized, session, teamId, reason } = await requireTeamOwner();
 
@@ -37,4 +38,4 @@ export async function DELETE(
   });
 
   return new NextResponse(null, { status: 204 });
-}
+});

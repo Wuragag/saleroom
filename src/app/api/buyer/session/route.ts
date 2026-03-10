@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 // 30-minute inactivity window (ms)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -24,7 +25,7 @@ function hashVisitorId(raw: string, pageId: string): string {
   return createHash("sha256").update(`${raw}:${pageId}`).digest("hex");
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   try {
     // Rate limit check
     const ip = getClientIp(req);
@@ -141,4 +142,4 @@ export async function POST(req: NextRequest) {
     console.error("[buyer/session POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

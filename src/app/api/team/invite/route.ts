@@ -4,9 +4,10 @@ import { requireTeamOwner } from "@/lib/team-auth";
 import { canAddTeamMember } from "@/lib/plan-limits";
 import { sendTeamInviteEmail } from "@/lib/email";
 import crypto from "crypto";
+import { withErrorHandler } from "@/lib/api-error";
 
 // POST /api/team/invite — send an invite (owner only)
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   const { authorized, session, teamId, reason } = await requireTeamOwner();
   if (!authorized) {
     const status = !session ? 401 : 403;
@@ -100,10 +101,10 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(invite, { status: 201 });
-}
+});
 
 // GET /api/team/invite — list pending invites (owner only)
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const { authorized, session, teamId, reason } = await requireTeamOwner();
   if (!authorized) {
     const status = !session ? 401 : 403;
@@ -117,4 +118,4 @@ export async function GET() {
   });
 
   return NextResponse.json(invites);
-}
+});

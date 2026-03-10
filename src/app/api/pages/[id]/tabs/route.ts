@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canCreateTab } from "@/lib/plan-limits";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
+import { withErrorHandler, safeJson } from "@/lib/api-error";
 
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "edit");
 
@@ -27,7 +28,7 @@ export async function POST(
     }
   }
 
-  const body = await request.json().catch(() => ({}));
+  const body = await safeJson<{ name?: string }>(request) ?? {};
   const name = body.name || DEFAULT_TAB_NAME;
 
   // Atomic: find max order + create inside a transaction to prevent
@@ -51,4 +52,4 @@ export async function POST(
   });
 
   return NextResponse.json(tab, { status: 201 });
-}
+});

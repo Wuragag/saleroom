@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
+import { withErrorHandler, safeJson } from "@/lib/api-error";
 
 async function verifyBlockAccess(blockId: string, userId: string) {
   const teamId = await getUserTeamId(userId);
@@ -16,10 +17,10 @@ async function verifyBlockAccess(blockId: string, userId: string) {
   return block;
 }
 
-export async function GET(
+export const GET = withErrorHandler(async (
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,12 +33,12 @@ export async function GET(
   }
 
   return NextResponse.json(block);
-}
+});
 
-export async function PUT(
+export const PUT = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,7 +50,7 @@ export async function PUT(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => ({}));
+  const body = await safeJson<{ name?: string; content?: string }>(request) ?? {};
   const data: { name?: string; content?: string } = {};
 
   if (typeof body.name === "string") data.name = body.name;
@@ -80,12 +81,12 @@ export async function PUT(
   });
 
   return NextResponse.json(updated);
-}
+});
 
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -99,4 +100,4 @@ export async function DELETE(
 
   await prisma.syncedBlock.delete({ where: { id } });
   return NextResponse.json({ ok: true });
-}
+});

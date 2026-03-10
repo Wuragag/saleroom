@@ -10,8 +10,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const token = req.nextUrl.searchParams.get("token");
   const slug = req.nextUrl.searchParams.get("slug");
 
@@ -46,4 +47,4 @@ export async function GET(req: NextRequest) {
   });
 
   return res;
-}
+});

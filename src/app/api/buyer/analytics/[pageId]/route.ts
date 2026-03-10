@@ -9,6 +9,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getIntentLabel } from "@/lib/engagement-score";
 import { getUserTeamId } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 function getRangeDate(range: string): Date | null {
   const now = new Date();
@@ -17,10 +18,10 @@ function getRangeDate(range: string): Date | null {
   return null; // "all"
 }
 
-export async function GET(
+export const GET = withErrorHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ pageId: string }> }
-) {
+) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -131,4 +132,4 @@ export async function GET(
     console.error("[buyer/analytics GET]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

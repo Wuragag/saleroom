@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Check, Calendar, User } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 import type { MutualActionPlanData, MapItemData } from "@/types";
 
 interface MapViewerProps {
@@ -16,10 +17,10 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
 
   const fetchMap = useCallback(async () => {
     try {
-      const res = await fetch(`/api/map/${slug}`);
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await apiClient.get<{ map?: MutualActionPlanData | null }>(`/api/map/${slug}`);
       setMap(data.map ?? null);
+    } catch {
+      // silent — map is optional
     } finally {
       setLoading(false);
     }
@@ -48,13 +49,7 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
     });
 
     try {
-      const res = await fetch(`/api/map/${slug}/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, completed }),
-      });
-
-      if (!res.ok) fetchMap(); // Revert on error
+      await apiClient.post(`/api/map/${slug}/toggle`, { itemId, completed });
     } catch {
       fetchMap(); // Revert on error
     }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess, getUserTeamId } from "@/lib/team-auth";
 import { canCreatePage } from "@/lib/plan-limits";
+import { withErrorHandler } from "@/lib/api-error";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -10,10 +11,10 @@ function generateSlug(title: string): string {
   return `${base}-${suffix}`;
 }
 
-export async function POST(
+export const POST = withErrorHandler(async (
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "view");
 
@@ -104,4 +105,4 @@ export async function POST(
   });
 
   return NextResponse.json(copy, { status: 201 });
-}
+});

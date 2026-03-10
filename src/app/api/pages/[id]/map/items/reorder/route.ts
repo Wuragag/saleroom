@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 /** PUT /api/pages/[id]/map/items/reorder — reorder MAP items (auth required) */
-export async function PUT(
+export const PUT = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -39,4 +40,4 @@ export async function PUT(
   );
 
   return NextResponse.json({ ok: true });
-}
+});

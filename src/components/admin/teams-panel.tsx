@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 interface TeamRow {
   id: string;
@@ -63,13 +64,11 @@ export function TeamsPanel() {
         limit: String(LIMIT),
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
       });
-      const res = await fetch(`/api/admin/teams?${params}`);
-      if (!res.ok) throw new Error("Failed to load teams");
-      const data = await res.json();
+      const data = await apiClient.get<{ teams: TeamRow[]; total: number }>(`/api/admin/teams?${params}`);
       setTeams(data.teams ?? []);
       setTotal(data.total ?? 0);
-    } catch {
-      toast.error("Failed to load teams");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to load teams");
     } finally {
       setLoading(false);
     }
@@ -86,18 +85,12 @@ export function TeamsPanel() {
     );
     setOverridingId(teamId);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}/subscription`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: newPlan }),
-      });
-      if (res.ok) {
-        setSavedId(teamId);
-        setTimeout(() => setSavedId(null), 2000);
-      } else {
-        toast.error("Failed to update plan");
-        fetchTeams();
-      }
+      await apiClient.put(`/api/admin/teams/${teamId}/subscription`, { plan: newPlan });
+      setSavedId(teamId);
+      setTimeout(() => setSavedId(null), 2000);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to update plan");
+      fetchTeams();
     } finally {
       setOverridingId(null);
     }

@@ -4,6 +4,7 @@ import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { canCreatePage } from "@/lib/plan-limits";
+import { withErrorHandler, safeJson } from "@/lib/api-error";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -12,13 +13,13 @@ function generateSlug(title: string): string {
   return `${base}-${suffix}`;
 }
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => ({}));
+  const body = await safeJson<{ title?: string }>(request) ?? {};
   const title = body.title || "Untitled Page";
 
   let slug = generateSlug(title);
@@ -72,9 +73,9 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json(page, { status: 201 });
-}
+});
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -103,4 +104,4 @@ export async function GET() {
   }));
 
   return NextResponse.json(safePages);
-}
+});

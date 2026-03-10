@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { X, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 import type { TemplateData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 
@@ -49,11 +50,7 @@ export function TemplatePicker({
   useEffect(() => {
     if (!isOpen) return;
     setLoadingTemplates(true);
-    fetch("/api/templates")
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load templates");
-        return r.json();
-      })
+    apiClient.get<TemplateData[]>("/api/templates")
       .then((data) => {
         setTemplates(data);
         setLoadingTemplates(false);
@@ -87,25 +84,14 @@ export function TemplatePicker({
       setIsCreating(true);
       setSelectedTemplateId(templateId);
       try {
-        const res = await fetch("/api/pages/from-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          if (data.code === "PLAN_LIMIT") {
-            setLimitError(data.error);
-            setIsCreating(false);
-            return;
-          }
-          toast.error(data.error || "Failed to create page from template");
-          setIsCreating(false);
-          return;
-        }
+        const data = await apiClient.post<{ pageId: string }>("/api/pages/from-template", { templateId });
         router.push(`/editor/${data.pageId}`);
-      } catch {
-        toast.error("Failed to create page");
+      } catch (err) {
+        if (err instanceof ApiError && err.code === "PLAN_LIMIT") {
+          setLimitError(err.message);
+        } else {
+          toast.error(err instanceof ApiError ? err.message : "Failed to create page from template");
+        }
         setIsCreating(false);
       }
     },

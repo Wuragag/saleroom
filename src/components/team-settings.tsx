@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 import type { TeamMemberData, TeamInviteData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 
@@ -35,19 +36,20 @@ export function TeamSettings() {
 
   const fetchTeam = useCallback(async () => {
     try {
-      const [teamRes, invitesRes] = await Promise.all([
-        fetch("/api/team"),
-        isOwner ? fetch("/api/team/invite") : Promise.resolve(null),
+      const [teamResult, invitesResult] = await Promise.allSettled([
+        apiClient.get<{ name: string; members?: TeamMemberData[] }>("/api/team"),
+        isOwner ? apiClient.get<TeamInviteData[]>("/api/team/invite") : Promise.resolve(null),
       ]);
 
-      if (teamRes.ok) {
-        const team = await teamRes.json();
-        setTeamName(team.name);
-        setMembers(team.members ?? []);
+      if (teamResult.status === "fulfilled" && teamResult.value) {
+        setTeamName(teamResult.value.name);
+        setMembers(teamResult.value.members ?? []);
       }
-      if (invitesRes?.ok) {
-        const data = await invitesRes.json();
-        setInvites(data);
+      if (invitesResult.status === "fulfilled" && invitesResult.value) {
+        setInvites(invitesResult.value);
+      }
+      if (teamResult.status === "rejected") {
+        toast.error("Failed to load team data");
       }
     } catch {
       toast.error("Failed to load team data");
@@ -64,19 +66,11 @@ export function TeamSettings() {
     if (!teamName.trim()) return;
     setSavingName(true);
     try {
-      const res = await fetch("/api/team", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: teamName.trim() }),
-      });
-      if (res.ok) {
-        setEditingName(false);
-        toast.success("Team name updated");
-      } else {
-        toast.error("Failed to save team name");
-      }
-    } catch {
-      toast.error("Failed to save team name");
+      await apiClient.put("/api/team", { name: teamName.trim() });
+      setEditingName(false);
+      toast.success("Team name updated");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to save team name");
     } finally {
       setSavingName(false);
     }
@@ -91,22 +85,12 @@ export function TeamSettings() {
     setInviteSuccess("");
 
     try {
-      const res = await fetch("/api/team/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail.trim() }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setInviteError(data.error);
-      } else {
-        setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`);
-        setInviteEmail("");
-        fetchTeam();
-      }
-    } catch {
-      setInviteError("Failed to send invite");
+      await apiClient.post("/api/team/invite", { email: inviteEmail.trim() });
+      setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`);
+      setInviteEmail("");
+      fetchTeam();
+    } catch (err) {
+      setInviteError(err instanceof ApiError ? err.message : "Failed to send invite");
     } finally {
       setInviteLoading(false);
     }
@@ -116,33 +100,21 @@ export function TeamSettings() {
     if (!confirm("Are you sure you want to remove this member?")) return;
 
     try {
-      const res = await fetch(`/api/team/members/${memberId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setMembers((prev) => prev.filter((m) => m.id !== memberId));
-        toast.success("Member removed");
-      } else {
-        toast.error("Failed to remove member");
-      }
-    } catch {
-      toast.error("Failed to remove member");
+      await apiClient.delete(`/api/team/members/${memberId}`);
+      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      toast.success("Member removed");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to remove member");
     }
   }
 
   async function handleCancelInvite(inviteId: string) {
     try {
-      const res = await fetch(`/api/team/invite/${inviteId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-        toast.success("Invite cancelled");
-      } else {
-        toast.error("Failed to cancel invite");
-      }
-    } catch {
-      toast.error("Failed to cancel invite");
+      await apiClient.delete(`/api/team/invite/${inviteId}`);
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+      toast.success("Invite cancelled");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to cancel invite");
     }
   }
 

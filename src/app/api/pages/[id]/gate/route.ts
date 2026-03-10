@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
@@ -11,10 +12,10 @@ const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
  * Email gate submission: creates/finds a PageContact and sets a ref cookie.
  * Body: { email: string, name?: string }
  */
-export async function POST(
+export const POST = withErrorHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const ip = getClientIp(req);
     const { success } = limiter.check(ip, 10);
@@ -67,4 +68,4 @@ export async function POST(
     console.error("[gate POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

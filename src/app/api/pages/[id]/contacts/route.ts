@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { sendSharePageEmail } from "@/lib/email";
 import { getIntentLabel } from "@/lib/engagement-score";
+import { withErrorHandler } from "@/lib/api-error";
 
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
@@ -11,10 +12,10 @@ const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
  * GET /api/pages/[id]/contacts
  * List contacts for a page with engagement summary.
  */
-export async function GET(
+export const GET = withErrorHandler(async (
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "view");
   if (!access.authorized) {
@@ -65,17 +66,17 @@ export async function GET(
   });
 
   return NextResponse.json({ contacts: rows });
-}
+});
 
 /**
  * POST /api/pages/[id]/contacts
  * Create one or more contacts and optionally send share emails.
  * Body: { contacts: Array<{ email, name?, company? }>, sendEmail?: boolean }
  */
-export async function POST(
+export const POST = withErrorHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -147,4 +148,4 @@ export async function POST(
   }
 
   return NextResponse.json({ contacts: created });
-}
+});

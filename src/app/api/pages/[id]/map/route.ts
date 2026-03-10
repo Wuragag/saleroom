@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 /** GET /api/pages/[id]/map — fetch the MAP for a page (auth required) */
-export async function GET(
+export const GET = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "view");
   if (!access.authorized) {
@@ -20,13 +21,13 @@ export async function GET(
   });
 
   return NextResponse.json({ map });
-}
+});
 
 /** POST /api/pages/[id]/map — create or update the MAP (auth required) */
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -51,13 +52,13 @@ export async function POST(
   });
 
   return NextResponse.json({ map });
-}
+});
 
 /** DELETE /api/pages/[id]/map — remove the MAP entirely (auth required) */
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -68,4 +69,4 @@ export async function DELETE(
   await prisma.mutualActionPlan.deleteMany({ where: { pageId: id } });
 
   return new NextResponse(null, { status: 204 });
-}
+});

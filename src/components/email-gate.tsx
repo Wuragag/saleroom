@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Mail } from "lucide-react";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 interface EmailGateProps {
   pageId: string;
@@ -28,23 +29,11 @@ export function EmailGate({ pageId, slug }: EmailGateProps) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/pages/${pageId}/gate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed, name: name.trim() || undefined }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Something went wrong");
-        setLoading(false);
-        return;
-      }
-
+      await apiClient.post(`/api/pages/${pageId}/gate`, { email: trimmed, name: name.trim() || undefined });
       // Reload the page — the server will now see the ref cookie and show content
       window.location.href = `/p/${slug}`;
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
       setLoading(false);
     }
   };

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function PUT(
+export const PUT = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ tabId: string }> }
-) {
+) => {
   const { tabId } = await params;
 
   const existingTab = await prisma.tab.findUnique({
@@ -35,12 +36,12 @@ export async function PUT(
   });
 
   return NextResponse.json(tab);
-}
+});
 
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ tabId: string }> }
-) {
+) => {
   const { tabId } = await params;
 
   // Find the tab to get its pageId
@@ -87,4 +88,4 @@ export async function DELETE(
   }
 
   return new NextResponse(null, { status: 204 });
-}
+});

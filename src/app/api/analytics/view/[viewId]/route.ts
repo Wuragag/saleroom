@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
-export async function PATCH(
+export const PATCH = withErrorHandler(async (
   req: Request,
   { params }: { params: Promise<{ viewId: string }> }
-) {
+) => {
   const { viewId } = await params;
 
   // Rate limit: 20 duration updates per minute per IP
@@ -43,4 +44,4 @@ export async function PATCH(
   });
 
   return NextResponse.json({ ok: true });
-}
+});

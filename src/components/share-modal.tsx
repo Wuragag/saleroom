@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { X, Send, Copy, Check, Loader2, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 import type { PageContactRow } from "@/types";
 
 interface ShareModalProps {
@@ -39,11 +40,8 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   const fetchContacts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/pages/${pageId}/contacts`);
-      if (res.ok) {
-        const data = await res.json();
-        setContacts(data.contacts);
-      }
+      const data = await apiClient.get<{ contacts: PageContactRow[] }>(`/api/pages/${pageId}/contacts`);
+      setContacts(data.contacts);
     } catch { /* silent */ }
     setLoading(false);
   }, [pageId]);
@@ -82,49 +80,51 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
     if (chips.length === 0) return;
     setSending(true);
     try {
-      const res = await fetch(`/api/pages/${pageId}/contacts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contacts: chips.map((c) => ({ email: c.email, name: c.name })),
-          sendEmail,
-        }),
+      const data = await apiClient.post<{ contacts: { link: string }[] }>(`/api/pages/${pageId}/contacts`, {
+        contacts: chips.map((c) => ({ email: c.email, name: c.name })),
+        sendEmail,
       });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
 
       if (sendEmail) {
         toast.success(`Sent to ${data.contacts.length} contact(s)`);
       } else {
         // Copy all links to clipboard
-        const links = data.contacts.map((c: { link: string }) => c.link).join("\n");
-        await navigator.clipboard.writeText(links);
-        toast.success("Links copied to clipboard");
+        const links = data.contacts.map((c) => c.link).join("\n");
+        try {
+          await navigator.clipboard.writeText(links);
+          toast.success("Links copied to clipboard");
+        } catch {
+          toast.error("Failed to copy links to clipboard");
+        }
       }
 
       setChips([]);
       fetchContacts();
-    } catch {
-      toast.error("Failed to create contacts");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to create contacts");
     }
     setSending(false);
   };
 
   const handleDeleteContact = async (contactId: string) => {
     try {
-      await fetch(`/api/pages/${pageId}/contacts/${contactId}`, { method: "DELETE" });
+      await apiClient.delete(`/api/pages/${pageId}/contacts/${contactId}`);
       setContacts(contacts.filter((c) => c.id !== contactId));
       toast.success("Contact removed");
-    } catch {
-      toast.error("Failed to remove contact");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to remove contact");
     }
   };
 
   const copyContactLink = async (contactId: string, refToken: string) => {
     const link = `${window.location.origin}/p/${slug}?ref=${refToken}`;
-    await navigator.clipboard.writeText(link);
-    setCopiedId(contactId);
-    setTimeout(() => setCopiedId(null), 1500);
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedId(contactId);
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch {
+      toast.error("Failed to copy link to clipboard");
+    }
   };
 
   return (

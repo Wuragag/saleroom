@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createImpersonateToken } from "@/lib/impersonation";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function POST(
+export const POST = withErrorHandler(async (
   _req: Request,
   { params }: { params: Promise<{ userId: string }> }
-) {
+) => {
   const auth = await requireAdmin();
   if (!auth.authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -33,4 +34,4 @@ export async function POST(
 
   const token = createImpersonateToken(auth.session!.user.id, userId);
   return NextResponse.json({ token });
-}
+});

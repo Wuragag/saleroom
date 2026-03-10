@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getUserTeamId, requireTeamOwner } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 // GET /api/team — get current user's team info
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,10 +31,10 @@ export async function GET() {
   });
 
   return NextResponse.json(team);
-}
+});
 
 // PUT /api/team — rename team (owner only)
-export async function PUT(request: Request) {
+export const PUT = withErrorHandler(async (request: Request) => {
   const { authorized, session, teamId, reason } = await requireTeamOwner();
   if (!authorized) {
     const status = !session ? 401 : 403;
@@ -53,4 +54,4 @@ export async function PUT(request: Request) {
   });
 
   return NextResponse.json(team);
-}
+});

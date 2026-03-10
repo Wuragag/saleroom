@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 /** Max total size of the serialised form data (bytes). */
 const MAX_DATA_SIZE = 16_384; // 16 KB
 
-export async function POST(req: Request) {
+export const POST = withErrorHandler(async (req: Request) => {
   // Rate limit: 5 form submissions per minute per IP
   const ip = getClientIp(req);
   const { success } = limiter.check(ip, 5);
@@ -61,4 +62,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ ok: true, id: submission.id });
-}
+});

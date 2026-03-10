@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -32,20 +33,15 @@ function ResetPasswordForm() {
 
     setLoading(true);
 
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password }),
-    });
-
-    const json = await res.json().catch(() => ({}));
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(json.error ?? "Something went wrong. Please try again.");
+    try {
+      await apiClient.post("/api/auth/reset-password", { token, password });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      setLoading(false);
       return;
     }
 
+    setLoading(false);
     setDone(true);
     // Auto-redirect to sign-in after 3 seconds
     setTimeout(() => router.push("/auth/signin"), 3000);

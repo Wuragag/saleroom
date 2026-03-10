@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 export function AcceptInviteCard({
   token,
@@ -23,24 +24,13 @@ export function AcceptInviteCard({
     setError("");
 
     try {
-      const res = await fetch("/api/team/invite/accept", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to accept invite");
-        setLoading(false);
-        return;
-      }
+      await apiClient.post("/api/team/invite/accept", { token });
 
       // Refresh session to pick up new team membership
       await update();
       router.push("/");
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
       setLoading(false);
     }
   }

@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 // POST /api/pages/[id]/lock — toggle lock on a page
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -73,4 +74,4 @@ export async function POST(
     const { password: _pw, ...safePage } = updated;
     return NextResponse.json({ ...safePage, hasPassword: !!_pw });
   }
-}
+});

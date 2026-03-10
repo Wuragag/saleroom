@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -48,11 +49,11 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await fetch(`/api/pages/${page.id}`, { method: "DELETE" });
+      await apiClient.delete(`/api/pages/${page.id}`);
       toast.success("Page deleted");
       onDeleted();
-    } catch {
-      toast.error("Failed to delete page");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete page");
       setDeleting(false);
     }
   };
@@ -60,11 +61,11 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
   const handleDuplicate = async () => {
     setDuplicating(true);
     try {
-      await fetch(`/api/pages/${page.id}/duplicate`, { method: "POST" });
+      await apiClient.post(`/api/pages/${page.id}/duplicate`);
       toast.success("Page duplicated");
       onDuplicated();
-    } catch {
-      toast.error("Failed to duplicate page");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to duplicate page");
     } finally {
       setDuplicating(false);
     }

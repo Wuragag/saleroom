@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Link2, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { SyncedBlockEditor } from "./synced-block-editor";
 import type { BillingPlan } from "@/generated/prisma";
 
@@ -46,19 +47,7 @@ export function SyncedBlockLibrary({
 
     setCreating(true);
     try {
-      const res = await fetch("/api/synced-blocks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Untitled Block" }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        toast.error(data.error || "Failed to create block");
-        return;
-      }
-
-      const block = await res.json();
+      const block = await apiClient.post<BlockItem>("/api/synced-blocks", { name: "Untitled Block" });
       const newBlock: BlockItem = {
         id: block.id,
         name: block.name,
@@ -69,8 +58,8 @@ export function SyncedBlockLibrary({
       };
       setBlocks((prev) => [newBlock, ...prev]);
       setEditingBlock(newBlock);
-    } catch {
-      toast.error("Failed to create block");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to create block");
     } finally {
       setCreating(false);
     }
@@ -79,16 +68,12 @@ export function SyncedBlockLibrary({
   async function handleDelete(id: string) {
     setDeleting(id);
     try {
-      const res = await fetch(`/api/synced-blocks/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        toast.error("Failed to delete block");
-        return;
-      }
+      await apiClient.delete(`/api/synced-blocks/${id}`);
       setBlocks((prev) => prev.filter((b) => b.id !== id));
       if (editingBlock?.id === id) setEditingBlock(null);
       toast.success("Block deleted");
-    } catch {
-      toast.error("Failed to delete block");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete block");
     } finally {
       setDeleting(null);
     }

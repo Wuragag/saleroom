@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 /** POST /api/pages/[id]/map/items — add item to the MAP (auth required) */
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -47,4 +48,4 @@ export async function POST(
   });
 
   return NextResponse.json({ item }, { status: 201 });
-}
+});

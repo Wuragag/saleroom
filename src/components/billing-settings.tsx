@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 interface BillingData {
   plan: "FREE" | "PRO" | "TEAM";
@@ -78,11 +79,8 @@ export function BillingSettings() {
 
   const fetchBilling = useCallback(async () => {
     try {
-      const res = await fetch("/api/billing/status");
-      if (res.ok) {
-        const data = await res.json();
-        setBilling(data);
-      }
+      const data = await apiClient.get<BillingData>("/api/billing/status");
+      setBilling(data);
     } catch (err) {
       console.error("Failed to fetch billing:", err);
     } finally {
@@ -110,22 +108,18 @@ export function BillingSettings() {
     setCheckoutLoading(plan);
     setError(null);
     try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const data = await res.json();
-      if (data.url) {
+      const data = await apiClient.post<{ url?: string }>("/api/billing/checkout", { plan });
+      if (data?.url) {
         window.location.href = data.url;
       } else {
-        const msg = data.error || "Failed to start checkout";
+        const msg = "Failed to start checkout";
         setError(msg);
         toast.error(msg);
       }
-    } catch {
-      setError("Failed to start checkout. Please try again.");
-      toast.error("Failed to start checkout");
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Failed to start checkout. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setCheckoutLoading(null);
     }
@@ -135,20 +129,18 @@ export function BillingSettings() {
     setPortalLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/billing/portal", {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (data.url) {
+      const data = await apiClient.post<{ url?: string }>("/api/billing/portal");
+      if (data?.url) {
         window.location.href = data.url;
       } else {
-        const msg = data.error || "Failed to open billing portal";
+        const msg = "Failed to open billing portal";
         setError(msg);
         toast.error(msg);
       }
-    } catch {
-      setError("Failed to open billing portal. Please try again.");
-      toast.error("Failed to open billing portal");
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Failed to open billing portal. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPortalLoading(false);
     }

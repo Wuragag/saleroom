@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 import { PageCard } from "@/components/page-card";
 import { PageListRow } from "@/components/page-list-row";
 import {
@@ -202,11 +204,26 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
   // Bulk delete
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
-    await Promise.all(Array.from(selected).map((id) => fetch(`/api/pages/${id}`, { method: "DELETE" })));
-    setPages((prev) => prev.filter((p) => !selected.has(p.id)));
+    const ids = Array.from(selected);
+    const results = await Promise.allSettled(
+      ids.map((id) => apiClient.delete(`/api/pages/${id}`))
+    );
+    const deletedIds = new Set<string>();
+    let failCount = 0;
+    results.forEach((result, i) => {
+      if (result.status === "fulfilled") {
+        deletedIds.add(ids[i]);
+      } else {
+        failCount++;
+      }
+    });
+    setPages((prev) => prev.filter((p) => !deletedIds.has(p.id)));
     setSelected(new Set());
     setShowBulkDelete(false);
     setBulkDeleting(false);
+    if (failCount > 0) {
+      toast.warning(`${failCount} page${failCount !== 1 ? "s" : ""} failed to delete`);
+    }
     router.refresh();
   };
 

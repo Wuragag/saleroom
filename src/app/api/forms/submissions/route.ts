@@ -2,8 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function GET(req: Request) {
+export const GET = withErrorHandler(async (req: Request) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,4 +47,4 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json(submissions);
-}
+});

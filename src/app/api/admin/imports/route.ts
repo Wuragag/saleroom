@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async (request: Request) => {
   const auth = await requireAdmin();
   if (!auth.authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -60,4 +61,4 @@ export async function GET(request: Request) {
   ]);
 
   return NextResponse.json({ imports, total, page });
-}
+});

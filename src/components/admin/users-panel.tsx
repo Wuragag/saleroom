@@ -5,6 +5,7 @@ import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck, KeyRo
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 interface UserRow {
   id: string;
@@ -60,13 +61,11 @@ export function UsersPanel() {
         limit: String(LIMIT),
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
       });
-      const res = await fetch(`/api/admin/users?${params}`);
-      if (!res.ok) throw new Error("Failed to load users");
-      const data = await res.json();
+      const data = await apiClient.get<{ users: UserRow[]; total: number }>(`/api/admin/users?${params}`);
       setUsers(data.users ?? []);
       setTotal(data.total ?? 0);
-    } catch {
-      toast.error("Failed to load users");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -79,19 +78,12 @@ export function UsersPanel() {
   const handleToggleAdmin = async (user: UserRow) => {
     setTogglingId(user.id);
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isAdmin: !user.isAdmin }),
-      });
-      if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === user.id ? { ...u, isAdmin: !user.isAdmin } : u))
-        );
-      } else {
-        const data = await res.json();
-        toast.error(data.error ?? "Failed to update admin status");
-      }
+      await apiClient.put(`/api/admin/users/${user.id}`, { isAdmin: !user.isAdmin });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, isAdmin: !user.isAdmin } : u))
+      );
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to update admin status");
     } finally {
       setTogglingId(null);
     }
@@ -100,16 +92,10 @@ export function UsersPanel() {
   const handleImpersonate = async (user: UserRow) => {
     setImpersonatingId(user.id);
     try {
-      const res = await fetch(`/api/admin/impersonate/${user.id}`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        toast.error(data.error ?? "Failed to start impersonation");
-        return;
-      }
-      const { token } = await res.json();
+      const { token } = await apiClient.post<{ token: string }>(`/api/admin/impersonate/${user.id}`);
       await signIn("credentials", { impersonateToken: token, callbackUrl: "/" });
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to start impersonation");
     } finally {
       setImpersonatingId(null);
     }
@@ -124,19 +110,10 @@ export function UsersPanel() {
     }
     setResettingId(user.id);
     try {
-      const res = await fetch(`/api/admin/users/${user.id}/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
-        toast.success(`Password reset for ${user.email}`);
-      } else {
-        const data = await res.json();
-        toast.error(data.error ?? "Failed to reset password");
-      }
-    } catch {
-      toast.error("Failed to reset password");
+      await apiClient.post(`/api/admin/users/${user.id}/reset-password`, { password });
+      toast.success(`Password reset for ${user.email}`);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to reset password");
     } finally {
       setResettingId(null);
     }

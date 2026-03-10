@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { canAddTeamMember } from "@/lib/plan-limits";
+import { withErrorHandler } from "@/lib/api-error";
 
 // POST /api/team/invite/accept — accept an invite (authenticated user)
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -115,4 +116,4 @@ export async function POST(request: Request) {
     message: "Welcome to the team!",
     teamName: invite.team.name,
   });
-}
+});

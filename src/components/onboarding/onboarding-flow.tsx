@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { StepRole } from "./step-role";
 
 export type OnboardingRole =
@@ -22,13 +23,9 @@ export function OnboardingFlow({ userName }: Props) {
   const [role, setRole] = useState<OnboardingRole>(null);
 
   async function handleComplete(selectedRole: OnboardingRole) {
-    const res = await fetch("/api/onboarding", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: selectedRole, onboardingCompleted: true }),
-    });
-
-    if (!res.ok) {
+    try {
+      await apiClient.patch("/api/onboarding", { role: selectedRole, onboardingCompleted: true });
+    } catch {
       toast.error("Something went wrong. Please try again.");
       return;
     }

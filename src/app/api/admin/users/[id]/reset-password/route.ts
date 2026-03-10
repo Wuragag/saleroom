@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const auth = await requireAdmin();
   if (!auth.authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -39,4 +40,4 @@ export async function POST(
   });
 
   return NextResponse.json({ ok: true });
-}
+});

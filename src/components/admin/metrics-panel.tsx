@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Users, Building2, FileText, TrendingUp } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 interface Metrics {
   totalUsers: number;
@@ -33,11 +34,7 @@ export function MetricsPanel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/metrics")
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load metrics");
-        return r.json();
-      })
+    apiClient.get<Metrics>("/api/admin/metrics")
       .then((data) => {
         setMetrics(data);
         setLoading(false);

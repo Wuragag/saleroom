@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function GET(
+export const GET = withErrorHandler(async (
   _req: Request,
   { params }: { params: Promise<{ pageId: string }> }
-) {
+) => {
   const { pageId } = await params;
   const access = await checkPageAccess(pageId, "view");
 
@@ -38,4 +39,4 @@ export async function GET(
     linkClicks,
     shares,
   });
-}
+});

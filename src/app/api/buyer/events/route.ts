@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 // Rate limit: 30 event batches per minute per IP
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
@@ -30,7 +31,7 @@ const ALLOWED_TYPES = new Set([
 
 const MAX_EVENTS_PER_BATCH = 50;
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   try {
     // Rate limit check
     const ip = getClientIp(req);
@@ -82,4 +83,4 @@ export async function POST(req: NextRequest) {
     console.error("[buyer/events POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

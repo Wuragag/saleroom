@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 /** PUT /api/pages/[id]/map/items/[itemId] — update a MAP item (auth required) */
-export async function PUT(
+export const PUT = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string; itemId: string }> }
-) {
+) => {
   const { id, itemId } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -35,13 +36,13 @@ export async function PUT(
   });
 
   return NextResponse.json({ item });
-}
+});
 
 /** DELETE /api/pages/[id]/map/items/[itemId] — delete a MAP item (auth required) */
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string; itemId: string }> }
-) {
+) => {
   const { id, itemId } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -57,4 +58,4 @@ export async function DELETE(
 
   await prisma.mapItem.delete({ where: { id: itemId } });
   return new NextResponse(null, { status: 204 });
-}
+});

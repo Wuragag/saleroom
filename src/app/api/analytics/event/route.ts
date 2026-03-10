@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
-export async function POST(req: Request) {
+export const POST = withErrorHandler(async (req: Request) => {
   // Rate limit: 30 events per minute per IP
   const ip = getClientIp(req);
   const { success } = limiter.check(ip, 30);
@@ -42,4 +43,4 @@ export async function POST(req: Request) {
     data: { pageId, type, meta: safeMeta },
   });
   return NextResponse.json({ ok: true });
-}
+});

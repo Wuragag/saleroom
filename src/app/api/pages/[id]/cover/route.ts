@@ -3,14 +3,15 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { put, del } from "@vercel/blob";
+import { withErrorHandler } from "@/lib/api-error";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -84,4 +85,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 const VALID_PLANS = ["FREE", "PRO", "TEAM"] as const;
 type Plan = (typeof VALID_PLANS)[number];
 
-export async function PUT(
+export const PUT = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const auth = await requireAdmin();
   if (!auth.authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -58,4 +59,4 @@ export async function PUT(
   });
 
   return NextResponse.json({ plan: subscription.plan, status: subscription.status });
-}
+});

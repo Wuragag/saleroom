@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 interface ImportRow {
   id: string;
@@ -90,13 +91,11 @@ export function ImportsPanel() {
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
         ...(statusFilter ? { status: statusFilter } : {}),
       });
-      const res = await fetch(`/api/admin/imports?${params}`);
-      if (!res.ok) throw new Error("Failed to load imports");
-      const data = await res.json();
+      const data = await apiClient.get<{ imports: ImportRow[]; total: number }>(`/api/admin/imports?${params}`);
       setImports(data.imports ?? []);
       setTotal(data.total ?? 0);
-    } catch {
-      toast.error("Failed to load imports");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to load imports");
     } finally {
       setLoading(false);
     }
@@ -109,21 +108,16 @@ export function ImportsPanel() {
   const handleRetry = async (importItem: ImportRow) => {
     setRetryingId(importItem.id);
     try {
-      const res = await fetch(`/api/admin/imports/${importItem.id}/retry`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        setImports((prev) =>
-          prev.map((i) =>
-            i.id === importItem.id
-              ? { ...i, importStatus: "processing", importError: null }
-              : i
-          )
-        );
-      } else {
-        const data = await res.json();
-        toast.error(data.error ?? "Failed to retry import");
-      }
+      await apiClient.post(`/api/admin/imports/${importItem.id}/retry`);
+      setImports((prev) =>
+        prev.map((i) =>
+          i.id === importItem.id
+            ? { ...i, importStatus: "processing", importError: null }
+            : i
+        )
+      );
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to retry import");
     } finally {
       setRetryingId(null);
     }

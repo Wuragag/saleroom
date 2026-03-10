@@ -50,6 +50,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 const TEMPLATE_CATEGORIES = [
   { value: "post-call", label: "Post-Call" },
@@ -140,11 +141,7 @@ export function EditorHeader({
     try {
       await onForceSave();
       const next = !published;
-      await fetch(`/api/pages/${pageId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ published: next }),
-      });
+      await apiClient.put(`/api/pages/${pageId}`, { published: next });
       onPublishedChange(next);
       toast.success(next ? "Page published" : "Page unpublished");
     } catch {
@@ -166,15 +163,11 @@ export function EditorHeader({
     if (!templateName.trim() || isSaving) return;
     setIsSaving(true);
     try {
-      await fetch("/api/templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: templateName.trim(),
-          description: templateDescription.trim(),
-          category: templateCategory,
-          pageId,
-        }),
+      await apiClient.post("/api/templates", {
+        name: templateName.trim(),
+        description: templateDescription.trim(),
+        category: templateCategory,
+        pageId,
       });
       setSaveSuccess(true);
       // Auto-close after showing success
@@ -192,17 +185,9 @@ export function EditorHeader({
   const handleLockToggle = async () => {
     setLockLoading(true);
     try {
-      const res = await fetch(`/api/pages/${pageId}/lock`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locked: !isLocked }),
-      });
-      if (res.ok) {
-        onLockChange?.(!isLocked);
-        toast.success(!isLocked ? "Page locked" : "Page unlocked");
-      } else {
-        toast.error("Failed to update lock status");
-      }
+      await apiClient.post(`/api/pages/${pageId}/lock`, { locked: !isLocked });
+      onLockChange?.(!isLocked);
+      toast.success(!isLocked ? "Page locked" : "Page unlocked");
     } catch {
       toast.error("Failed to update lock status");
     } finally {
@@ -212,17 +197,9 @@ export function EditorHeader({
 
   const handleVisibilityChange = async (newVisibility: "TEAM" | "PRIVATE") => {
     try {
-      const res = await fetch(`/api/pages/${pageId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visibility: newVisibility }),
-      });
-      if (res.ok) {
-        onVisibilityChange?.(newVisibility);
-        toast.success(newVisibility === "PRIVATE" ? "Page set to private" : "Page visible to team");
-      } else {
-        toast.error("Failed to change visibility");
-      }
+      await apiClient.put(`/api/pages/${pageId}`, { visibility: newVisibility });
+      onVisibilityChange?.(newVisibility);
+      toast.success(newVisibility === "PRIVATE" ? "Page set to private" : "Page visible to team");
     } catch {
       toast.error("Failed to change visibility");
     }
@@ -231,17 +208,9 @@ export function EditorHeader({
   const handleRequireEmailToggle = async () => {
     const next = !requireEmail;
     try {
-      const res = await fetch(`/api/pages/${pageId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requireEmail: next }),
-      });
-      if (res.ok) {
-        onRequireEmailChange?.(next);
-        toast.success(next ? "Email gate enabled" : "Email gate disabled");
-      } else {
-        toast.error("Failed to update email gate setting");
-      }
+      await apiClient.put(`/api/pages/${pageId}`, { requireEmail: next });
+      onRequireEmailChange?.(next);
+      toast.success(next ? "Email gate enabled" : "Email gate disabled");
     } catch {
       toast.error("Failed to update email gate setting");
     }
@@ -250,7 +219,7 @@ export function EditorHeader({
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await fetch(`/api/pages/${pageId}`, { method: "DELETE" });
+      await apiClient.delete(`/api/pages/${pageId}`);
       toast.success("Page deleted");
       router.push("/");
     } catch {

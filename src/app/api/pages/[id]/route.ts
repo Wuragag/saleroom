@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canSetPassword } from "@/lib/plan-limits";
+import { withErrorHandler } from "@/lib/api-error";
 import bcrypt from "bcryptjs";
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "view");
 
@@ -26,12 +27,12 @@ export async function GET(
   // Strip password hash from response — clients only need to know if one is set
   const { password: _pw, ...safePageData } = page;
   return NextResponse.json({ ...safePageData, hasPassword: !!_pw });
-}
+});
 
-export async function PUT(
+export const PUT = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const body = await request.json();
 
@@ -97,12 +98,12 @@ export async function PUT(
   // Strip password hash from response
   const { password: _pw, ...safePageData } = page;
   return NextResponse.json({ ...safePageData, hasPassword: !!_pw });
-}
+});
 
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const access = await checkPageAccess(id, "delete");
 
@@ -116,4 +117,4 @@ export async function DELETE(
   });
 
   return new NextResponse(null, { status: 204 });
-}
+});

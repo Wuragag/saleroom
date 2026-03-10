@@ -3,8 +3,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { PLAN_LIMITS, getTeamPlan } from "@/lib/plan-limits";
+import { withErrorHandler } from "@/lib/api-error";
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -42,4 +43,4 @@ export async function GET() {
       canInvite: limits.canInvite,
     },
   });
-}
+});

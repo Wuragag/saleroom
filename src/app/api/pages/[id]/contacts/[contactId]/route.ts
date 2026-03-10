@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
+import { withErrorHandler } from "@/lib/api-error";
 
 /**
  * DELETE /api/pages/[id]/contacts/[contactId]
  * Remove a contact (does not delete the visitor data, just unlinks).
  */
-export async function DELETE(
+export const DELETE = withErrorHandler(async (
   _req: NextRequest,
   { params }: { params: Promise<{ id: string; contactId: string }> }
-) {
+) => {
   const { id, contactId } = await params;
   const access = await checkPageAccess(id, "edit");
   if (!access.authorized) {
@@ -29,4 +30,4 @@ export async function DELETE(
   ]);
 
   return NextResponse.json({ success: true });
-}
+});

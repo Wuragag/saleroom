@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeSessionScore, aggregateVisitorScore } from "@/lib/engagement-score";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 // Rate limit: 60 heartbeats per minute per IP (client sends every ~30s)
 const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
@@ -26,10 +27,10 @@ interface TabViewInput {
   viewCount: number;
 }
 
-export async function PATCH(
+export const PATCH = withErrorHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
-) {
+) => {
   try {
     // Rate limit check
     const ip = getClientIp(req);
@@ -133,4 +134,4 @@ export async function PATCH(
     console.error("[buyer/session PATCH]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});
