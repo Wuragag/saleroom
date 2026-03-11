@@ -5,3 +5,6 @@ export { FormNode } from "./form-node";
 export { ContactCardNode } from "./contact-card-node";
 export { BannerNode } from "./banner-node";
 export { SyncedBlockNode } from "./synced-block-node";
+export { TestimonialNode } from "./testimonial-node";
+export { MetricsNode } from "./metrics-node";
+export { SpacerNode } from "./spacer-node";

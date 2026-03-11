@@ -39,6 +39,45 @@ const td = (t: string): N => ({
 });
 const tr = (...cells: N[]): N => ({ type: "tableRow", content: cells });
 const tbl = (...rows: N[]): N => ({ type: "table", content: rows });
+const testimonial = (quote: string, author: string, role: string, avatar = ""): N => ({
+  type: "testimonial",
+  attrs: { quote, author, role, avatar },
+});
+const metrics = (...items: { value: string; label: string }[]): N => ({
+  type: "metrics",
+  attrs: { metrics: items },
+});
+const spacer = (height: "sm" | "md" | "lg" | "xl" = "md"): N => ({
+  type: "spacer",
+  attrs: { height },
+});
+const cta = (label: string, url: string): N => ({
+  type: "ctaButton",
+  attrs: { label, url },
+});
+const banner = (text: string, opts?: { emoji?: string; bgStyle?: string; link?: string; linkLabel?: string }): N => ({
+  type: "banner",
+  attrs: {
+    text,
+    emoji: opts?.emoji ?? "",
+    bgStyle: opts?.bgStyle ?? "accent",
+    link: opts?.link ?? "",
+    linkLabel: opts?.linkLabel ?? "Learn more →",
+  },
+});
+const contactCard = (...contacts: { name: string; title: string; email: string; phone?: string; photo?: string }[]): N => ({
+  type: "contactCard",
+  attrs: {
+    contacts: contacts.map((c, i) => ({
+      id: `c_seed_${i}_${c.name.replace(/\s/g, "")}`,
+      name: c.name,
+      title: c.title,
+      email: c.email,
+      phone: c.phone ?? "",
+      photo: c.photo ?? "",
+    })),
+  },
+});
 const doc = (...nodes: N[]): N => ({ type: "doc", content: nodes });
 const tab = (label: string, content: N) => ({ label, content });
 
@@ -166,13 +205,28 @@ const proposalTabs = [
       p("Here are some customers similar to [Company Name] and the results they've achieved."),
       h2("Customers Like You"),
       logoGrid(),
+      spacer("sm"),
+      h2("Results That Speak"),
+      metrics(
+        { value: "[X]%", label: "Revenue increase" },
+        { value: "[X]x", label: "Faster implementation" },
+        { value: "[X]+", label: "Team members onboarded" }
+      ),
+      spacer("sm"),
       h2("Case Study: [Similar Company Name]"),
       p("[2-3 sentences on their challenge, what they did, the result they got]"),
       embed("https://your-case-study-link.com", "generic"),
+      spacer("sm"),
       h2("What They Say"),
-      ul(
-        '"[Testimonial quote 1]" — [Name], [Title] at [Company]',
-        '"[Testimonial quote 2]" — [Name], [Title] at [Company]'
+      testimonial(
+        "[Testimonial quote about how your product solved their problem and delivered results]",
+        "[Name]",
+        "[Title] at [Company]"
+      ),
+      testimonial(
+        "[Another testimonial highlighting a different benefit or use case]",
+        "[Name]",
+        "[Title] at [Company]"
       )
     )
   ),
@@ -363,7 +417,14 @@ const qbrTabs = [
     doc(
       h1("Q[X] Business Review"),
       p("[Your Company] × [Their Company] · [Date]"),
-      h2("The Numbers"),
+      h2("Highlights at a Glance"),
+      metrics(
+        { value: "[X]%", label: "Goal completion" },
+        { value: "[X]x", label: "ROI delivered" },
+        { value: "[X]+", label: "Active users" }
+      ),
+      spacer("sm"),
+      h2("Detailed Performance"),
       tbl(
         tr(th("Metric"), th("Target"), th("Actual"), th("Status")),
         tr(td("[KPI 1]"), td("[Goal]"), td("[Result]"), td("✅")),
@@ -384,10 +445,17 @@ const qbrTabs = [
         "✅ [Achievement 2]",
         "✅ [Achievement 3]"
       ),
+      spacer("sm"),
       h2("Team Feedback"),
-      ul(
-        '"[Internal quote from their team member]" — [Name], [Title]',
-        '"[Another quote]" — [Name], [Title]'
+      testimonial(
+        "[Internal quote from their team member about results]",
+        "[Name]",
+        "[Title]"
+      ),
+      testimonial(
+        "[Another team member sharing their experience]",
+        "[Name]",
+        "[Title]"
       )
     )
   ),
@@ -433,6 +501,181 @@ const qbrTabs = [
       ),
       h2("Let's Talk Renewal"),
       embed("https://calendly.com/your-link", "generic")
+    )
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// Template 7 — Executive One-Pager
+// ---------------------------------------------------------------------------
+const executiveSummaryTabs = [
+  tab(
+    "Summary",
+    doc(
+      h1("Executive Summary"),
+      p("Prepared for [Company Name] · [Date]"),
+      banner("This page is tailored specifically for [Company Name] based on our discovery call.", {
+        emoji: "✨",
+        bgStyle: "subtle",
+      }),
+      spacer("md"),
+      h2("The Opportunity"),
+      p(
+        "[Company Name] is losing [estimated $X / Y hours / Z% efficiency] every [week/month/quarter] because of [PRIMARY PROBLEM]. This is a solvable problem — and here's how we do it."
+      ),
+      spacer("sm"),
+      h2("Impact at a Glance"),
+      metrics(
+        { value: "[X]%", label: "Efficiency gained" },
+        { value: "$[X]K", label: "Annual savings" },
+        { value: "[X]", label: "Days to go live" },
+        { value: "[X]x", label: "ROI in year one" }
+      ),
+      spacer("md"),
+      h2("Our Solution"),
+      ul(
+        "[Capability 1] — Directly addresses [their pain point]",
+        "[Capability 2] — Replaces [their current workaround]",
+        "[Capability 3] — Enables [their aspirational goal]"
+      ),
+      spacer("sm"),
+      h2("What Others Say"),
+      testimonial(
+        "[Compelling quote from a customer in a similar industry or situation]",
+        "[Customer Name]",
+        "[Title] at [Company]"
+      ),
+      spacer("md"),
+      h2("Trusted By Industry Leaders"),
+      logoGrid(),
+      spacer("md"),
+      h2("Investment"),
+      tbl(
+        tr(th("Package"), th("Includes"), th("Price")),
+        tr(td("[Recommended plan]"), td("[Key features]"), td("$[X]/mo")),
+        tr(td("[Premium plan]"), td("[Additional features]"), td("$[X]/mo"))
+      ),
+      spacer("md"),
+      h2("Next Steps"),
+      ul(
+        "☐ Review this summary with your team",
+        "☐ 30-minute follow-up to answer questions",
+        "☐ Start your pilot — no commitment required"
+      ),
+      spacer("sm"),
+      cta("Book a Follow-Up Call", "https://calendly.com/your-link"),
+      spacer("md"),
+      h2("Your Contact"),
+      contactCard(
+        { name: "[Your Name]", title: "[Your Title]", email: "[your@email.com]" }
+      )
+    )
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// Template 8 — ROI Case Study
+// ---------------------------------------------------------------------------
+const roiCaseStudyTabs = [
+  tab(
+    "Challenge",
+    doc(
+      h1("[Customer Name]: From [Problem] to [Result]"),
+      p("[Industry] · [Company Size] · [Timeframe]"),
+      spacer("sm"),
+      banner("[Customer Name] achieved [KEY RESULT] in just [TIMEFRAME] with [Your Product].", {
+        emoji: "🏆",
+        bgStyle: "accent",
+      }),
+      spacer("md"),
+      h2("The Challenge"),
+      p(
+        "[Customer Name] was struggling with [PROBLEM]. Their team of [X] people spent [Y hours/week] on [manual process]. This led to [NEGATIVE OUTCOME — missed revenue, slow response times, customer churn]."
+      ),
+      h2("What They Tried Before"),
+      ul(
+        "[Previous solution 1] — [Why it didn't work]",
+        "[Previous solution 2] — [Why it didn't work]",
+        "[Manual workaround] — [Why it wasn't sustainable]"
+      ),
+      spacer("sm"),
+      testimonial(
+        "[Quote from the customer about their frustration before finding your solution]",
+        "[Contact Name]",
+        "[Title] at [Customer Name]"
+      )
+    )
+  ),
+  tab(
+    "Solution",
+    doc(
+      h1("The Solution"),
+      p("[How Customer Name implemented Your Product and what the rollout looked like]"),
+      spacer("sm"),
+      h2("Implementation"),
+      ul(
+        "Day 1–3: Account setup and data migration",
+        "Week 1: Core team trained and using the platform",
+        "Week 2: Full team rollout",
+        "Month 1: First measurable results"
+      ),
+      spacer("sm"),
+      h2("Walkthrough"),
+      embed("https://www.loom.com/embed/your-demo-here", "loom"),
+      spacer("sm"),
+      h2("What Made the Difference"),
+      ul(
+        "[Feature 1] — [Specific impact on their workflow]",
+        "[Feature 2] — [Specific impact on their workflow]",
+        "[Feature 3] — [Specific impact on their workflow]"
+      ),
+      spacer("sm"),
+      testimonial(
+        "[Quote about the implementation experience — ease, speed, support quality]",
+        "[Contact Name]",
+        "[Title] at [Customer Name]"
+      )
+    )
+  ),
+  tab(
+    "Results",
+    doc(
+      h1("The Results"),
+      spacer("sm"),
+      metrics(
+        { value: "[X]%", label: "Increase in [KPI]" },
+        { value: "[X]x", label: "Faster [process]" },
+        { value: "$[X]K", label: "Annual savings" },
+        { value: "[X]%", label: "Team adoption" }
+      ),
+      spacer("md"),
+      h2("Before & After"),
+      tbl(
+        tr(th("Metric"), th("Before"), th("After"), th("Change")),
+        tr(td("[KPI 1]"), td("[Old value]"), td("[New value]"), td("↑ [X]%")),
+        tr(td("[KPI 2]"), td("[Old value]"), td("[New value]"), td("↑ [X]%")),
+        tr(td("[KPI 3]"), td("[Old value]"), td("[New value]"), td("↓ [X]%")),
+        tr(td("Time spent on [task]"), td("[X] hrs/week"), td("[Y] hrs/week"), td("↓ [Z]%"))
+      ),
+      spacer("md"),
+      h2("In Their Words"),
+      testimonial(
+        "[Powerful quote about the business impact and ROI they've seen]",
+        "[Executive Name]",
+        "[C-Level Title] at [Customer Name]"
+      ),
+      spacer("sm"),
+      testimonial(
+        "[Quote from an end user about day-to-day improvements]",
+        "[User Name]",
+        "[Title] at [Customer Name]"
+      ),
+      spacer("md"),
+      h2("Could This Be You?"),
+      p(
+        "If [Customer Name]'s challenges sound familiar, we'd love to show you how [Your Product] can deliver similar results for [Prospect Company]."
+      ),
+      cta("See It In Action", "https://calendly.com/your-link")
     )
   ),
 ];
@@ -508,6 +751,24 @@ async function main() {
       category: "onboarding",
       icon: "📊",
       tabs: qbrTabs,
+    },
+    {
+      id: "template-executive-summary",
+      name: "Executive One-Pager",
+      description:
+        "A polished single-page overview with metrics, social proof, and a clear ask. Perfect for decision-makers.",
+      category: "proposal",
+      icon: "✨",
+      tabs: executiveSummaryTabs,
+    },
+    {
+      id: "template-roi-case-study",
+      name: "ROI Case Study",
+      description:
+        "Showcase real customer results with before/after metrics, testimonials, and a clear ROI story.",
+      category: "deal-room",
+      icon: "📈",
+      tabs: roiCaseStudyTabs,
     },
   ];
 

@@ -250,6 +250,68 @@ const COMMANDS: SlashCommandItem[] = [
     },
   },
   {
+    title: "Testimonial",
+    description: "Quote with author attribution",
+    icon: "MessageSquareQuote",
+    aliases: ["testimonial", "review", "feedback", "praise"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "testimonial",
+          attrs: {
+            quote: "Add a testimonial quote here...",
+            author: "",
+            role: "",
+            avatar: "",
+          },
+        })
+        .run();
+    },
+  },
+  {
+    title: "Metrics",
+    description: "Display key stats & numbers",
+    icon: "BarChart3",
+    aliases: ["metrics", "stats", "numbers", "kpi", "data"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "metrics",
+          attrs: {
+            metrics: [
+              { value: "99%", label: "Customer satisfaction" },
+              { value: "3x", label: "Faster close rate" },
+              { value: "50%", label: "Less follow-up time" },
+            ],
+          },
+        })
+        .run();
+    },
+  },
+  {
+    title: "Spacer",
+    description: "Add vertical whitespace",
+    icon: "SeparatorHorizontal",
+    aliases: ["spacer", "space", "gap", "padding"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "spacer",
+          attrs: { height: "md" },
+        })
+        .run();
+    },
+  },
+  {
     title: "Synced Block",
     description: "Insert a reusable content block",
     icon: "Blocks",

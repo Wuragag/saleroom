@@ -35,6 +35,9 @@ import {
   FileText,
   UserRound,
   Megaphone,
+  Quote as QuoteIcon,
+  BarChart3,
+  SeparatorHorizontal,
   type LucideIcon,
 } from "lucide-react";
 import { detectProvider } from "./extensions/embed-utils";
@@ -218,6 +221,65 @@ const BLOCKS: BlockDef[] = [
             link: "",
             linkLabel: "Learn more →",
           },
+        })
+        .run();
+    },
+  },
+  {
+    id: "testimonial",
+    label: "Testimonial",
+    description: "Quote with attribution",
+    icon: QuoteIcon,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "testimonial",
+          attrs: {
+            quote: "Add a testimonial quote here...",
+            author: "",
+            role: "",
+            avatar: "",
+          },
+        })
+        .run();
+    },
+  },
+  {
+    id: "metrics",
+    label: "Metrics",
+    description: "Key stats & numbers",
+    icon: BarChart3,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "metrics",
+          attrs: {
+            metrics: [
+              { value: "99%", label: "Customer satisfaction" },
+              { value: "3x", label: "Faster close rate" },
+              { value: "50%", label: "Less follow-up time" },
+            ],
+          },
+        })
+        .run();
+    },
+  },
+  {
+    id: "spacer",
+    label: "Spacer",
+    description: "Vertical whitespace",
+    icon: SeparatorHorizontal,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "spacer",
+          attrs: { height: "md" },
         })
         .run();
     },

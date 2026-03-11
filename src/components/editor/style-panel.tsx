@@ -6,6 +6,7 @@ import {
   FONT_OPTIONS,
   BACKGROUND_OPTIONS,
   WIDTH_OPTIONS,
+  THEME_PRESETS,
   getAccentColor,
   type PageStyle,
 } from "@/lib/page-styles";
@@ -72,6 +73,48 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
       <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
         Style
       </h3>
+
+      {/* Theme Presets */}
+      <div>
+        <SectionLabel>Theme</SectionLabel>
+        <div className="grid grid-cols-3 gap-1">
+          {THEME_PRESETS.map((preset) => {
+            const bg = BACKGROUND_OPTIONS.find((b) => b.value === preset.background);
+            const isActive =
+              style.font === preset.font &&
+              getAccentColor(style.accentColor) === preset.accentColor &&
+              style.background === preset.background;
+            return (
+              <button
+                key={preset.id}
+                onClick={() =>
+                  onChange({
+                    font: preset.font,
+                    accentColor: preset.accentColor,
+                    background: preset.background,
+                  })
+                }
+                className={`relative flex flex-col items-center gap-1 py-2 px-1 text-[10px] rounded-lg border transition-all ${
+                  isActive
+                    ? "border-foreground bg-accent text-accent-foreground ring-1 ring-foreground/20"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                <div
+                  className="w-full h-5 rounded border border-border/50 flex items-center justify-center"
+                  style={{ backgroundColor: bg?.hex ?? "#fff" }}
+                >
+                  <div
+                    className="w-3 h-1 rounded-full"
+                    style={{ backgroundColor: preset.accentColor }}
+                  />
+                </div>
+                <span className="font-medium truncate w-full text-center">{preset.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Logo */}
       <div>
@@ -237,17 +280,17 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
       {/* Background */}
       <div>
         <SectionLabel>Background</SectionLabel>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-7 gap-1.5">
           {BACKGROUND_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               title={opt.label}
               onClick={() => onChange({ background: opt.value })}
               style={{ backgroundColor: opt.hex }}
-              className={`w-6 h-6 rounded border transition-transform hover:scale-110 ${
+              className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 ${
                 style.background === opt.value
-                  ? "ring-2 ring-offset-2 ring-foreground"
-                  : "border-border"
+                  ? "ring-2 ring-offset-1 ring-foreground border-transparent scale-110"
+                  : opt.dark ? "border-white/20" : "border-border"
               }`}
             />
           ))}

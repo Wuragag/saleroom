@@ -25,6 +25,9 @@ import {
   UserRound,
   Blocks,
   Megaphone,
+  BarChart3,
+  SeparatorHorizontal,
+  MessageSquareQuote,
 } from "lucide-react";
 import type { SlashCommandItem } from "./slash-command-suggestion";
 
@@ -46,6 +49,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   UserRound,
   Blocks,
   Megaphone,
+  BarChart3,
+  SeparatorHorizontal,
+  MessageSquareQuote,
 };
 
 interface SlashCommandListProps {

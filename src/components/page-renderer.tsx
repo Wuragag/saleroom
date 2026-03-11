@@ -519,7 +519,7 @@ function createBannerNode(accentColor: string) {
         bgStyle === "warning"
           ? "background:#fef3c7;color:#92400e;"
           : bgStyle === "subtle"
-          ? `background:${accentColor}1a;color:${accentColor};`
+          ? `background:color-mix(in srgb, ${accentColor} 10%, transparent);color:${accentColor};`
           : `background:${accentColor};color:#ffffff;`;
 
       const innerContent = link
@@ -558,6 +558,202 @@ function createBannerNode(accentColor: string) {
     },
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Testimonial node — styled quote card with accent border
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createTestimonialNode(isDark: boolean, accentColor: string) {
+  return Node.create({
+    name: "testimonial",
+    group: "block",
+    atom: true,
+    addAttributes() {
+      return {
+        quote:  { default: "" },
+        author: { default: "" },
+        role:   { default: "" },
+        avatar: { default: "" },
+      };
+    },
+    parseHTML() {
+      return [{ tag: 'div[data-type="testimonial"]' }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      const safeQuote  = escapeHtml(HTMLAttributes["data-quote"]  || HTMLAttributes.quote  || "");
+      const safeAuthor = escapeHtml(HTMLAttributes["data-author"] || HTMLAttributes.author || "");
+      const safeRole   = escapeHtml(HTMLAttributes["data-role"]   || HTMLAttributes.role   || "");
+      const safeAvatar = sanitizeUrl(HTMLAttributes["data-avatar"] || HTMLAttributes.avatar || "");
+
+      const cardBg = isDark ? "rgba(255,255,255,0.04)" : "#ffffff";
+      const cardBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+      const textColor = isDark ? "#e2e8f0" : "#1e293b";
+      const mutedColor = isDark ? "#94a3b8" : "#64748b";
+
+      const initials = safeAuthor
+        .split(" ")
+        .map((n: string) => n[0] || "")
+        .slice(0, 2)
+        .join("")
+        .toUpperCase() || "?";
+
+      const avatarEl = safeAvatar
+        ? [
+            "img",
+            {
+              src: safeAvatar,
+              alt: safeAuthor,
+              style: "width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;",
+            },
+          ]
+        : [
+            "div",
+            {
+              style: `width:40px;height:40px;border-radius:50%;background:${accentColor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;`,
+            },
+            initials,
+          ];
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const children: any[] = [
+        ["div", { style: "font-size:32px;line-height:1;opacity:0.15;margin-bottom:12px;" }, "\u201C"],
+        ["p", { style: `font-size:16px;line-height:1.7;color:${textColor};margin:0 0 16px;font-style:italic;` }, `\u201C${safeQuote}\u201D`],
+      ];
+
+      if (safeAuthor) {
+        children.push([
+          "div",
+          { style: "display:flex;align-items:center;gap:12px;" },
+          avatarEl,
+          [
+            "div",
+            {},
+            ["p", { style: `margin:0;font-weight:700;font-size:14px;color:${textColor};` }, safeAuthor],
+            ...(safeRole ? [["p", { style: `margin:2px 0 0;font-size:12px;color:${mutedColor};` }, safeRole]] : []),
+          ],
+        ]);
+      }
+
+      return [
+        "div",
+        mergeAttributes(
+          {
+            "data-type":   "testimonial",
+            "data-quote":  HTMLAttributes["data-quote"]  || HTMLAttributes.quote  || "",
+            "data-author": HTMLAttributes["data-author"] || HTMLAttributes.author || "",
+            "data-role":   HTMLAttributes["data-role"]   || HTMLAttributes.role   || "",
+            "data-avatar": HTMLAttributes["data-avatar"] || HTMLAttributes.avatar || "",
+          },
+          {
+            style: `background:${cardBg};border:1px solid ${cardBorder};border-left:4px solid ${accentColor};border-radius:12px;padding:24px;margin:12px 0;`,
+          }
+        ),
+        ...children,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any;
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Metrics node — row of stat cards
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createMetricsNode(isDark: boolean, accentColor: string) {
+  return Node.create({
+    name: "metrics",
+    group: "block",
+    atom: true,
+    addAttributes() {
+      return {
+        metrics: {
+          default: [],
+          parseHTML: (element: HTMLElement) => {
+            const data = element.getAttribute("data-metrics");
+            return data ? JSON.parse(data) : [];
+          },
+          renderHTML: (attributes: Record<string, unknown>) => ({
+            "data-metrics": JSON.stringify(attributes.metrics),
+          }),
+        },
+      };
+    },
+    parseHTML() {
+      return [{ tag: 'div[data-type="metrics"]' }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      const metrics =
+        typeof HTMLAttributes["data-metrics"] === "string"
+          ? JSON.parse(HTMLAttributes["data-metrics"])
+          : HTMLAttributes.metrics || [];
+
+      const cellBg = isDark ? "rgba(255,255,255,0.04)" : `color-mix(in srgb, ${accentColor} 8%, transparent)`;
+      const valueColor = accentColor;
+      const labelColor = isDark ? "#94a3b8" : "#64748b";
+
+      const cols = metrics.length || 3;
+
+      const cells = metrics.map(
+        (m: { value: string; label: string }) => [
+          "div",
+          { style: `text-align:center;padding:24px 16px;border-radius:10px;background:${cellBg};` },
+          ["div", { style: `font-size:28px;font-weight:800;letter-spacing:-0.02em;color:${valueColor};margin-bottom:6px;` }, escapeHtml(m.value)],
+          ["div", { style: `font-size:13px;font-weight:500;color:${labelColor};` }, escapeHtml(m.label)],
+        ]
+      );
+
+      return [
+        "div",
+        mergeAttributes(
+          { "data-type": "metrics" },
+          {
+            "data-metrics": JSON.stringify(metrics),
+            style: `display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;padding:12px 0;`,
+          }
+        ),
+        ...cells,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any;
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spacer node — vertical whitespace
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SPACER_HEIGHTS: Record<string, number> = {
+  sm: 24,
+  md: 48,
+  lg: 80,
+  xl: 120,
+};
+
+const SpacerNodeServer = Node.create({
+  name: "spacer",
+  group: "block",
+  atom: true,
+  addAttributes() {
+    return {
+      height: { default: "md" },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'div[data-type="spacer"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    const h = HTMLAttributes["data-height"] || HTMLAttributes.height || "md";
+    const px = SPACER_HEIGHTS[h] ?? 48;
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "spacer",
+        "data-height": h,
+        style: `height:${px}px;`,
+      }),
+    ];
+  },
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Synced Block fallback — content is normally resolved before generateHTML,
@@ -621,6 +817,9 @@ export function PageRenderer({
     createFormBlockNode(isDark, accentColor),
     createContactCardNode(isDark, accentColor),
     createBannerNode(accentColor),
+    createTestimonialNode(isDark, accentColor),
+    createMetricsNode(isDark, accentColor),
+    SpacerNodeServer,
     SyncedBlockServerFallback,
   ];
 
@@ -652,6 +851,12 @@ export function PageRenderer({
       "data-link-label",
       "data-synced-block-id",
       "data-block-name",
+      "data-quote",
+      "data-author",
+      "data-role",
+      "data-avatar",
+      "data-metrics",
+      "data-height",
     ],
     ALLOWED_URI_REGEXP:
       /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,

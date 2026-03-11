@@ -19,19 +19,42 @@ export const ACCENT_LABELS: Record<string, string> = {
 };
 
 export const FONT_OPTIONS = [
-  { value: "inter", label: "Inter", style: { fontFamily: "var(--font-montserrat), Inter, sans-serif" } },
+  { value: "inter", label: "Inter", style: { fontFamily: "var(--font-inter), Inter, sans-serif" } },
   { value: "georgia", label: "Georgia", style: { fontFamily: "Georgia, serif" } },
   { value: "playfair", label: "Playfair", style: { fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif" } },
   { value: "mono", label: "Mono", style: { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" } },
   { value: "lora", label: "Lora", style: { fontFamily: "var(--font-lora), Georgia, serif" } },
   { value: "dmsans", label: "DM Sans", style: { fontFamily: "var(--font-dm-sans), sans-serif" } },
+  { value: "instrument", label: "Instrument Serif", style: { fontFamily: "var(--font-serif), 'Instrument Serif', Georgia, serif" } },
+  { value: "syne", label: "Syne", style: { fontFamily: "var(--font-syne), sans-serif" } },
 ];
 
 export const BACKGROUND_OPTIONS = [
   { value: "white", label: "White", bgClass: "bg-white", hex: "#ffffff", dark: false },
   { value: "cream", label: "Cream", bgClass: "bg-[#fdf8f0]", hex: "#fdf8f0", dark: false },
   { value: "gray", label: "Gray", bgClass: "bg-gray-50", hex: "#f9fafb", dark: false },
+  { value: "warm", label: "Warm", bgClass: "bg-[#fafaf8]", hex: "#fafaf8", dark: false },
+  { value: "slate", label: "Slate", bgClass: "bg-[#f1f5f9]", hex: "#f1f5f9", dark: false },
   { value: "dark", label: "Dark", bgClass: "bg-gray-950", hex: "#030712", dark: true },
+  { value: "navy", label: "Navy", bgClass: "bg-[#0f172a]", hex: "#0f172a", dark: true },
+];
+
+// Pre-configured theme presets for one-click elegant styling
+export interface ThemePreset {
+  id: string;
+  label: string;
+  font: string;
+  accentColor: string;
+  background: string;
+}
+
+export const THEME_PRESETS: ThemePreset[] = [
+  { id: "classic", label: "Classic", font: "inter", accentColor: "#64748b", background: "white" },
+  { id: "elegant", label: "Elegant", font: "instrument", accentColor: "#0f172a", background: "cream" },
+  { id: "modern", label: "Modern", font: "dmsans", accentColor: "#2563eb", background: "gray" },
+  { id: "bold", label: "Bold", font: "syne", accentColor: "#7c3aed", background: "dark" },
+  { id: "warm", label: "Warm", font: "lora", accentColor: "#d97706", background: "warm" },
+  { id: "editorial", label: "Editorial", font: "playfair", accentColor: "#0f172a", background: "white" },
 ];
 
 export const WIDTH_OPTIONS = [
