@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 
 interface ScrollRevealProps {
   children: ReactNode
@@ -11,7 +11,6 @@ interface ScrollRevealProps {
   threshold?: number
   style?: CSSProperties
   className?: string
-  as?: "div" | "section" | "li"
 }
 
 export default function ScrollReveal({
@@ -23,7 +22,6 @@ export default function ScrollReveal({
   threshold = 0.15,
   style,
   className,
-  as: Tag = "div",
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -44,16 +42,16 @@ export default function ScrollReveal({
     return () => observer.disconnect()
   }, [threshold])
 
-  const getTransform = () => {
+  const getTransform = useCallback(() => {
     if (direction === "none") return "none"
     const axis = direction === "up" || direction === "down" ? "Y" : "X"
     const sign = direction === "down" || direction === "right" ? -1 : 1
     return `translate${axis}(${sign * distance}px)`
-  }
+  }, [direction, distance])
 
   return (
-    <Tag
-      ref={ref as React.Ref<HTMLDivElement>}
+    <div
+      ref={ref}
       className={className}
       style={{
         ...style,
@@ -63,7 +61,7 @@ export default function ScrollReveal({
       }}
     >
       {children}
-    </Tag>
+    </div>
   )
 }
 
