@@ -11,7 +11,11 @@ export default auth((req) => {
     pathname.startsWith("/auth") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/api/") ||
-    pathname.startsWith("/invite/")
+    pathname.startsWith("/invite/") ||
+    pathname.startsWith("/features") ||
+    pathname.startsWith("/use-cases") ||
+    pathname.startsWith("/examples") ||
+    pathname.startsWith("/pricing")
   ) {
     // Authenticated users hitting the marketing root get sent straight to the app
     if (pathname === "/" && isLoggedIn) {

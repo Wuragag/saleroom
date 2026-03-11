@@ -2,413 +2,312 @@
 
 import { useEffect, useRef, useState } from "react"
 
-/* ─────────────────────────────────────────────
-   Hooks
-────────────────────────────────────────────── */
-function useCountUp(target: number, duration = 1100, trigger = false) {
-  const [count, setCount] = useState(0)
-
-  useEffect(() => {
-    if (!trigger) return
-    let frame = 0
-    const totalFrames = Math.round(duration / 16)
-    const step = target / totalFrames
-
-    const timer = setInterval(() => {
-      frame++
-      const next = Math.min(Math.round(step * frame), target)
-      setCount(next)
-      if (next >= target) clearInterval(timer)
-    }, 16)
-
-    return () => clearInterval(timer)
-  }, [trigger, target, duration])
-
-  return count
-}
-
-/* ─────────────────────────────────────────────
-   Shared primitives
-────────────────────────────────────────────── */
-function FeatureNumber({ n }: { n: string }) {
+/* ── Minimal browser mockup ── */
+function BrowserMockup({ children }: { children: React.ReactNode }) {
   return (
-    <span
+    <div
       style={{
-        fontFamily: "var(--font-syne), sans-serif",
-        fontSize: 13,
-        color: "#3B82F6",
-        letterSpacing: "0.1em",
+        background: "var(--sr-surface)",
+        borderRadius: 16,
+        border: "1px solid var(--sr-border)",
+        boxShadow: "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
+        overflow: "hidden",
       }}
     >
-      {n}
-    </span>
-  )
-}
-
-function FeaturePills({ pills }: { pills: string[] }) {
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 24 }}>
-      {pills.map((pill) => (
-        <span
-          key={pill}
+      {/* Chrome bar */}
+      <div
+        style={{
+          padding: "14px 16px",
+          borderBottom: "1px solid var(--sr-border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <div style={{ display: "flex", gap: 6 }}>
+          {["#FF5F57", "#FFBD2E", "#28CA42"].map((color) => (
+            <span
+              key={color}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: color,
+                opacity: 0.8,
+              }}
+            />
+          ))}
+        </div>
+        <div
           style={{
-            background: "#13131A",
-            border: "1px solid #1E1E2E",
-            borderRadius: 100,
+            flex: 1,
+            marginLeft: 8,
+            background: "var(--sr-surface-dim)",
+            borderRadius: 8,
             padding: "6px 14px",
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 13,
-            color: "#A8A8B3",
+            fontFamily: "var(--font-inter), sans-serif",
+            fontSize: 12,
+            color: "var(--sr-text-muted)",
           }}
         >
-          {pill}
-        </span>
-      ))}
+          acme.salesroom.app/q4-proposal
+        </div>
+      </div>
+      {children}
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   ROW 1 visual — Editor mockup
-────────────────────────────────────────────── */
-function EditorMockup() {
+/* ── Page mockup content ── */
+function PageMockupContent() {
   return (
-    <div
-      style={{
-        background: "#0F0F17",
-        borderRadius: 16,
-        border: "1px solid #1E1E2E",
-        boxShadow: "0 40px 80px rgba(0,0,0,0.4)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Toolbar */}
+    <div style={{ padding: 24, background: "#FCFCFB" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            background: "var(--sr-surface-dim)",
+          }}
+        />
+        <div>
+          <div
+            style={{
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--sr-text)",
+            }}
+          >
+            Q4 Partnership Proposal
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: 11,
+              color: "var(--sr-text-muted)",
+            }}
+          >
+            Prepared for Sarah Chen
+          </div>
+        </div>
+      </div>
+
+      {/* Tab bar */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: 4,
-          padding: "10px 16px",
-          borderBottom: "1px solid #1E1E2E",
-          background: "#13131A",
+          gap: 0,
+          borderBottom: "1px solid var(--sr-border)",
+          marginBottom: 24,
         }}
       >
-        {[
-          { label: "B", style: { fontWeight: 700 } },
-          { label: "I", style: { fontStyle: "italic" } },
-          { label: "U", style: { textDecoration: "underline" } },
-        ].map(({ label, style }) => (
-          <div
-            key={label}
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 5,
-              background: "#1E1E2E",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 12,
-              color: "#A8A8B3",
-              cursor: "default",
-              ...style,
-            }}
-          >
-            {label}
-          </div>
-        ))}
-
-        <div style={{ width: 1, height: 14, background: "#2E2E3E", margin: "0 6px" }} />
-
-        {["H₁", "⌘", "· · ·"].map((t) => (
-          <div
-            key={t}
-            style={{
-              padding: "0 6px",
-              height: 26,
-              display: "flex",
-              alignItems: "center",
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 11,
-              color: "#5C5C7A",
-              cursor: "default",
-            }}
-          >
-            {t}
-          </div>
-        ))}
+        {["Overview", "Pricing", "Team", "Next Steps"].map((tab) => {
+          const active = tab === "Pricing"
+          return (
+            <div
+              key={tab}
+              style={{
+                padding: "10px 16px",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: 12,
+                fontWeight: active ? 600 : 400,
+                color: active ? "var(--sr-text)" : "var(--sr-text-muted)",
+                borderBottom: active ? "2px solid var(--sr-text)" : "2px solid transparent",
+                marginBottom: -1,
+              }}
+            >
+              {tab}
+            </div>
+          )
+        })}
       </div>
 
-      {/* Editor body */}
-      <div style={{ padding: "20px 20px 0" }}>
-        {/* Heading placeholder */}
-        <div
-          style={{
-            width: "75%",
-            height: 18,
-            borderRadius: 4,
-            background: "rgba(248,247,244,0.15)",
-            marginBottom: 14,
-          }}
-        />
-
-        {/* Body lines */}
-        {[100, 90, 100, 72, 85].map((w, i) => (
+      {/* Content lines */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+        {[100, 85, 92, 65].map((w, i) => (
           <div
             key={i}
             style={{
               width: `${w}%`,
-              height: 7,
+              height: 8,
               borderRadius: 4,
-              background: "#1E1E2E",
-              marginBottom: 8,
+              background: "var(--sr-surface-dim)",
             }}
           />
         ))}
+      </div>
 
-        {/* Embed block */}
-        <div
-          style={{
-            marginTop: 14,
-            height: 56,
-            border: "1.5px dashed #2E2E3E",
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ width: 18, height: 18, borderRadius: 4, background: "#2E2E3E" }} />
-          <div style={{ width: 70, height: 7, borderRadius: 3, background: "#2E2E3E" }} />
-        </div>
-
-        {/* Slash-command menu */}
-        <div
-          style={{
-            background: "#0A0A0F",
-            border: "1px solid #2E2E3E",
-            borderRadius: 10,
-            overflow: "hidden",
-            boxShadow: "0 16px 32px rgba(0,0,0,0.5)",
-            marginBottom: 20,
-          }}
-        >
+      {/* Pricing cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {[
+          { label: "Starter", price: "$29", active: false },
+          { label: "Enterprise", price: "$149", active: true },
+        ].map(({ label, price, active }) => (
           <div
+            key={label}
             style={{
-              padding: "7px 12px",
-              borderBottom: "1px solid #1E1E2E",
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 11,
-              color: "#5C5C7A",
+              padding: "16px",
+              borderRadius: 12,
+              border: `1px solid ${active ? "var(--sr-text)" : "var(--sr-border)"}`,
+              background: active ? "var(--sr-text)" : "var(--sr-surface)",
             }}
           >
-            / Commands
-          </div>
-          {[
-            { icon: "📝", label: "Text Block",  active: false },
-            { icon: "H",  label: "Heading",     active: true  },
-            { icon: "🎬", label: "Video Embed", active: false },
-            { icon: "📊", label: "Table",       active: false },
-          ].map(({ icon, label, active }) => (
             <div
-              key={label}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "7px 12px",
-                background: active ? "rgba(59,130,246,0.1)" : "transparent",
-                borderLeft: `2px solid ${active ? "#3B82F6" : "transparent"}`,
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: 11,
+                fontWeight: 600,
+                color: active ? "rgba(255,255,255,0.6)" : "var(--sr-text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 8,
               }}
             >
-              <span style={{ fontSize: 13, width: 16, textAlign: "center" }}>{icon}</span>
-              <span
-                style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 12,
-                  color: active ? "#F8F7F4" : "#A8A8B3",
-                }}
-              >
-                {label}
-              </span>
+              {label}
             </div>
-          ))}
-        </div>
+            <div
+              style={{
+                fontFamily: "var(--font-serif), serif",
+                fontSize: 24,
+                color: active ? "#FFFFFF" : "var(--sr-text)",
+              }}
+            >
+              {price}
+            </div>
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
+              {[70, 55, 85].map((w, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: `${w}%`,
+                    height: 5,
+                    borderRadius: 3,
+                    background: active ? "rgba(255,255,255,0.15)" : "var(--sr-surface-dim)",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   ROW 2 visual — Analytics dashboard
-────────────────────────────────────────────── */
-const VISITORS = [
-  { initial: "S", name: "Sarah Chen", company: "Acme Corp",  section: "4m 32s on Pricing",  time: "2 min ago",  color: "#3B82F6" },
-  { initial: "M", name: "Marcus Johnson", company: "Acme Corp", section: "1m 14s on Overview", time: "Yesterday", color: "#10B981" },
-]
-
-const BAR_HEIGHTS = [38, 55, 30, 72, 50, 100, 65]
-
+/* ── Analytics mockup ── */
 function AnalyticsMockup({ inView }: { inView: boolean }) {
-  const visitors = useCountUp(3,  900, inView)
-  const avgTime  = useCountUp(12, 1100, inView)
-
   return (
     <div
       style={{
-        background: "#0F0F17",
+        background: "var(--sr-surface)",
         borderRadius: 16,
-        border: "1px solid #1E1E2E",
-        boxShadow: "0 40px 80px rgba(0,0,0,0.4)",
+        border: "1px solid var(--sr-border)",
+        boxShadow: "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
         padding: 24,
       }}
     >
-      {/* Stat bar */}
+      {/* Stats row */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: 20,
-          padding: "12px 16px",
-          background: "#13131A",
-          borderRadius: 10,
-          border: "1px solid #1E1E2E",
-          marginBottom: 16,
+          gap: 32,
+          marginBottom: 24,
+          paddingBottom: 24,
+          borderBottom: "1px solid var(--sr-border)",
         }}
       >
-        <div>
-          <span
-            style={{
-              fontFamily: "var(--font-syne), sans-serif",
-              fontSize: 24,
-              fontWeight: 800,
-              color: "#F8F7F4",
-            }}
-          >
-            {visitors}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 12,
-              color: "#5C5C7A",
-              marginLeft: 5,
-            }}
-          >
-            visitors
-          </span>
-        </div>
-        <div style={{ width: 1, height: 22, background: "#2E2E3E" }} />
-        <div>
-          <span
-            style={{
-              fontFamily: "var(--font-syne), sans-serif",
-              fontSize: 24,
-              fontWeight: 800,
-              color: "#F8F7F4",
-            }}
-          >
-            {avgTime}m
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 12,
-              color: "#5C5C7A",
-              marginLeft: 5,
-            }}
-          >
-            avg time
-          </span>
-        </div>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-          <div
-            style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 11,
-              color: "#10B981",
-            }}
-          >
-            Live
-          </span>
-        </div>
+        {[
+          { label: "Visitors", value: "3" },
+          { label: "Avg. time", value: "12m" },
+          { label: "Completion", value: "68%" },
+        ].map(({ label, value }) => (
+          <div key={label}>
+            <div
+              style={{
+                fontFamily: "var(--font-serif), serif",
+                fontSize: 28,
+                color: "var(--sr-text)",
+                lineHeight: 1,
+                marginBottom: 6,
+              }}
+            >
+              {value}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: 12,
+                color: "var(--sr-text-muted)",
+              }}
+            >
+              {label}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Visitor rows */}
-      {VISITORS.map((v) => (
+      {[
+        { name: "Sarah Chen", company: "Acme Corp", detail: "4m 32s on Pricing", time: "2 min ago" },
+        { name: "Marcus Johnson", company: "Acme Corp", detail: "1m 14s on Overview", time: "Yesterday" },
+      ].map((v) => (
         <div
           key={v.name}
           style={{
             display: "flex",
             alignItems: "center",
             gap: 12,
-            padding: "10px 0",
-            borderBottom: "1px solid #1E1E2E",
+            padding: "12px 0",
+            borderBottom: "1px solid var(--sr-border)",
           }}
         >
           <div
             style={{
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               borderRadius: "50%",
-              background: `${v.color}1A`,
-              border: `1px solid ${v.color}40`,
+              background: "var(--sr-surface-dim)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "var(--sr-text-secondary)",
               flexShrink: 0,
             }}
           >
-            <span
+            {v.name[0]}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div
               style={{
-                fontFamily: "var(--font-syne), sans-serif",
+                fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 13,
-                fontWeight: 700,
-                color: v.color,
+                fontWeight: 500,
+                color: "var(--sr-text)",
               }}
             >
-              {v.initial}
-            </span>
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
+              {v.name}
+            </div>
             <div
               style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
-                fontWeight: 600,
-                color: "#F8F7F4",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                color: "var(--sr-text-muted)",
               }}
             >
-              {v.name} · {v.company}
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 11,
-                color: "#A8A8B3",
-                marginTop: 2,
-              }}
-            >
-              {v.section}
+              {v.detail}
             </div>
           </div>
-
           <div
             style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 11,
-              color: "#5C5C7A",
-              flexShrink: 0,
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: 12,
+              color: "var(--sr-text-muted)",
             }}
           >
             {v.time}
@@ -416,25 +315,24 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
         </div>
       ))}
 
-      {/* Micro bar chart */}
+      {/* Mini bar chart */}
       <div
         style={{
           display: "flex",
           alignItems: "flex-end",
-          gap: 5,
-          height: 44,
-          marginTop: 16,
-          padding: "0 2px",
+          gap: 6,
+          height: 48,
+          marginTop: 20,
         }}
       >
-        {BAR_HEIGHTS.map((h, i) => (
+        {[38, 55, 30, 72, 50, 100, 65].map((h, i) => (
           <div key={i} style={{ flex: 1 }}>
             <div
               style={{
                 width: "100%",
                 height: inView ? `${h}%` : "0%",
-                borderRadius: 3,
-                background: i === 5 ? "#3B82F6" : "#1E1E2E",
+                borderRadius: 4,
+                background: i === 5 ? "var(--sr-text)" : "var(--sr-surface-dim)",
                 transition: `height 600ms ${i * 70}ms ease`,
               }}
             />
@@ -445,87 +343,77 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
   )
 }
 
-/* ─────────────────────────────────────────────
-   ROW 3 visual — Template grid
-────────────────────────────────────────────── */
-const TEMPLATES = [
-  { emoji: "📞", name: "Call Recap" },
-  { emoji: "📄", name: "Proposal" },
-  { emoji: "📋", name: "Mutual Action" },
-  { emoji: "🃏", name: "Battle Card" },
-  { emoji: "🎓", name: "Onboarding" },
-  { emoji: "✨", name: "AI from PDF" },
-]
-
-function TemplateGridMockup() {
+/* ── Notification card ── */
+function NotificationCard() {
   return (
     <div
       style={{
-        background: "#0F0F17",
-        borderRadius: 16,
-        border: "1px solid #1E1E2E",
-        boxShadow: "0 40px 80px rgba(0,0,0,0.4)",
-        padding: 24,
+        position: "absolute",
+        top: -16,
+        right: -16,
+        background: "var(--sr-surface)",
+        border: "1px solid var(--sr-border)",
+        borderRadius: 12,
+        padding: "14px 18px",
+        boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
+        width: 240,
+        zIndex: 10,
       }}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-        {TEMPLATES.map((t) => (
-          <div key={t.name} className="sr-tmpl-card">
-            <span style={{ fontSize: 22, lineHeight: 1, display: "block", marginBottom: 8 }}>
-              {t.emoji}
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 12,
-                color: "#A8A8B3",
-                lineHeight: 1.3,
-              }}
-            >
-              {t.name}
-            </span>
-          </div>
-        ))}
+      <div
+        style={{
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          color: "var(--sr-text)",
+          marginBottom: 6,
+        }}
+      >
+        Sarah just opened your page
       </div>
+      <div
+        style={{
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: 12,
+          color: "var(--sr-text-muted)",
+        }}
+      >
+        Spending time on Pricing
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          top: 14,
+          right: 14,
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: "#10B981",
+        }}
+      />
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   Section data
-────────────────────────────────────────────── */
+/* ── Row data ── */
 const ROWS = [
   {
-    n: "01",
-    heading: "One link. Not six.",
-    body: "Create a beautiful page with everything your buyer needs — demo recording, pricing, case studies, next steps — and share one clean link instead of a wall of attachments.",
-    pills: ["Block editor", "Embed anything", "Custom URL", "Tabs"],
-    reversed: false,
-    visualKey: "editor",
+    label: "Create",
+    heading: "Beautiful pages, effortlessly",
+    body: "Build proposals with a block editor that supports rich text, video embeds, tables, and AI-generated content. Your buyers get one clean link instead of six attachments.",
+    visual: "page",
   },
   {
-    n: "02",
-    heading: "See inside your deal",
-    body: "Get notified the moment your buyer opens your page. See which sections they spent time on. Know if it got shared internally. Never follow up blind again.",
-    pills: ["Real-time alerts", "Time per section", "Slack detection"],
-    reversed: true,
-    visualKey: "analytics",
-  },
-  {
-    n: "03",
-    heading: "Built for every stage",
-    body: "Templates for every moment in your deal — call recaps, proposals, mutual action plans, battle cards, onboarding. Start from a template or let AI build it from your deck.",
-    pills: ["6 templates", "AI from PDF", "Custom templates"],
-    reversed: false,
-    visualKey: "templates",
+    label: "Track",
+    heading: "See inside every deal",
+    body: "Know the moment your buyer opens your page. See which sections they spend time on, whether it got shared internally, and exactly when to follow up.",
+    visual: "analytics",
   },
 ]
 
-/* ─────────────────────────────────────────────
-   Main export
-────────────────────────────────────────────── */
+/* ── Main export ── */
 export default function SolutionSection() {
-  const analyticsRef                    = useRef<HTMLDivElement>(null)
+  const analyticsRef = useRef<HTMLDivElement>(null)
   const [analyticsInView, setAnalyticsInView] = useState(false)
 
   useEffect(() => {
@@ -544,131 +432,126 @@ export default function SolutionSection() {
     return () => observer.disconnect()
   }, [])
 
-  function renderVisual(key: string) {
-    if (key === "editor")    return <EditorMockup />
-    if (key === "analytics") return (
-      <div ref={analyticsRef}>
-        <AnalyticsMockup inView={analyticsInView} />
-      </div>
-    )
-    return <TemplateGridMockup />
-  }
-
   return (
     <>
       <style>{`
-        .sr-tmpl-card {
-          background: #13131A;
-          border: 1px solid #1E1E2E;
-          border-radius: 10px;
-          padding: 14px 12px;
-          transition: border-color 200ms ease;
-          cursor: default;
-        }
-        .sr-tmpl-card:hover { border-color: #3B82F6; }
-
         @media (max-width: 900px) {
-          .sr-sol-row  { grid-template-columns: 1fr !important; gap: 40px !important; }
-          .sr-sol-rev  { order: 0 !important; }
-          .sr-sol-txt-rev { order: 1 !important; }
+          .sr-sol-row { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .sr-sol-visual { order: -1 !important; }
         }
         @media (max-width: 640px) {
           .sr-sol-h2 { font-size: 36px !important; }
-          .sr-sol-h3 { font-size: 26px !important; }
+          .sr-sol-h3 { font-size: 28px !important; }
           .sr-sol-section { padding: 80px 0 !important; }
         }
       `}</style>
 
       <section className="sr-sol-section" style={{ padding: "120px 0" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-
-          {/* ── Section header ── */}
-          <div style={{ textAlign: "center" }}>
-            <span
+          {/* Section header */}
+          <div style={{ marginBottom: 80, maxWidth: 600 }}>
+            <p
               style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
-                color: "#5C5C7A",
+                fontWeight: 500,
+                color: "var(--sr-text-muted)",
                 textTransform: "uppercase",
-                letterSpacing: "0.12em",
+                letterSpacing: "0.1em",
+                marginBottom: 16,
               }}
             >
-              The Solution
-            </span>
+              How it works
+            </p>
             <h2
               className="sr-sol-h2"
               style={{
-                fontFamily: "var(--font-syne), sans-serif",
-                fontSize: 52,
-                fontWeight: 800,
-                color: "#F8F7F4",
+                fontFamily: "var(--font-serif), serif",
+                fontSize: 48,
+                fontWeight: 400,
+                color: "var(--sr-text)",
                 lineHeight: 1.1,
-                textAlign: "center",
-                marginTop: 12,
-                marginBottom: 0,
+                margin: 0,
               }}
             >
               Everything your buyer needs.
               <br />
-              Everything you need to know.
+              <em>Everything you need to know.</em>
             </h2>
           </div>
 
-          {/* ── Feature rows ── */}
-          {ROWS.map(({ n, heading, body, pills, reversed, visualKey }) => (
+          {/* Feature rows */}
+          {ROWS.map(({ label, heading, body, visual }, index) => (
             <div
-              key={n}
+              key={label}
               className="sr-sol-row"
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
                 gap: 80,
                 alignItems: "center",
-                padding: "80px 0",
-                borderBottom: "1px solid #1E1E2E",
+                marginBottom: index < ROWS.length - 1 ? 100 : 0,
               }}
             >
               {/* Text */}
-              <div
-                className={reversed ? "sr-sol-txt-rev" : ""}
-                style={{ order: reversed ? 2 : 1 }}
-              >
-                <FeatureNumber n={n} />
+              <div style={{ order: index % 2 === 0 ? 1 : 2 }}>
+                <p
+                  style={{
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "var(--sr-text-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    marginBottom: 16,
+                  }}
+                >
+                  {label}
+                </p>
                 <h3
                   className="sr-sol-h3"
                   style={{
-                    fontFamily: "var(--font-syne), sans-serif",
+                    fontFamily: "var(--font-serif), serif",
                     fontSize: 36,
-                    fontWeight: 800,
-                    color: "#F8F7F4",
-                    lineHeight: 1.15,
-                    marginTop: 12,
-                    marginBottom: 0,
+                    fontWeight: 400,
+                    color: "var(--sr-text)",
+                    lineHeight: 1.2,
+                    margin: "0 0 16px",
                   }}
                 >
                   {heading}
                 </h3>
                 <p
                   style={{
-                    fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 17,
-                    color: "#A8A8B3",
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: 16,
+                    color: "var(--sr-text-secondary)",
                     lineHeight: 1.7,
-                    marginTop: 16,
-                    marginBottom: 0,
+                    margin: 0,
+                    maxWidth: 420,
                   }}
                 >
                   {body}
                 </p>
-                <FeaturePills pills={pills} />
               </div>
 
               {/* Visual */}
               <div
-                className={reversed ? "sr-sol-rev" : ""}
-                style={{ order: reversed ? 1 : 2 }}
+                className="sr-sol-visual"
+                style={{ order: index % 2 === 0 ? 2 : 1, position: "relative" }}
               >
-                {renderVisual(visualKey)}
+                {visual === "page" ? (
+                  <div style={{ position: "relative" }}>
+                    <BrowserMockup>
+                      <PageMockupContent />
+                    </BrowserMockup>
+                    <NotificationCard />
+                  </div>
+                ) : (
+                  <div ref={analyticsRef}>
+                    <AnalyticsMockup inView={analyticsInView} />
+                  </div>
+                )}
               </div>
             </div>
           ))}

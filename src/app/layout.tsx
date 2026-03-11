@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Playfair_Display, Lora, DM_Sans, Syne } from "next/font/google";
+import { Montserrat, Playfair_Display, Lora, DM_Sans, Syne, Inter, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -33,6 +33,19 @@ const syne = Syne({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400"],
+  style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
   title: "SalesRoom",
   description: "Create and share beautiful sales pages",
@@ -45,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} ${playfairDisplay.variable} ${lora.variable} ${dmSans.variable} ${syne.variable} font-sans antialiased`}>
+      <body className={`${montserrat.variable} ${playfairDisplay.variable} ${lora.variable} ${dmSans.variable} ${syne.variable} ${inter.variable} ${instrumentSerif.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
