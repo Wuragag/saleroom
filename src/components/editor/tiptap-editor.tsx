@@ -64,6 +64,12 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
   const passwordTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstMount = useRef(true);
 
+  // Refs that track the latest pending payloads so the unmount flush can
+  // access them without stale closures.
+  const pendingStyleRef = useRef<Partial<PageStyle> | null>(null);
+  const pendingLinksRef = useRef<PageLink[] | null>(null);
+  const pendingPasswordRef = useRef<string | null>(null);
+
   const {
     tabs,
     activeTab,
@@ -169,40 +175,74 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
   const handleStyleChange = (patch: Partial<PageStyle>) => {
     const next = { ...pageStyle, ...patch };
     setPageStyle(next);
-    // Debounce save to API
+    // Merge into pending payload so rapid changes are batched
+    pendingStyleRef.current = { ...pendingStyleRef.current, ...patch };
     if (styleTimerRef.current) clearTimeout(styleTimerRef.current);
     styleTimerRef.current = setTimeout(() => {
+      const payload = pendingStyleRef.current;
+      pendingStyleRef.current = null;
       fetch(`/api/pages/${page.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
+        body: JSON.stringify(payload),
       }).catch(() => toast.error("Failed to save style"));
     }, 800);
   };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
+    pendingPasswordRef.current = value;
     if (passwordTimerRef.current) clearTimeout(passwordTimerRef.current);
     passwordTimerRef.current = setTimeout(() => {
+      const val = pendingPasswordRef.current;
+      pendingPasswordRef.current = null;
       fetch(`/api/pages/${page.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: value }),
+        body: JSON.stringify({ password: val }),
       }).catch(() => toast.error("Failed to save password"));
     }, 800);
   };
 
   const handleLinksChange = (next: PageLink[]) => {
     setLinks(next);
+    pendingLinksRef.current = next;
     if (linksTimerRef.current) clearTimeout(linksTimerRef.current);
     linksTimerRef.current = setTimeout(() => {
+      const val = pendingLinksRef.current;
+      pendingLinksRef.current = null;
       fetch(`/api/pages/${page.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ links: JSON.stringify(next) }),
+        body: JSON.stringify({ links: JSON.stringify(val) }),
       }).catch(() => toast.error("Failed to save links"));
     }, 800);
   };
+
+  // Flush any pending debounced saves on unmount so data isn't lost on navigation
+  useEffect(() => {
+    return () => {
+      if (styleTimerRef.current) clearTimeout(styleTimerRef.current);
+      if (passwordTimerRef.current) clearTimeout(passwordTimerRef.current);
+      if (linksTimerRef.current) clearTimeout(linksTimerRef.current);
+
+      // Build a single merged payload from all pending saves
+      const payload: Record<string, unknown> = {};
+      if (pendingStyleRef.current) Object.assign(payload, pendingStyleRef.current);
+      if (pendingPasswordRef.current !== null) payload.password = pendingPasswordRef.current;
+      if (pendingLinksRef.current !== null) payload.links = JSON.stringify(pendingLinksRef.current);
+
+      if (Object.keys(payload).length > 0) {
+        // Use keepalive so the request survives page unload
+        fetch(`/api/pages/${page.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div

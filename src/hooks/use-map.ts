@@ -80,7 +80,8 @@ export function useMap(pageId: string) {
   };
 
   const updateItem = async (itemId: string, patch: Partial<MapItemData>) => {
-    // Optimistic update
+    // Snapshot for rollback
+    const prevMap = map;
     setMap((prev) => {
       if (!prev) return prev;
       return {
@@ -95,12 +96,13 @@ export function useMap(pageId: string) {
       await apiClient.put(`/api/pages/${pageId}/map/items/${itemId}`, patch);
     } catch {
       toast.error("Failed to update item");
-      fetchMap();
+      setMap(prevMap);
     }
   };
 
   const deleteItem = async (itemId: string) => {
-    // Optimistic update
+    // Snapshot for rollback
+    const prevMap = map;
     setMap((prev) => {
       if (!prev) return prev;
       return { ...prev, items: prev.items.filter((item) => item.id !== itemId) };
@@ -110,7 +112,7 @@ export function useMap(pageId: string) {
       await apiClient.delete(`/api/pages/${pageId}/map/items/${itemId}`);
     } catch {
       toast.error("Failed to delete item");
-      fetchMap();
+      setMap(prevMap);
     }
   };
 

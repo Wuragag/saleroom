@@ -49,14 +49,27 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
   }, [pageId, tabs.length]);
 
   const renameTab = useCallback(async (tabId: string, name: string) => {
-    // Optimistic update
+    // Optimistic update — capture previous name for rollback
+    let prevName: string | undefined;
     setTabs((prev) =>
-      prev.map((t) => (t.id === tabId ? { ...t, name } : t))
+      prev.map((t) => {
+        if (t.id === tabId) {
+          prevName = t.name;
+          return { ...t, name };
+        }
+        return t;
+      })
     );
     try {
       await apiClient.put(`/api/tabs/${tabId}`, { name });
     } catch {
       toast.error("Failed to rename tab");
+      // Rollback to previous name
+      if (prevName !== undefined) {
+        setTabs((prev) =>
+          prev.map((t) => (t.id === tabId ? { ...t, name: prevName! } : t))
+        );
+      }
     }
   }, []);
 

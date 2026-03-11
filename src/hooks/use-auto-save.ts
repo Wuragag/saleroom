@@ -148,28 +148,59 @@ export function useAutoSave({
     };
   }, [title, pageId]);
 
-  // Save on unmount — uses refs so it always accesses the latest editor and
-  // saveTabContent, avoiding the stale-closure bug from `[]` deps.
+  // Keep pageId in a ref so the unmount handler can access the latest value.
+  const pageIdRef = useRef(pageId);
+  pageIdRef.current = pageId;
+
+  // Keep title in a ref for the unmount flush.
+  const titleRef = useRef(title);
+  titleRef.current = title;
+
+  // Save on unmount — uses refs so it always accesses the latest values,
+  // avoiding the stale-closure bug from `[]` deps.  Uses `keepalive` so the
+  // browser keeps the request alive even after the page starts unloading.
   useEffect(() => {
     return () => {
+      const hasPendingContent = !!contentTimerRef.current;
+      const hasPendingTitle = !!titleTimerRef.current;
+
       // Clear any pending timers
       if (contentTimerRef.current) {
         clearTimeout(contentTimerRef.current);
+        contentTimerRef.current = null;
       }
       if (titleTimerRef.current) {
         clearTimeout(titleTimerRef.current);
+        titleTimerRef.current = null;
       }
 
-      const ed = editorRef.current;
-      const tabId = activeTabIdRef.current;
-      if (ed && tabId) {
-        try {
-          const content = JSON.stringify(ed.getJSON());
-          // Fire and forget — keepalive ensures the request survives unmount
-          saveTabContentRef.current(tabId, content);
-        } catch {
-          // Editor may already be destroyed — nothing to save
+      // Flush pending tab content save via keepalive fetch
+      if (hasPendingContent) {
+        const ed = editorRef.current;
+        const tabId = activeTabIdRef.current;
+        if (ed && tabId) {
+          try {
+            const content = JSON.stringify(ed.getJSON());
+            fetch(`/api/tabs/${tabId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content }),
+              keepalive: true,
+            }).catch(() => {});
+          } catch {
+            // Editor may already be destroyed — nothing to save
+          }
         }
+      }
+
+      // Flush pending title save via keepalive fetch
+      if (hasPendingTitle) {
+        fetch(`/api/pages/${pageIdRef.current}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: titleRef.current }),
+          keepalive: true,
+        }).catch(() => {});
       }
     };
   }, []);

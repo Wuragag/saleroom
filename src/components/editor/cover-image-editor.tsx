@@ -64,12 +64,23 @@ export function CoverImageEditor({
 
   const handleRemove = async () => {
     setError(null);
-    await fetch(`/api/pages/${pageId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coverImage: "" }),
-    });
+    // Optimistically update UI
+    const previousImage = coverImage;
     onCoverImageChange("");
+    try {
+      const res = await fetch(`/api/pages/${pageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverImage: "" }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to remove cover image");
+      }
+    } catch {
+      // Rollback on failure
+      onCoverImageChange(previousImage);
+      setError("Failed to remove cover image. Please try again.");
+    }
   };
 
   /* ── Hidden file input ── */
