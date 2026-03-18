@@ -44,23 +44,21 @@ export async function POST(
 
   const formData = await request.formData();
   const submittedPassword = formData.get("password") as string | null;
-  const slug = formData.get("slug") as string | null;
 
-  if (!submittedPassword || !slug) {
-    return NextResponse.redirect(
-      new URL(`/p/${slug}/password?error=1`, request.url),
-      { status: 303 }
-    );
-  }
-
+  // Always look up the page first so we use the trusted slug from the database,
+  // never the user-supplied value (prevents open redirect via crafted slug).
   const page = await prisma.page.findUnique({
     where: { id },
     select: { id: true, slug: true, password: true },
   });
 
   if (!page || !page.password) {
+    return new NextResponse("Page not found", { status: 404 });
+  }
+
+  if (!submittedPassword) {
     return NextResponse.redirect(
-      new URL(`/p/${slug}`, request.url),
+      new URL(`/p/${page.slug}/password?error=1`, request.url),
       { status: 303 }
     );
   }

@@ -73,24 +73,51 @@ export const POST = withErrorHandler(async (request: Request) => {
   // Leave existing team (if any) before joining the new one.
   // The system assumes one team per user. Signup auto-creates a personal
   // team, so we clean that up here to avoid broken multi-team state.
-  await prisma.$transaction(async (tx) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const txResult = await prisma.$transaction(async (tx: any) => {
     const oldMembership = await tx.teamMember.findFirst({
       where: { userId: session.user.id },
+      include: { team: true },
     });
 
     if (oldMembership && oldMembership.teamId !== invite.teamId) {
+      // Only allow leaving if user is the sole OWNER of a personal team,
+      // or if they are a regular MEMBER. Prevent team owners with other
+      // members from silently abandoning their team.
+      if (oldMembership.role === "OWNER") {
+        const otherMembers = await tx.teamMember.count({
+          where: {
+            teamId: oldMembership.teamId,
+            userId: { not: session.user.id },
+          },
+        });
+        if (otherMembers > 0) {
+          // Abort the transaction — caller handles the response
+          return "OWNER_HAS_MEMBERS" as const;
+        }
+      }
+
       // Remove from old team
       await tx.teamMember.delete({ where: { id: oldMembership.id } });
 
-      // If the old team is now empty, delete it
+      // Only clean up personal (now-empty) teams.
+      // Delete the user's own pages in that team rather than leaking
+      // them to the new team.
       const remaining = await tx.teamMember.count({
         where: { teamId: oldMembership.teamId },
       });
       if (remaining === 0) {
-        // Reassign any pages from the old team to the new team
-        await tx.page.updateMany({
+        // Delete pages that belonged to this user in the old team
+        // instead of reassigning them across team boundaries.
+        await tx.page.deleteMany({
+          where: {
+            teamId: oldMembership.teamId,
+            userId: session.user.id,
+          },
+        });
+        // Delete any remaining orphaned pages in the empty team
+        await tx.page.deleteMany({
           where: { teamId: oldMembership.teamId },
-          data: { teamId: invite.teamId },
         });
         await tx.team.delete({ where: { id: oldMembership.teamId } });
       }
@@ -110,7 +137,16 @@ export const POST = withErrorHandler(async (request: Request) => {
       where: { id: invite.id },
       data: { status: "ACCEPTED" },
     });
+
+    return "OK" as const;
   });
+
+  if (txResult === "OWNER_HAS_MEMBERS") {
+    return NextResponse.json(
+      { error: "You must transfer team ownership before joining another team" },
+      { status: 409 }
+    );
+  }
 
   return NextResponse.json({
     message: "Welcome to the team!",
