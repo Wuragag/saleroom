@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, PenLine, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,15 +27,20 @@ interface Props {
 
 /**
  * Polls import status in the background and updates the toast.
+ * Returns a cleanup function that cancels any pending poll.
  */
 function pollAndToast(
   pageId: string,
   toastId: string | number,
   router: ReturnType<typeof useRouter>
-) {
+): () => void {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+  let cancelled = false;
 
   const tick = async () => {
+    if (cancelled) return;
+
     if (Date.now() > deadline) {
       toast.error(
         "Page generation is taking too long. Check the admin panel for status.",
@@ -46,6 +51,7 @@ function pollAndToast(
 
     try {
       const res = await fetch(`/api/import/status/${pageId}`);
+      if (cancelled) return;
       if (!res.ok) throw new Error("Failed to check status");
       const data = await res.json();
 
@@ -69,15 +75,24 @@ function pollAndToast(
         return;
       }
 
-      setTimeout(tick, POLL_INTERVAL_MS);
+      if (!cancelled) {
+        timerId = setTimeout(tick, POLL_INTERVAL_MS);
+      }
     } catch {
-      toast.error("Lost connection while checking generation status.", {
-        id: toastId,
-      });
+      if (!cancelled) {
+        toast.error("Lost connection while checking generation status.", {
+          id: toastId,
+        });
+      }
     }
   };
 
-  setTimeout(tick, POLL_INTERVAL_MS);
+  timerId = setTimeout(tick, POLL_INTERVAL_MS);
+
+  return () => {
+    cancelled = true;
+    if (timerId !== null) clearTimeout(timerId);
+  };
 }
 
 export function AiWriteModal({ isOpen, onClose }: Props) {
@@ -86,6 +101,14 @@ export function AiWriteModal({ isOpen, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [limitError, setLimitError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
+  const cancelPollRef = useRef<(() => void) | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      cancelPollRef.current?.();
+    };
+  }, []);
 
   const reset = useCallback(() => {
     setStatus("idle");
@@ -142,8 +165,9 @@ export function AiWriteModal({ isOpen, onClose }: Props) {
         keepalive: true,
       }).catch(() => {});
 
-      // Poll in background
-      pollAndToast(data.id, toastId, router);
+      // Poll in background (cancel any previous poll first)
+      cancelPollRef.current?.();
+      cancelPollRef.current = pollAndToast(data.id, toastId, router);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";

@@ -47,7 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
@@ -115,15 +115,28 @@ export function EditorHeader({
   const [templateCategory, setTemplateCategory] = useState("post-call");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear copy timer on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const pageUrl = `/p/${slug}`;
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(
-      `${window.location.origin}${pageUrl}`
-    );
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}${pageUrl}`
+      );
+    } catch {
+      return; // Clipboard API not available
+    }
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
     fetch("/api/analytics/event", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

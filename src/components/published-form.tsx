@@ -33,7 +33,11 @@ export function PublishedFormHydrator({
         submitBtn.style.backgroundColor = accentColor;
       }
 
-      // Style focus states
+      // Use a single AbortController per form for all listeners (focus, blur, submit)
+      const controller = new AbortController();
+      controllers.push(controller);
+
+      // Style focus states — attach with signal so cleanup removes them
       const inputs = form.querySelectorAll<
         HTMLInputElement | HTMLTextAreaElement
       >("input, textarea");
@@ -41,15 +45,12 @@ export function PublishedFormHydrator({
         input.addEventListener("focus", () => {
           input.style.borderColor = accentColor;
           input.style.boxShadow = `0 0 0 2px ${accentColor}26`;
-        });
+        }, { signal: controller.signal });
         input.addEventListener("blur", () => {
           input.style.borderColor = "#d1d5db";
           input.style.boxShadow = "none";
-        });
+        }, { signal: controller.signal });
       });
-
-      const controller = new AbortController();
-      controllers.push(controller);
 
       form.addEventListener(
         "submit",

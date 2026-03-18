@@ -36,6 +36,14 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   const [contacts, setContacts] = useState<PageContactRow[]>([]);
   const [loading, setLoading] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear copy timer on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -121,7 +129,8 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
     try {
       await navigator.clipboard.writeText(link);
       setCopiedId(contactId);
-      setTimeout(() => setCopiedId(null), 1500);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedId(null), 1500);
     } catch {
       toast.error("Failed to copy link to clipboard");
     }

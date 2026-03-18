@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, AlertCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,16 @@ interface Props {
 /**
  * Polls import status in the background and updates the toast.
  * Runs outside the modal — called after modal closes.
+ * Returns a cleanup function that cancels any pending poll.
  */
-function pollAndToast(pageId: string, toastId: string | number, router: ReturnType<typeof useRouter>) {
+function pollAndToast(pageId: string, toastId: string | number, router: ReturnType<typeof useRouter>): () => void {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+  let cancelled = false;
 
   const tick = async () => {
+    if (cancelled) return;
+
     if (Date.now() > deadline) {
       toast.error("Import is taking too long. Check the admin panel for status.", { id: toastId });
       return;
@@ -47,6 +52,7 @@ function pollAndToast(pageId: string, toastId: string | number, router: ReturnTy
 
     try {
       const res = await fetch(`/api/import/status/${pageId}`);
+      if (cancelled) return;
       if (!res.ok) throw new Error("Failed to check status");
       const data = await res.json();
 
@@ -71,13 +77,22 @@ function pollAndToast(pageId: string, toastId: string | number, router: ReturnTy
       }
 
       // Still processing — poll again
-      setTimeout(tick, POLL_INTERVAL_MS);
+      if (!cancelled) {
+        timerId = setTimeout(tick, POLL_INTERVAL_MS);
+      }
     } catch {
-      toast.error("Lost connection while checking import status.", { id: toastId });
+      if (!cancelled) {
+        toast.error("Lost connection while checking import status.", { id: toastId });
+      }
     }
   };
 
-  setTimeout(tick, POLL_INTERVAL_MS);
+  timerId = setTimeout(tick, POLL_INTERVAL_MS);
+
+  return () => {
+    cancelled = true;
+    if (timerId !== null) clearTimeout(timerId);
+  };
 }
 
 export function ImportDocumentModal({ isOpen, onClose }: Props) {
@@ -87,6 +102,14 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [limitError, setLimitError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const cancelPollRef = useRef<(() => void) | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      cancelPollRef.current?.();
+    };
+  }, []);
 
   const reset = useCallback(() => {
     setStatus("idle");
@@ -164,8 +187,9 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         // Silently ignore — polling will detect errors
       });
 
-      // Step 5: Poll in background and update toast on completion
-      pollAndToast(data.id, toastId, router);
+      // Step 5: Poll in background (cancel any previous poll first)
+      cancelPollRef.current?.();
+      cancelPollRef.current = pollAndToast(data.id, toastId, router);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";
