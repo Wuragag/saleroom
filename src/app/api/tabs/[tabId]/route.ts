@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { withErrorHandler } from "@/lib/api-error";
@@ -34,6 +35,11 @@ export const PUT = withErrorHandler(async (
     where: { id: tabId },
     data: updateData,
   });
+
+  // Bust ISR cache so buyers see the latest content immediately
+  if (existingTab.page.slug) {
+    revalidatePath(`/p/${existingTab.page.slug}`);
+  }
 
   return NextResponse.json(tab);
 });

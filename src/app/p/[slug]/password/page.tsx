@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import Image from "next/image";
 import { getAccentColor, getBgHex, getFontStyle } from "@/lib/page-styles";
 import { Lock } from "lucide-react";
 
@@ -50,11 +51,13 @@ export default async function PasswordPage({
     >
       <div className="w-full max-w-sm">
         {page.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={page.logoUrl}
             alt="Logo"
-            className="h-8 object-contain mb-8 mx-auto"
+            width={160}
+            height={32}
+            className="object-contain mb-8 mx-auto"
+            style={{ height: "32px", width: "auto" }}
           />
         )}
 

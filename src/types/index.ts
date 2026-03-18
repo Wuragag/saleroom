@@ -82,17 +82,6 @@ export interface PageListItem {
 
 // ──── Synced Block types ────
 
-export interface SyncedBlockData {
-  id: string;
-  name: string;
-  content: string;
-  teamId: string;
-  createdById: string;
-  createdBy?: { name: string };
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface SyncedBlockListItem {
   id: string;
   name: string;
@@ -140,11 +129,6 @@ export interface BuyerAnalyticsSummary {
   avgScore: number;
 }
 
-export interface BuyerAnalyticsResponse {
-  summary: BuyerAnalyticsSummary;
-  visitors: BuyerVisitorRow[];
-}
-
 // ──── Mutual Action Plan types ────
 
 export interface MapItemData {
@@ -171,12 +155,6 @@ export interface MutualActionPlanData {
 }
 
 // ──── Team types ────
-
-export interface TeamData {
-  id: string;
-  name: string;
-  createdAt: string;
-}
 
 export interface TeamMemberData {
   id: string;
@@ -232,8 +210,3 @@ export interface TimelineVisitor {
   email: string | null;
 }
 
-export interface TimelineResponse {
-  events: TimelineEvent[];
-  nextCursor: string | null;
-  visitors: TimelineVisitor[];
-}

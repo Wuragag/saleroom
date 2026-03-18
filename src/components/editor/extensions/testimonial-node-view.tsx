@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { Input } from "@/components/ui/input";
@@ -86,10 +87,11 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
 
             <div className="flex items-center gap-3">
               {node.attrs.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={node.attrs.avatar}
                   alt={node.attrs.author}
+                  width={36}
+                  height={36}
                   className="w-9 h-9 rounded-full object-cover"
                 />
               ) : node.attrs.author ? (

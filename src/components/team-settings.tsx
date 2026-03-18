@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import {
   Users,
   Mail,
@@ -188,9 +189,11 @@ export function TeamSettings() {
               className="px-6 py-3 flex items-center gap-3"
             >
               {member.user.avatarUrl ? (
-                <img
+                <Image
                   src={member.user.avatarUrl}
                   alt=""
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (

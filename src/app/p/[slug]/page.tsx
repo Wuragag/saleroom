@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
@@ -9,6 +10,10 @@ import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
+
+// ISR: serve cached pages, revalidate in background every 60s.
+// Analytics tracking moved client-side so this page can be cached.
+export const revalidate = 60;
 
 export default async function PublishedPage({
   params,
@@ -63,8 +68,6 @@ export default async function PublishedPage({
       redirect(`/p/${page.slug}/password`);
     }
   }
-
-  const pageView = await prisma.pageView.create({ data: { pageId: page.id } });
 
   const tabs = await Promise.all(
     page.tabs.map(async (tab) => {
@@ -124,11 +127,13 @@ export default async function PublishedPage({
       {/* ── Cover image ── */}
       {page.coverImage && (
         <div className="relative z-10 w-full" style={{ height: "300px" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={page.coverImage}
             alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            fill
+            sizes="100vw"
+            priority
+            style={{ objectFit: "cover" }}
           />
         </div>
       )}
@@ -215,12 +220,14 @@ export default async function PublishedPage({
 
         {/* Logo */}
         {page.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={page.logoUrl}
             alt="Logo"
+            width={180}
+            height={36}
             style={{
               height: "36px",
+              width: "auto",
               objectFit: "contain",
               marginBottom: "2.25rem",
               display: "block",
@@ -278,7 +285,7 @@ export default async function PublishedPage({
         </span>
       </footer>
 
-      <AnalyticsTracker pageId={page.id} viewId={pageView.id} />
+      <AnalyticsTracker pageId={page.id} />
       <BuyerAnalyticsTracker
         pageId={page.id}
         initialTabId={tabs[0]?.id}

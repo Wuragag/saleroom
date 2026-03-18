@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 
@@ -143,9 +144,11 @@ export function AccountSettings() {
             className="relative w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden group shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
                 alt="Avatar"
+                width={80}
+                height={80}
                 className="w-full h-full object-cover"
               />
             ) : (

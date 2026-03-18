@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import { ImagePlus, Lock, X, Zap } from "lucide-react";
 import {
   FONT_OPTIONS,
@@ -121,11 +122,13 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         <SectionLabel>Logo</SectionLabel>
         {style.logoUrl ? (
           <div className="relative group inline-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={style.logoUrl}
               alt="Logo preview"
-              className="h-10 max-w-full rounded border border-border object-contain bg-card px-1"
+              width={200}
+              height={40}
+              className="rounded border border-border object-contain bg-card px-1"
+              style={{ height: "40px", width: "auto" }}
             />
             <button
               onClick={() => onChange({ logoUrl: "" })}

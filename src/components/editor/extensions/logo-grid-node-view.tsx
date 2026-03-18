@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
@@ -49,10 +50,13 @@ export function LogoGridNodeView({
           <div className="flex flex-wrap items-center justify-center gap-6">
             {logos.map((logo, i) => (
               <div key={i} className="relative group">
-                <img
+                <Image
                   src={logo.src}
                   alt={logo.alt || ""}
-                  className="h-10 object-contain"
+                  width={120}
+                  height={40}
+                  className="object-contain"
+                  style={{ height: "40px", width: "auto" }}
                 />
                 <button
                   onClick={() => removeLogo(i)}
