@@ -1,19 +1,36 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AnalyticsTrackerProps {
   pageId: string;
-  viewId: string;
 }
 
-export function AnalyticsTracker({ pageId, viewId }: AnalyticsTrackerProps) {
+export function AnalyticsTracker({ pageId }: AnalyticsTrackerProps) {
+  const [viewId, setViewId] = useState<string | null>(null);
+
+  // Create the pageView client-side on mount (moved from server component to enable ISR caching)
+  useEffect(() => {
+    fetch("/api/analytics/view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.viewId) setViewId(data.viewId);
+      })
+      .catch(() => {});
+  }, [pageId]);
+
   // Track only visible time — pause when tab is hidden
   const visibleDuration = useRef(0); // accumulated seconds while visible
   const lastVisibleAt = useRef(Date.now()); // timestamp when tab last became visible
   const sending = useRef(false);
 
   useEffect(() => {
+    if (!viewId) return;
+
     const accumulateDuration = () => {
       if (document.visibilityState !== "hidden") {
         // Tab is visible, accumulate time since last visible timestamp

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
+import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { PublishedFormHydrator } from "@/components/published-form";
@@ -139,12 +140,14 @@ export default async function PreviewPage({
       >
         {/* Logo */}
         {page.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={page.logoUrl}
             alt="Logo"
+            width={180}
+            height={36}
             style={{
               height: "36px",
+              width: "auto",
               objectFit: "contain",
               marginBottom: "2.25rem",
               display: "block",

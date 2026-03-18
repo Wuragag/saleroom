@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
@@ -96,9 +97,11 @@ export function AppNav() {
               {/* Avatar circle */}
               <div className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center overflow-hidden shrink-0">
                 {session.user.image ? (
-                  <img
+                  <Image
                     src={session.user.image}
                     alt=""
+                    width={32}
+                    height={32}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -188,9 +191,11 @@ export function AppNav() {
                 <div className="flex items-center gap-2.5 mb-3">
                   <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center overflow-hidden shrink-0">
                     {session.user.image ? (
-                      <img
+                      <Image
                         src={session.user.image}
                         alt=""
+                        width={32}
+                        height={32}
                         className="w-full h-full object-cover"
                       />
                     ) : (

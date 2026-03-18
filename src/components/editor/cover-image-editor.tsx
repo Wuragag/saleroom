@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { ImageIcon, Upload, X, AlertCircle } from "lucide-react";
 
 interface CoverImageEditorProps {
@@ -125,11 +126,12 @@ export function CoverImageEditor({
   return (
     <div className="mb-4">
       <div className="group relative w-full rounded-xl overflow-hidden" style={{ height: "220px" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={coverImage}
           alt="Cover"
-          className="w-full h-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 720px"
+          className="object-cover"
         />
 
         {/* Hover overlay */}

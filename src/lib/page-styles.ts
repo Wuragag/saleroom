@@ -9,15 +9,6 @@ export const ACCENT_COLORS: Record<string, string> = {
   sky: "#0284c7",
 };
 
-export const ACCENT_LABELS: Record<string, string> = {
-  slate: "Slate",
-  violet: "Violet",
-  rose: "Rose",
-  amber: "Amber",
-  emerald: "Emerald",
-  sky: "Sky",
-};
-
 export const FONT_OPTIONS = [
   { value: "inter", label: "Inter", style: { fontFamily: "var(--font-inter), Inter, sans-serif" } },
   { value: "georgia", label: "Georgia", style: { fontFamily: "Georgia, serif" } },
@@ -62,14 +53,6 @@ export const WIDTH_OPTIONS = [
   { value: "default", label: "Default", class: "max-w-3xl" },
   { value: "wide", label: "Wide", class: "max-w-5xl" },
 ];
-
-export function getLayoutClass(width: string): string {
-  return WIDTH_OPTIONS.find((o) => o.value === width)?.class ?? "max-w-3xl";
-}
-
-export function getBgClass(background: string): string {
-  return BACKGROUND_OPTIONS.find((o) => o.value === background)?.bgClass ?? "bg-white";
-}
 
 export function getBgHex(background: string): string {
   return BACKGROUND_OPTIONS.find((o) => o.value === background)?.hex ?? "#ffffff";

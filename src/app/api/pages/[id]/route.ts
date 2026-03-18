@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canSetPassword } from "@/lib/plan-limits";
@@ -124,6 +125,11 @@ export const PUT = withErrorHandler(async (
     where: { id },
     data: updateData,
   });
+
+  // Bust ISR cache so buyers see the latest version immediately
+  if (page.slug) {
+    revalidatePath(`/p/${page.slug}`);
+  }
 
   // Strip password hash from response
   const { password: _pw, ...safePageData } = page;

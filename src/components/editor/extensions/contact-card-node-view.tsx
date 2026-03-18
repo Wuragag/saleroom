@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
@@ -71,9 +72,11 @@ function ContactCard({
         {/* Avatar */}
         <div className="flex-shrink-0">
           {contact.photo ? (
-            <img
+            <Image
               src={contact.photo}
               alt={contact.name}
+              width={48}
+              height={48}
               className="w-12 h-12 rounded-full object-cover ring-2 ring-border"
             />
           ) : (
