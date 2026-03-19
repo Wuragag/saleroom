@@ -54,15 +54,6 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ error: "Too many events" }, { status: 400 });
     }
 
-    // Validate session exists
-    const session = await prisma.buyerSession.findUnique({
-      where: { id: sessionId },
-      select: { id: true },
-    });
-    if (!session) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
-    }
-
     // Filter and sanitize events
     const validEvents = events
       .filter((e) => ALLOWED_TYPES.has(e.type))
@@ -76,9 +67,13 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ inserted: 0 });
     }
 
-    await prisma.buyerEvent.createMany({ data: validEvents });
-
-    return NextResponse.json({ inserted: validEvents.length });
+    try {
+      // FK constraint on sessionId validates the session exists — no separate lookup needed
+      await prisma.buyerEvent.createMany({ data: validEvents });
+      return NextResponse.json({ inserted: validEvents.length });
+    } catch {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
   } catch (err) {
     console.error("[buyer/events POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

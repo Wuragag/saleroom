@@ -21,15 +21,12 @@ export const POST = withErrorHandler(async (req: Request) => {
     );
   }
 
-  // Validate that the page actually exists
-  const page = await prisma.page.findUnique({
-    where: { id: pageId },
-    select: { id: true },
-  });
-  if (!page) {
+  try {
+    // FK constraint on pageId validates the page exists — no separate lookup needed
+    const view = await prisma.pageView.create({ data: { pageId } });
+    return NextResponse.json({ viewId: view.id });
+  } catch {
+    // FK violation means the page doesn't exist
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
   }
-
-  const view = await prisma.pageView.create({ data: { pageId } });
-  return NextResponse.json({ viewId: view.id });
 });

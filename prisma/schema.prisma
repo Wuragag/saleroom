@@ -3,6 +3,9 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+// NOTE: For Neon serverless, append ?connection_limit=5 to DATABASE_URL
+// to reduce idle compute costs. Example:
+//   DATABASE_URL="postgresql://...@ep-xxx.region.neon.tech/neondb?sslmode=require&connection_limit=5"
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")

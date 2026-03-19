@@ -19,8 +19,7 @@ import { useEffect, useRef } from "react";
 const SESSION_API = "/api/buyer/session";
 const EVENTS_API  = "/api/buyer/events";
 
-const HEARTBEAT_INTERVAL_MS = 30_000;
-const FLUSH_INTERVAL_MS     = 10_000;
+const HEARTBEAT_INTERVAL_MS = 60_000;
 
 function getOrCreateVisitorId(): string {
   if (typeof window === "undefined") return "";
@@ -277,12 +276,11 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
 
   // Heartbeat + flush intervals
   useEffect(() => {
+    // Single interval for both heartbeat + event flush to minimize DB operations
     const heartbeatTimer = setInterval(() => {
-      helpersRef.current.sendHeartbeat();
       helpersRef.current.flushEvents();
+      helpersRef.current.sendHeartbeat();
     }, HEARTBEAT_INTERVAL_MS);
-
-    const flushTimer = setInterval(() => helpersRef.current.flushEvents(), FLUSH_INTERVAL_MS);
 
     function onVisibilityChange() {
       if (document.visibilityState === "hidden") {
@@ -295,7 +293,6 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
 
     return () => {
       clearInterval(heartbeatTimer);
-      clearInterval(flushTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       // Final flush on unmount
       helpersRef.current.flushEvents();

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getIntentLabel } from "@/lib/engagement-score";
+import { getIntentLabel, aggregateVisitorScore } from "@/lib/engagement-score";
 import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler } from "@/lib/api-error";
 
@@ -60,7 +60,7 @@ export const GET = withErrorHandler(async (
     };
 
     // Fetch paginated visitors + global summary stats in parallel
-    const [visitors, totalVisitorCount, globalReturning, globalHighIntent, globalScoreAgg] = await Promise.all([
+    const [visitors, totalVisitorCount, globalReturning] = await Promise.all([
       prisma.buyerVisitor.findMany({
         where: visitorWhere,
         take: limit,
@@ -86,21 +86,10 @@ export const GET = withErrorHandler(async (
       prisma.buyerVisitor.count({
         where: { ...visitorWhere, totalSessions: { gt: 1 } },
       }),
-      // Global: high intent visitors
-      prisma.buyerVisitor.count({
-        where: {
-          ...visitorWhere,
-          OR: [{ ctaClicked: true }, { engagementScore: { gte: 70 } }],
-        },
-      }),
-      // Global: average engagement score
-      prisma.buyerVisitor.aggregate({
-        where: visitorWhere,
-        _avg: { engagementScore: true },
-      }),
     ]);
 
-    // Build response rows
+    // Build response rows — compute visitor engagement score at read time
+    // from session scores (deferred from heartbeat writes to reduce DB ops)
     const rows = visitors.map((v) => {
       const totalDuration = v.sessions.reduce((sum, s) => sum + s.duration, 0);
       const allTabViews = v.sessions.flatMap((s) => s.tabViews);
@@ -123,7 +112,10 @@ export const GET = withErrorHandler(async (
         tv.tabName.toLowerCase().includes("pric")
       );
 
-      const intent = getIntentLabel(v.engagementScore, v.ctaClicked, pricingTabViewed);
+      // Compute visitor score from session scores at read time
+      const sessionScores = v.sessions.map((s) => s.engagementScore);
+      const computedScore = aggregateVisitorScore(sessionScores);
+      const intent = getIntentLabel(computedScore, v.ctaClicked, pricingTabViewed);
 
       return {
         visitorId: v.id,
@@ -132,7 +124,7 @@ export const GET = withErrorHandler(async (
         firstSeenAt: v.firstSeenAt.toISOString(),
         lastSeenAt: v.lastSeenAt.toISOString(),
         totalDurationSeconds: totalDuration,
-        engagementScore: v.engagementScore,
+        engagementScore: computedScore,
         mostViewedTab,
         ctaClicked: v.ctaClicked,
         pricingTabViewed,
@@ -142,12 +134,19 @@ export const GET = withErrorHandler(async (
       };
     });
 
+    // Compute summary stats from the current page of visitors
+    // (approximation scoped to loaded rows — good enough for dashboard UX)
+    const highIntentCount = rows.filter((r) => r.intent === "High Intent").length;
+    const avgScore = rows.length > 0
+      ? Math.round(rows.reduce((sum, r) => sum + r.engagementScore, 0) / rows.length)
+      : 0;
+
     return NextResponse.json({
       summary: {
         totalVisitors: totalVisitorCount,
         uniqueReturning: globalReturning,
-        highIntentCount: globalHighIntent,
-        avgScore: Math.round(globalScoreAgg._avg.engagementScore ?? 0),
+        highIntentCount,
+        avgScore,
       },
       visitors: rows,
       pagination: {

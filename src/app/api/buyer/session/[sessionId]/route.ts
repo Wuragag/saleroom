@@ -13,11 +13,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { computeSessionScore, aggregateVisitorScore } from "@/lib/engagement-score";
+import { computeSessionScore } from "@/lib/engagement-score";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-// Rate limit: 60 heartbeats per minute per IP (client sends every ~30s)
+// Rate limit: 60 heartbeats per minute per IP (client sends every ~60s)
 const limiter = rateLimit({ limit: 60, window: "60s" });
 
 interface TabViewInput {
@@ -109,21 +109,13 @@ export const PATCH = withErrorHandler(async (
         });
       }
 
-      // Update visitor aggregates
-      const allSessions = await tx.buyerSession.findMany({
-        where: { visitorId: session.visitorId },
-        select: { engagementScore: true },
-      });
-      const allScores = allSessions.map((s) => s.engagementScore);
-      // Replace current session score in array (already updated above)
-      const updatedScores = allScores; // already includes updated score (session was updated above)
-      const visitorScore = aggregateVisitorScore(updatedScores);
-
+      // Update visitor timestamps and flags only — visitor engagementScore is
+      // computed at read-time in the analytics endpoint to avoid the expensive
+      // findMany of all sessions on every heartbeat.
       await tx.buyerVisitor.update({
         where: { id: session.visitorId },
         data: {
           lastSeenAt: now,
-          engagementScore: visitorScore,
           ctaClicked: ctaClicked ? true : undefined,
         },
       });

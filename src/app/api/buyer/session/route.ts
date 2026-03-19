@@ -45,11 +45,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ error: "Missing visitorId or pageId" }, { status: 400 });
     }
 
-    // Verify the page exists (and isn't soft-deleted, etc.)
-    const page = await prisma.page.findUnique({ where: { id: pageId }, select: { id: true } });
-    if (!page) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
-    }
+    // Page existence is validated by FK constraints in the transaction below
 
     // Resolve refToken to a contactId (if valid)
     let contactId: string | null = null;
@@ -138,7 +134,12 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       isReturn: result.session.isReturn,
       isNew: result.isNew,
     });
-  } catch (err) {
+  } catch (err: unknown) {
+    // FK violation on pageId means the page doesn't exist
+    const message = err instanceof Error ? err.message : "";
+    if (message.includes("Foreign key constraint") || message.includes("violates foreign key")) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
     console.error("[buyer/session POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
