@@ -167,7 +167,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
     setDuplicating(true);
     try {
       await fetch(`/api/pages/${page.id}/duplicate`, { method: "POST" });
-      toast.success("Page duplicated");
+      toast.success("Page duplicated", { icon: "✨" });
       router.refresh();
     } catch {
       toast.error("Failed to duplicate page");
@@ -178,7 +178,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
 
   return (
     <>
-      <div className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+      <div className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-primary/20 transition-all duration-300 ease-out flex flex-col">
 
         {/* Thumbnail */}
         <Link href={`/editor/${page.id}`} className="block">
@@ -252,9 +252,22 @@ export function PageCard({ page, analytics }: PageCardProps) {
           {/* Analytics */}
           {analytics && analytics.views > 0 && (
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{analytics.views} views</span>
-              {analytics.avgDuration > 0 && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDuration(analytics.avgDuration)}</span>}
-              {analytics.linkClicks > 0 && <span className="flex items-center gap-1"><Link2 className="h-3 w-3" />{analytics.linkClicks}</span>}
+              <span className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-200">
+                <Eye className="h-3 w-3" />
+                <span className="tabular-nums font-medium">{analytics.views}</span> views
+              </span>
+              {analytics.avgDuration > 0 && (
+                <span className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-200">
+                  <Clock className="h-3 w-3" />
+                  {formatDuration(analytics.avgDuration)}
+                </span>
+              )}
+              {analytics.linkClicks > 0 && (
+                <span className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-200">
+                  <Link2 className="h-3 w-3" />
+                  <span className="tabular-nums font-medium">{analytics.linkClicks}</span>
+                </span>
+              )}
             </div>
           )}
 
@@ -270,12 +283,17 @@ export function PageCard({ page, analytics }: PageCardProps) {
               <span className="text-[11px] text-muted-foreground truncate">{timeAgo(page.updatedAt)}</span>
             </div>
             <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 transition-all duration-200"
               style={page.published
                 ? { backgroundColor: `${accent}18`, color: accent }
                 : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
             >
-              {page.published ? "Published" : "Draft"}
+              {page.published ? (
+                <span className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current animate-save-dot" />
+                  Live
+                </span>
+              ) : "Draft"}
             </span>
           </div>
         </div>

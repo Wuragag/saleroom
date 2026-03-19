@@ -39,6 +39,121 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════
+   DOPAMINE LOOPS — Micro-interactions & feedback system
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Press feedback: satisfying tactile click ── */
+@keyframes btn-press {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+/* ── Success pulse: green glow on completion ── */
+@keyframes success-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ── Checkmark draw: animated SVG check ── */
+@keyframes check-draw {
+  0%   { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* ── Bounce in: elastic entrance for success states ── */
+@keyframes dopamine-bounce {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.15); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Shimmer: skeleton loading glow ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Progress fill: smooth bar animation ── */
+@keyframes progress-fill {
+  from { width: 0%; }
+}
+
+/* ── Number count up: scale pop for metrics ── */
+@keyframes count-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* ── Celebration burst: radial particles ── */
+@keyframes celebrate-ring {
+  0%   { transform: scale(0.8); opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+  100% { transform: scale(1); opacity: 0; box-shadow: 0 0 0 16px transparent; }
+}
+
+/* ── Saved indicator dot pulse ── */
+@keyframes save-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.6); opacity: 0.6; }
+}
+
+/* ── Slide-up reveal for toasts/notifications ── */
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Ripple: material-style click ripple ── */
+@keyframes ripple-expand {
+  0%   { transform: scale(0); opacity: 0.35; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+/* ── Glow pulse for attention ── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+  50%      { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
+}
+
+@layer utilities {
+  .animate-btn-press {
+    animation: btn-press 0.15s ease-out;
+  }
+  .animate-success-pulse {
+    animation: success-pulse 0.6s ease-out;
+  }
+  .animate-dopamine-bounce {
+    animation: dopamine-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, hsl(var(--muted)) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  .animate-progress-fill {
+    animation: progress-fill 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-count-pop {
+    animation: count-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .animate-celebrate-ring {
+    animation: celebrate-ring 0.5s ease-out both;
+  }
+  .animate-save-dot {
+    animation: save-dot-pulse 1.5s ease-in-out infinite;
+  }
+  .animate-slide-up {
+    animation: slide-up-fade 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+}
+
 /* Tiptap editor styles */
 .tiptap {
   @apply prose prose-lg max-w-none focus:outline-none min-h-[500px] p-6;
@@ -145,16 +260,24 @@ div[data-type="form-block"] textarea:focus {
 }
 
 div[data-type="form-block"] button[type="submit"] {
-  transition: opacity 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 div[data-type="form-block"] button[type="submit"]:hover {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+div[data-type="form-block"] button[type="submit"]:active {
+  transform: scale(0.97);
+  box-shadow: none;
 }
 
 div[data-type="form-block"] button[type="submit"]:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Node view wrapper spacing */
@@ -486,9 +609,14 @@ div[data-type="cta-button"] a {
 }
 div[data-type="cta-button"] a:hover {
   filter: brightness(1.1) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.2) !important;
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.22) !important;
   background-size: unset !important;
+}
+div[data-type="cta-button"] a:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  transition-duration: 0.08s !important;
 }
 
 /* ── Logo grid ── */
@@ -502,10 +630,11 @@ div[data-type="logo-grid"] img:hover {
 
 /* ── Contact cards ── */
 div[data-type="contact-card"] > div {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
 }
 div[data-type="contact-card"] > div:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 
 /* ── Form block (pub context) ── */

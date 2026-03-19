@@ -98,17 +98,17 @@ export function PublishedFormHydrator({
             };
 
             if (res.ok) {
-              // Show success message — use textContent to prevent XSS
+              // Show success message with dopamine animation — use textContent to prevent XSS
               while (form.firstChild) form.removeChild(form.firstChild);
 
               const wrapper = document.createElement("div");
-              wrapper.style.cssText = "text-align:center;padding:24px 0;";
+              wrapper.style.cssText = "text-align:center;padding:24px 0;opacity:0;transform:scale(0);animation:dopamine-bounce 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;";
 
               const iconWrap = document.createElement("div");
-              iconWrap.style.cssText = `width:48px;height:48px;border-radius:50%;background:${accentColor}1a;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;`;
+              iconWrap.style.cssText = `width:56px;height:56px;border-radius:50%;background:${accentColor}1a;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:0 0 0 0 ${accentColor}40;animation:success-pulse 0.6s ease-out 0.3s both;`;
               const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-              svg.setAttribute("width", "24");
-              svg.setAttribute("height", "24");
+              svg.setAttribute("width", "28");
+              svg.setAttribute("height", "28");
               svg.setAttribute("viewBox", "0 0 24 24");
               svg.setAttribute("fill", "none");
               svg.setAttribute("stroke", accentColor);
@@ -117,11 +117,12 @@ export function PublishedFormHydrator({
               svg.setAttribute("stroke-linejoin", "round");
               const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
               polyline.setAttribute("points", "20 6 9 17 4 12");
+              polyline.style.cssText = "stroke-dasharray:20;stroke-dashoffset:20;animation:check-draw 0.4s ease-out 0.4s both;";
               svg.appendChild(polyline);
               iconWrap.appendChild(svg);
 
               const msg = document.createElement("p");
-              msg.style.cssText = "font-size:16px;font-weight:600;margin:0;";
+              msg.style.cssText = "font-size:17px;font-weight:700;margin:0;opacity:0;animation:slide-up-fade 0.25s cubic-bezier(0.16,1,0.3,1) 0.5s both;";
               msg.textContent = successMessage; // safe: textContent never parses HTML
 
               wrapper.appendChild(iconWrap);

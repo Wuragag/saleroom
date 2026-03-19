@@ -240,10 +240,10 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => copyContactLink(c.id, c.refToken)}
-                        className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted"
+                        className={`h-6 w-6 flex items-center justify-center rounded-md transition-all duration-200 ${copiedId === c.id ? "bg-emerald-50 dark:bg-emerald-950/30" : "hover:bg-muted"}`}
                         title="Copy link"
                       >
-                        {copiedId === c.id ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                        {copiedId === c.id ? <Check className="h-3 w-3 text-emerald-500 animate-dopamine-bounce" /> : <Copy className="h-3 w-3" />}
                       </button>
                       <a
                         href={`/p/${slug}?ref=${c.refToken}`}

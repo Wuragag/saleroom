@@ -39,9 +39,9 @@ export function OnboardingFlow({ userName }: Props) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Progress bar */}
-      <div className="w-full h-1 bg-border">
+      <div className="w-full h-1.5 bg-border overflow-hidden">
         <div
-          className="h-full bg-primary transition-all duration-500 ease-out"
+          className="h-full bg-primary rounded-r-full animate-progress-fill transition-all duration-700 ease-out"
           style={{ width: "100%" }}
         />
       </div>

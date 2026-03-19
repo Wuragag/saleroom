@@ -98,20 +98,25 @@ export function TourTooltipCard({
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          {/* Step dots */}
-          <div className="flex items-center gap-1.5">
-            {Array.from({ length: totalSteps }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-200 ${
-                  i === stepIndex
-                    ? "w-4 bg-primary"
-                    : i < stepIndex
-                    ? "w-1.5 bg-primary/40"
-                    : "w-1.5 bg-muted-foreground/20"
-                }`}
-              />
-            ))}
+          {/* Step dots + progress */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ease-out ${
+                    i === stepIndex
+                      ? "w-5 bg-primary animate-glow-pulse"
+                      : i < stepIndex
+                      ? "w-1.5 bg-primary/60"
+                      : "w-1.5 bg-muted-foreground/20"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-muted-foreground font-medium tabular-nums">
+              {stepIndex + 1}/{totalSteps}
+            </span>
           </div>
 
           {/* Buttons */}

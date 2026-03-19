@@ -107,6 +107,7 @@ export function EditorHeader({
 
   // Share modal state
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [justPublished, setJustPublished] = useState(false);
 
   // Save as Template modal state
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
@@ -156,6 +157,10 @@ export function EditorHeader({
       const next = !published;
       await apiClient.put(`/api/pages/${pageId}`, { published: next });
       onPublishedChange(next);
+      if (next) {
+        setJustPublished(true);
+        setTimeout(() => setJustPublished(false), 1500);
+      }
       toast.success(next ? "Page published" : "Page unpublished");
     } catch {
       toast.error("Failed to update publish status");
@@ -266,19 +271,22 @@ export function EditorHeader({
               </Badge>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Circle
-                  className={`h-2 w-2 fill-current ${
+                  className={`h-2 w-2 fill-current transition-all duration-300 ${
                     saveStatus === "saved"
-                      ? "text-emerald-500"
+                      ? "text-emerald-500 animate-save-dot"
                       : saveStatus === "saving"
-                      ? "text-amber-500"
+                      ? "text-amber-500 animate-spin"
                       : "text-muted-foreground/50"
                   }`}
+                  style={saveStatus === "saving" ? { animationDuration: "1s" } : undefined}
                 />
-                {saveStatus === "saved"
-                  ? "Saved"
-                  : saveStatus === "saving"
-                  ? "Saving..."
-                  : "Unsaved"}
+                <span className={`transition-all duration-200 ${saveStatus === "saved" ? "text-emerald-600 font-medium" : ""}`}>
+                  {saveStatus === "saved"
+                    ? "Saved"
+                    : saveStatus === "saving"
+                    ? "Saving..."
+                    : "Unsaved"}
+                </span>
               </div>
 
               {/* Lock indicator */}
@@ -312,12 +320,12 @@ export function EditorHeader({
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-lg gap-1.5"
+                className={`rounded-lg gap-1.5 transition-all duration-200 ${copied ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400 animate-success-pulse" : ""}`}
                 onClick={copyLink}
               >
                 {copied ? (
                   <>
-                    <Check className="h-3 w-3" />
+                    <Check className="h-3 w-3 animate-dopamine-bounce" />
                     Copied!
                   </>
                 ) : (
@@ -336,25 +344,37 @@ export function EditorHeader({
                 <Share2 className="h-3 w-3" />
                 Share
               </Button>
-              <Button
-                size="sm"
-                variant={published ? "outline" : "default"}
-                className="rounded-lg gap-1.5"
-                onClick={handleTogglePublish}
-                disabled={publishing}
-              >
-                {published ? (
-                  <>
-                    <EyeOff className="h-3 w-3" />
-                    {publishing ? "Unpublishing..." : "Unpublish"}
-                  </>
-                ) : (
-                  <>
-                    <Globe className="h-3 w-3" />
-                    {publishing ? "Publishing..." : "Publish"}
-                  </>
+              <div className="relative">
+                <Button
+                  size="sm"
+                  variant={published ? "outline" : "default"}
+                  className={`rounded-lg gap-1.5 transition-all duration-200 ${
+                    justPublished ? "animate-success-pulse bg-emerald-600 hover:bg-emerald-600 text-white" : ""
+                  } ${!published && !publishing ? "animate-glow-pulse" : ""}`}
+                  onClick={handleTogglePublish}
+                  disabled={publishing}
+                >
+                  {justPublished ? (
+                    <>
+                      <Check className="h-3 w-3 animate-dopamine-bounce" />
+                      Published!
+                    </>
+                  ) : published ? (
+                    <>
+                      <EyeOff className="h-3 w-3" />
+                      {publishing ? "Unpublishing..." : "Unpublish"}
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-3 w-3" />
+                      {publishing ? "Publishing..." : "Publish"}
+                    </>
+                  )}
+                </Button>
+                {justPublished && (
+                  <span className="absolute inset-0 rounded-lg animate-celebrate-ring text-emerald-400 pointer-events-none" />
                 )}
-              </Button>
+              </div>
 
               {/* ··· overflow menu */}
               <DropdownMenu>
@@ -501,11 +521,14 @@ export function EditorHeader({
 
           {saveSuccess ? (
             <div className="flex flex-col items-center gap-3 py-6">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-              <p className="text-sm font-medium text-foreground">
+              <div className="relative">
+                <CheckCircle2 className="h-10 w-10 text-emerald-500 animate-dopamine-bounce" />
+                <span className="absolute inset-0 rounded-full animate-celebrate-ring text-emerald-400 pointer-events-none" />
+              </div>
+              <p className="text-sm font-medium text-foreground animate-slide-up">
                 Template saved!
               </p>
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-xs text-muted-foreground text-center animate-slide-up" style={{ animationDelay: "0.1s" }}>
                 Find it in <strong>New Page</strong> when you next create a
                 page.
               </p>

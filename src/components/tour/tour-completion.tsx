@@ -56,20 +56,25 @@ export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) 
 
       {/* Completion card */}
       <div
-        className="bg-card rounded-2xl shadow-2xl border border-border max-w-md w-full p-8 text-center animate-in fade-in-0 zoom-in-95 duration-300 relative z-[63]"
+        className="bg-card rounded-2xl shadow-2xl border border-border max-w-md w-full p-8 text-center animate-dopamine-bounce relative z-[63]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Emoji */}
-        <div className="text-5xl mb-4">
-          <span role="img" aria-label="party popper">
-            🎉
-          </span>
+        {/* Animated checkmark circle */}
+        <div className="mx-auto mb-5 h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center animate-success-pulse">
+          <svg className="h-8 w-8 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" style={{ strokeDasharray: 20, animation: "check-draw 0.4s ease-out 0.3s both" }} />
+          </svg>
         </div>
 
         {/* Title */}
         <h2 className="text-xl font-bold text-foreground mb-2">
           You&apos;re All Set!
         </h2>
+
+        {/* Progress complete bar */}
+        <div className="w-full h-1.5 bg-border rounded-full mb-4 overflow-hidden">
+          <div className="h-full bg-emerald-500 rounded-full animate-progress-fill" style={{ width: "100%" }} />
+        </div>
 
         {/* Subtitle */}
         <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
@@ -81,13 +86,13 @@ export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) 
         <div className="flex flex-col gap-2.5">
           <button
             onClick={onCreatePage}
-            className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+            className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all duration-150 animate-glow-pulse"
           >
             Create Your First Page
           </button>
           <button
             onClick={onFinish}
-            className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted active:scale-[0.97] transition-all duration-150"
           >
             Go to Dashboard
           </button>
