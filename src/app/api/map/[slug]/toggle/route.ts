@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 const limiter = rateLimit({ limit: 30, window: "60s" });
 
 /** POST /api/map/[slug]/toggle — buyer toggles a MAP item (public, rate-limited) */
-export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export const POST = withErrorHandler(async (req: Request, { params }: { params: Promise<{ slug: string }> }) => {
   const ip = getClientIp(req);
   const { success } = await limiter.limit(ip);
   if (!success) {
@@ -54,4 +55,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   });
 
   return NextResponse.json({ item: updated });
-}
+});

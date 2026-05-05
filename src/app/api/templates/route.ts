@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { withErrorHandler, safeJson } from "@/lib/api-error";
+import { safeJson } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
 // ---------------------------------------------------------------------------
 // GET /api/templates
 // Returns all templates ordered by usageCount desc.
 // Optionally filter by ?category=post-call
 // ---------------------------------------------------------------------------
-export const GET = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (request) => {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
 
@@ -30,12 +25,7 @@ export const GET = withErrorHandler(async (request: Request) => {
 // Body: { name, description, category, pageId }
 // Fetches page + tabs, creates a Template record, returns { id }
 // ---------------------------------------------------------------------------
-export const POST = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (request, { session }) => {
   const body = await safeJson(request) ?? {};
   const { name, description, category, pageId } = body as {
     name: string;

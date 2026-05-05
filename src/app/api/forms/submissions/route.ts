@@ -1,19 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
+import { parsePagination } from "@/lib/pagination-utils";
 
-export const GET = withErrorHandler(async (req: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (req, { session }) => {
   const { searchParams } = new URL(req.url);
   const pageId = searchParams.get("pageId");
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10) || 50));
+  const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 50 });
 
   const teamId = await getUserTeamId(session.user.id);
 
@@ -48,7 +42,7 @@ export const GET = withErrorHandler(async (req: Request) => {
       include: { page: { select: { id: true, title: true, slug: true } } },
       orderBy: { createdAt: "desc" },
       take: limit,
-      skip: (page - 1) * limit,
+      skip,
     }),
     prisma.formSubmission.count({ where: whereClause }),
   ]);

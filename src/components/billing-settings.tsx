@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { formatFullDate } from "@/lib/format-utils";
 
 interface BillingData {
   plan: "FREE" | "PRO" | "TEAM";
@@ -210,13 +211,7 @@ export function BillingSettings() {
           <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              Your plan is set to cancel on{" "}
-              {new Date(billing.currentPeriodEnd).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-              . You&apos;ll keep access until then.
+              Your plan is set to cancel on {formatFullDate(billing.currentPeriodEnd)}. You&apos;ll keep access until then.
             </p>
           </div>
         )}

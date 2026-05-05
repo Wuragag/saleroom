@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
-export const PATCH = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const PATCH = withAuth(async (request, { session }) => {
   const body = (await request.json()) as {
     role?: string;
     onboardingCompleted?: boolean;

@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAdminAuth } from "@/lib/admin-auth";
 
-export const GET = withErrorHandler(async () => {
-  const auth = await requireAdmin();
-  if (!auth.authorized) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async () => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 

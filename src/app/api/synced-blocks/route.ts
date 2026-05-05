@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { canCreateSyncedBlock } from "@/lib/plan-limits";
-import { withErrorHandler, safeJson } from "@/lib/api-error";
+import { safeJson } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
-export const GET = withErrorHandler(async () => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_request, { session }) => {
   const teamId = await getUserTeamId(session.user.id);
   if (!teamId) {
     return NextResponse.json({ error: "No team found" }, { status: 400 });
@@ -30,12 +25,7 @@ export const GET = withErrorHandler(async () => {
   return NextResponse.json(blocks);
 });
 
-export const POST = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (request, { session }) => {
   const teamId = await getUserTeamId(session.user.id);
   if (!teamId) {
     return NextResponse.json({ error: "No team found" }, { status: 400 });

@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { TourStep } from "./tour-steps";
-import type { TargetRect } from "./use-product-tour";
+import type { TargetRect } from "@/hooks/use-product-tour";
 
 interface TourTooltipCardProps {
   step: TourStep;

@@ -11,6 +11,23 @@ export function formatDuration(s: number): string {
   return rem > 0 ? `${m}m ${rem}s` : `${m}m`;
 }
 
+/** Format a date as "Jan 15". */
+export function formatShortDate(d: string | Date): string {
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/** Format a date as "January 15, 2026". */
+export function formatFullDate(d: string | Date): string {
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 /** Format an ISO timestamp into a relative time string (e.g. "just now", "2m ago", "3d ago", "Jan 15"). */
 export function formatRelativeTime(iso: string): string {
   const now = Date.now();
@@ -22,5 +39,5 @@ export function formatRelativeTime(iso: string): string {
   if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
   if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
 
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatShortDate(iso);
 }

@@ -4,12 +4,12 @@
  * Returns buyer analytics for a page. Requires authenticated session and page ownership/team access.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getIntentLabel, aggregateVisitorScore } from "@/lib/engagement-score";
 import { getUserTeamId } from "@/lib/team-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
 function getRangeDate(range: string): Date | null {
   const now = new Date();
@@ -18,22 +18,15 @@ function getRangeDate(range: string): Date | null {
   return null; // "all"
 }
 
-export const GET = withErrorHandler(async (
-  req: NextRequest,
-  { params }: { params: Promise<{ pageId: string }> }
-) => {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const GET = withAuth<{ pageId: string }>(async (req, { params, session }) => {
+    const searchParams = (req as NextRequest).nextUrl.searchParams;
     const { pageId } = await params;
-    const range = req.nextUrl.searchParams.get("range") ?? "30d";
+    const range = searchParams.get("range") ?? "30d";
     const sinceDate = getRangeDate(range);
 
     // Pagination
-    const pageParam = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1);
-    const limit = Math.min(200, Math.max(1, parseInt(req.nextUrl.searchParams.get("limit") ?? "50", 10) || 50));
+    const pageParam = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10) || 50));
 
     // Verify access: page must belong to the user's team or user directly
     const page = await prisma.page.findUnique({

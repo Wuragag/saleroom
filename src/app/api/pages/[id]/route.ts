@@ -4,14 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canSetPassword } from "@/lib/plan-limits";
 import { withErrorHandler } from "@/lib/api-error";
+import { generateSlug } from "@/lib/slug-utils";
 import bcrypt from "bcryptjs";
-import slugify from "slugify";
-
-function generateSlug(title: string): string {
-  const base = slugify(title, { lower: true, strict: true });
-  const suffix = Math.random().toString(36).substring(2, 6);
-  return `${base}-${suffix}`;
-}
 
 export const GET = withErrorHandler(async (
   request: Request,

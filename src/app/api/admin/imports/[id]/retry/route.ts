@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAdminAuth } from "@/lib/admin-auth";
 
-export const POST = withErrorHandler(async (
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
-  const auth = await requireAdmin();
-  if (!auth.authorized) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth<{ id: string }>(async (_request, { params }) => {
   const { id } = await params;
 
   const page = await prisma.page.findUnique({

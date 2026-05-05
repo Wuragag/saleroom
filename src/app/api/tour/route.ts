@@ -1,31 +1,21 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-auth";
 
-export async function POST() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (_request, { session }) => {
   await prisma.user.update({
     where: { id: session.user.id },
     data: { hasSeenTour: true },
   });
 
   return NextResponse.json({ ok: true });
-}
+});
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_request, { session }) => {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { hasSeenTour: true },
   });
 
   return NextResponse.json({ hasSeenTour: user?.hasSeenTour ?? false });
-}
+});

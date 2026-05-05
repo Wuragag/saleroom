@@ -1,16 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-auth";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ pageId: string }> }
-) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth<{ pageId: string }>(async (_request, { params, session }) => {
   const { pageId } = await params;
 
   const page = await prisma.page.findUnique({
@@ -44,4 +36,4 @@ export async function GET(
     status: page.importStatus ?? "complete",
     error: page.importError,
   });
-}
+});

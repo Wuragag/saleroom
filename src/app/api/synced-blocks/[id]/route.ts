@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
-import { withErrorHandler, safeJson } from "@/lib/api-error";
+import { safeJson } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
 async function verifyBlockAccess(blockId: string, userId: string) {
   const teamId = await getUserTeamId(userId);
@@ -17,15 +17,7 @@ async function verifyBlockAccess(blockId: string, userId: string) {
   return block;
 }
 
-export const GET = withErrorHandler(async (
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth<{ id: string }>(async (_request, { params, session }) => {
   const { id } = await params;
   const block = await verifyBlockAccess(id, session.user.id);
   if (!block) {
@@ -35,15 +27,7 @@ export const GET = withErrorHandler(async (
   return NextResponse.json(block);
 });
 
-export const PUT = withErrorHandler(async (
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const PUT = withAuth<{ id: string }>(async (request, { params, session }) => {
   const { id } = await params;
   const block = await verifyBlockAccess(id, session.user.id);
   if (!block) {
@@ -83,15 +67,7 @@ export const PUT = withErrorHandler(async (
   return NextResponse.json(updated);
 });
 
-export const DELETE = withErrorHandler(async (
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const DELETE = withAuth<{ id: string }>(async (_request, { params, session }) => {
   const { id } = await params;
   const block = await verifyBlockAccess(id, session.user.id);
   if (!block) {

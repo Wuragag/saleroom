@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import { getUserTeamId, requireTeamOwner } from "@/lib/team-auth";
 import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
 // GET /api/team — get current user's team info
-export const GET = withErrorHandler(async () => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_request, { session }) => {
   const teamId = await getUserTeamId(session.user.id);
   if (!teamId) {
     return NextResponse.json({ error: "No team found" }, { status: 404 });

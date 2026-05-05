@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
-export const PUT = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const PUT = withAuth(async (request, { session }) => {
   const { currentPassword, newPassword } = (await request.json()) as {
     currentPassword: string;
     newPassword: string;

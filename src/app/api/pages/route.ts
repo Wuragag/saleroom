@@ -1,24 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
-import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { canCreatePage } from "@/lib/plan-limits";
-import { withErrorHandler, safeJson } from "@/lib/api-error";
-import slugify from "slugify";
+import { safeJson } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
+import { generateSlug } from "@/lib/slug-utils";
 
-function generateSlug(title: string): string {
-  const base = slugify(title, { lower: true, strict: true });
-  const suffix = Math.random().toString(36).substring(2, 6);
-  return `${base}-${suffix}`;
-}
-
-export const POST = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (request, { session }) => {
   const body = await safeJson<{ title?: string }>(request) ?? {};
   const title = body.title || "Untitled Page";
 
@@ -75,12 +64,7 @@ export const POST = withErrorHandler(async (request: Request) => {
   return NextResponse.json(page, { status: 201 });
 });
 
-export const GET = withErrorHandler(async () => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_request, { session }) => {
   const teamId = await getUserTeamId(session.user.id);
 
   // Show team pages (TEAM visibility) + user's own private pages

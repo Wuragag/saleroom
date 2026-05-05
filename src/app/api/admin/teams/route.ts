@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAdminAuth } from "@/lib/admin-auth";
+import { parsePagination } from "@/lib/pagination-utils";
 
-export const GET = withErrorHandler(async (request: Request) => {
-  const auth = await requireAdmin();
-  if (!auth.authorized) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (request) => {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") ?? "";
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams);
 
   const where = search
     ? { name: { contains: search, mode: "insensitive" as const } }

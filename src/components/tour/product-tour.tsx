@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useProductTour } from "./use-product-tour";
+import { useProductTour } from "@/hooks/use-product-tour";
 import { TourWelcomeDialog } from "./tour-welcome-dialog";
 import { TourSpotlightOverlay } from "./tour-spotlight-overlay";
 import { TourTooltipCard } from "./tour-tooltip-card";

@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import { checkPageAccess } from "@/lib/team-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
 // POST /api/pages/[id]/lock — toggle lock on a page
-export const POST = withErrorHandler(async (
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
+export const POST = withAuth<{ id: string }>(async (request, { params, session }) => {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   // Must have at least view access
   const access = await checkPageAccess(id, "view");

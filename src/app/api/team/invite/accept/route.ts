@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import { canAddTeamMember } from "@/lib/plan-limits";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
 
 // POST /api/team/invite/accept — accept an invite (authenticated user)
-export const POST = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (request, { session }) => {
   const body = await request.json();
   const { token } = body as { token?: string };
 

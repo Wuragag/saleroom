@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Check, Calendar, User } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
+import { formatFullDate, formatShortDate } from "@/lib/format-utils";
 import type { MutualActionPlanData, MapItemData } from "@/types";
 
 interface MapViewerProps {
@@ -78,12 +79,7 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
               style={{ color: "var(--pub-body-color)" }}
             >
               <Calendar className="h-3.5 w-3.5" />
-              Target close:{" "}
-              {new Date(map.closeDate).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              Target close: {formatFullDate(map.closeDate)}
             </p>
           )}
         </div>
@@ -221,10 +217,7 @@ function MapViewerItem({
               }}
             >
               <Calendar className="h-3 w-3" />
-              {new Date(item.dueDate).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
+              {formatShortDate(item.dueDate)}
               {isOverdue && " (overdue)"}
             </span>
           )}

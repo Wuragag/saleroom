@@ -4,6 +4,7 @@ import { RefreshCw, Activity, Filter } from "lucide-react";
 import { useActivityTimeline } from "@/hooks/use-activity-timeline";
 import { TimelineEventRow } from "@/components/activity-timeline-event";
 import { getVisitorColor, getVisitorLabel, TIMELINE_EVENT_CONFIG } from "@/lib/timeline-utils";
+import { formatShortDate } from "@/lib/format-utils";
 import type { TimelineEventType } from "@/types";
 
 type Range = "7d" | "30d" | "all";
@@ -17,7 +18,7 @@ function formatDateHeading(iso: string): string {
 
   if (eventDay.getTime() === today.getTime()) return "Today";
   if (eventDay.getTime() === yesterday.getTime()) return "Yesterday";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatShortDate(d);
 }
 
 interface ActivityTimelineProps {

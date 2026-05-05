@@ -3,13 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess, getUserTeamId } from "@/lib/team-auth";
 import { canCreatePage } from "@/lib/plan-limits";
 import { withErrorHandler } from "@/lib/api-error";
-import slugify from "slugify";
-
-function generateSlug(title: string): string {
-  const base = slugify(title, { lower: true, strict: true });
-  const suffix = Math.random().toString(36).substring(2, 6);
-  return `${base}-${suffix}`;
-}
+import { generateSlug } from "@/lib/slug-utils";
 
 export const POST = withErrorHandler(async (
   _request: Request,

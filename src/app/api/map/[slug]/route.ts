@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withErrorHandler } from "@/lib/api-error";
 
 /** GET /api/map/[slug] — fetch MAP for a published page (public, buyer-facing) */
-export async function GET(
-  request: Request,
+export const GET = withErrorHandler(async (
+  _request: Request,
   { params }: { params: Promise<{ slug: string }> }
-) {
+) => {
   const { slug } = await params;
 
   const page = await prisma.page.findFirst({
@@ -26,4 +27,4 @@ export async function GET(
   }
 
   return NextResponse.json({ map });
-}
+});

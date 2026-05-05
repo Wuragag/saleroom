@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-auth";
+import { retryWithBackoff } from "@/lib/retry";
+import { extractFirstJsonObject, isAnthropicRetryableError } from "@/lib/ai-output";
 
 // Separate serverless function with its own timeout.
 export const maxDuration = 60;
@@ -53,15 +55,7 @@ Rules:
  * POST /api/ai-write/process/[pageId]
  * Reads the user's prompt from DB, calls Claude, saves generated content.
  */
-export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ pageId: string }> }
-) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth<{ pageId: string }>(async (_request, { params, session }) => {
   const { pageId } = await params;
 
   const page = await prisma.page.findUnique({
@@ -91,13 +85,9 @@ export async function POST(
   try {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    // Retry with exponential backoff for transient errors
-    const MAX_RETRIES = 3;
-    let message: Anthropic.Message | null = null;
-
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        message = await anthropic.messages.create({
+    const message = await retryWithBackoff(
+      () =>
+        anthropic.messages.create({
           model: AI_MODEL,
           max_tokens: 16384,
           system: SYSTEM_PROMPT,
@@ -107,64 +97,26 @@ export async function POST(
               content: `Generate a page based on this description:\n\n${page.importText}`,
             },
           ],
-        });
-        break;
-      } catch (retryErr: unknown) {
-        const status = (retryErr as { status?: number })?.status;
-        const isRetryable = status === 429 || status === 529 || status === 503;
-
-        if (!isRetryable || attempt === MAX_RETRIES - 1) throw retryErr;
-
-        const delay = Math.pow(2, attempt + 1) * 1000;
-        console.log(
-          `Anthropic API returned ${status}, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`
-        );
-        await new Promise((r) => setTimeout(r, delay));
+        }),
+      {
+        attempts: 3,
+        isRetryable: isAnthropicRetryableError,
+        onRetry: (err, attempt, delayMs) => {
+          const status = (err as { status?: number })?.status;
+          console.log(
+            `Anthropic API returned ${status}, retrying in ${delayMs}ms (attempt ${attempt}/3)`
+          );
+        },
       }
-    }
-
-    if (!message) throw new Error("No response from AI after retries");
+    );
 
     const responseText =
       message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Robust JSON extraction
-    let parsed: { title: string; content: Record<string, unknown> } | null =
-      null;
-
-    const extractJson = (text: string) => {
-      let str = text.trim();
-
-      // Strip code fences: handle both complete (```json...```) and truncated (```json... no closing)
-      if (str.startsWith("```")) {
-        // Remove opening fence line
-        const firstNewline = str.indexOf("\n");
-        if (firstNewline !== -1) str = str.slice(firstNewline + 1);
-      }
-      if (str.endsWith("```")) {
-        str = str.slice(0, -3);
-      }
-      str = str.trim();
-
-      // 1. Try parsing directly
-      try {
-        return JSON.parse(str);
-      } catch {
-        // 2. Try to find the outermost JSON object { ... }
-        const firstBrace = str.indexOf("{");
-        const lastBrace = str.lastIndexOf("}");
-        if (firstBrace !== -1 && lastBrace > firstBrace) {
-          try {
-            return JSON.parse(str.slice(firstBrace, lastBrace + 1));
-          } catch {
-            return null;
-          }
-        }
-        return null;
-      }
-    };
-
-    parsed = extractJson(responseText);
+    const parsed = extractFirstJsonObject<{
+      title: string;
+      content: Record<string, unknown>;
+    }>(responseText);
 
     if (!parsed) {
       console.error(
@@ -228,4 +180,4 @@ export async function POST(
       error: `AI generation failed: ${errorMessage}`,
     });
   }
-}
+});

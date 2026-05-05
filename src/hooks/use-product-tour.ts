@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { TOUR_STEPS, STORAGE_KEY, type TourStep } from "./tour-steps";
+import { TOUR_STEPS, STORAGE_KEY, type TourStep } from "@/components/tour/tour-steps";
 
 export type TourState = "idle" | "welcome" | "spotlight" | "completion";
 

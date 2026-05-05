@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-auth";
-import { withErrorHandler } from "@/lib/api-error";
+import { withAdminAuth } from "@/lib/admin-auth";
 
-export const PUT = withErrorHandler(async (
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) => {
-  const auth = await requireAdmin();
-  if (!auth.authorized) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+export const PUT = withAdminAuth<{ id: string }>(async (request, { params, session }) => {
   const { id } = await params;
   const body = await request.json();
   const { isAdmin } = body as { isAdmin: boolean };
@@ -21,7 +12,7 @@ export const PUT = withErrorHandler(async (
   }
 
   // Prevent self-demotion
-  if (!isAdmin && id === auth.session?.user?.id) {
+  if (!isAdmin && id === session.user.id) {
     return NextResponse.json(
       { error: "You cannot remove your own admin access" },
       { status: 400 }

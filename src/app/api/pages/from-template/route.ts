@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT } from "@/lib/constants";
-import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { canCreatePage } from "@/lib/plan-limits";
-import { withErrorHandler, safeJson } from "@/lib/api-error";
-import slugify from "slugify";
-
-function generateSlug(name: string): string {
-  const base = slugify(name, { lower: true, strict: true });
-  const suffix = Math.random().toString(36).substring(2, 6);
-  return `${base}-${suffix}`;
-}
+import { safeJson } from "@/lib/api-error";
+import { withAuth } from "@/lib/api-auth";
+import { generateSlug } from "@/lib/slug-utils";
+import { formatFullDate } from "@/lib/format-utils";
 
 // ---------------------------------------------------------------------------
 // POST /api/pages/from-template
@@ -20,12 +15,7 @@ function generateSlug(name: string): string {
 // Increments the template's usageCount.
 // Returns: { pageId: string }
 // ---------------------------------------------------------------------------
-export const POST = withErrorHandler(async (request: Request) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (request, { session }) => {
   const body = await safeJson(request) ?? {};
   const { templateId } = body as { templateId: string };
 
@@ -46,11 +36,7 @@ export const POST = withErrorHandler(async (request: Request) => {
   }>;
 
   // Build title: "Template Name — Month D, YYYY"
-  const title = `${template.name} — ${new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })}`;
+  const title = `${template.name} — ${formatFullDate(new Date())}`;
 
   // Generate unique slug
   let slug = generateSlug(template.name);

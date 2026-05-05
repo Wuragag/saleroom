@@ -1,6 +1,6 @@
 "use client";
 
-import type { TargetRect } from "./use-product-tour";
+import type { TargetRect } from "@/hooks/use-product-tour";
 
 interface TourSpotlightOverlayProps {
   targetRect: TargetRect | null;

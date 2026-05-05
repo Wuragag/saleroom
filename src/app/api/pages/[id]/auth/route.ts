@@ -3,14 +3,15 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/lib/api-error";
 
 // Strict rate limit for password attempts: 5 per minute per IP
 const limiter = rateLimit({ limit: 5, window: "60s" });
 
-export async function POST(
+export const POST = withErrorHandler(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   // Rate limit check
   const ip = getClientIp(request);
@@ -93,4 +94,4 @@ export async function POST(
   });
 
   return response;
-}
+});
