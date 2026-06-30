@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function AccountSettings() {
   const { data: session, update } = useSession();
@@ -141,7 +143,8 @@ export function AccountSettings() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="relative w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden group shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            aria-label="Upload profile photo"
+            className="relative w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden group shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {avatarUrl ? (
               <Image
@@ -196,13 +199,12 @@ export function AccountSettings() {
               >
                 First name
               </label>
-              <input
+              <Input
                 id="firstName"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="First name"
-                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
               />
             </div>
             <div className="space-y-1.5">
@@ -212,13 +214,12 @@ export function AccountSettings() {
               >
                 Last name
               </label>
-              <input
+              <Input
                 id="lastName"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Last name"
-                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
               />
             </div>
           </div>
@@ -230,25 +231,20 @@ export function AccountSettings() {
             >
               Email
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
             />
           </div>
 
           <div className="flex items-center gap-3 pt-1">
-            <button
-              type="submit"
-              disabled={profileLoading}
-              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={profileLoading}>
               {profileLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {profileLoading ? "Saving…" : "Save changes"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -273,7 +269,7 @@ export function AccountSettings() {
             >
               Current password
             </label>
-            <input
+            <Input
               id="currentPassword"
               type="password"
               autoComplete="current-password"
@@ -281,7 +277,6 @@ export function AccountSettings() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
             />
           </div>
 
@@ -293,7 +288,7 @@ export function AccountSettings() {
               >
                 New password
               </label>
-              <input
+              <Input
                 id="newPassword"
                 type="password"
                 autoComplete="new-password"
@@ -302,7 +297,6 @@ export function AccountSettings() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 8 characters"
-                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
               />
             </div>
             <div className="space-y-1.5">
@@ -312,7 +306,7 @@ export function AccountSettings() {
               >
                 Confirm new password
               </label>
-              <input
+              <Input
                 id="confirmNewPassword"
                 type="password"
                 autoComplete="new-password"
@@ -320,22 +314,17 @@ export function AccountSettings() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-3 pt-1">
-            <button
-              type="submit"
-              disabled={passwordLoading}
-              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={passwordLoading}>
               {passwordLoading && (
                 <Loader2 className="h-4 w-4 animate-spin" />
               )}
               {passwordLoading ? "Updating…" : "Update password"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

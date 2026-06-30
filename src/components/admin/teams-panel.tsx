@@ -3,6 +3,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 
@@ -41,6 +51,10 @@ export function TeamsPanel() {
   const [loading, setLoading] = useState(true);
   const [overridingId, setOverridingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  // Confirmation state for a plan override (mutates a paid subscription)
+  const [pendingOverride, setPendingOverride] = useState<
+    { team: TeamRow; newPlan: string } | null
+  >(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
 
@@ -172,7 +186,11 @@ export function TeamsPanel() {
                     <div className="flex items-center gap-1.5">
                       <select
                         value={team.plan}
-                        onChange={(e) => handlePlanOverride(team.id, e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value !== team.plan) {
+                            setPendingOverride({ team, newPlan: e.target.value });
+                          }
+                        }}
                         disabled={overridingId === team.id}
                         className="text-xs rounded-md border border-border bg-background px-2 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                       >
@@ -226,6 +244,39 @@ export function TeamsPanel() {
           </div>
         </div>
       )}
+
+      {/* Confirm plan override (mutates a paid subscription) */}
+      <AlertDialog
+        open={pendingOverride !== null}
+        onOpenChange={(open) => { if (!open) setPendingOverride(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Change {pendingOverride?.team.name}&apos;s plan to {pendingOverride?.newPlan}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This overrides the team&apos;s billing plan from{" "}
+              <strong>{pendingOverride?.team.plan}</strong> to{" "}
+              <strong>{pendingOverride?.newPlan}</strong> immediately, without going through Stripe.
+              It changes what the team can access and is not a refund or charge.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingOverride) {
+                  handlePlanOverride(pendingOverride.team.id, pendingOverride.newPlan);
+                  setPendingOverride(null);
+                }
+              }}
+            >
+              Override plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

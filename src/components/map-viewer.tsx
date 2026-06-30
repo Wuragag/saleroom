@@ -30,7 +30,10 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
     fetchMap();
   }, [fetchMap]);
 
-  if (loading || !map || map.items.length === 0) return null;
+  // Show a lightweight skeleton while the map loads so the section does not
+  // pop in abruptly. Once loaded, the map is optional — render nothing if empty.
+  if (loading) return <MapViewerSkeleton isDark={isDark} />;
+  if (!map || map.items.length === 0) return null;
 
   const completedCount = map.items.filter((i) => i.completed).length;
   const totalCount = map.items.length;
@@ -125,6 +128,78 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
             isLast={i === map.items.length - 1}
             onToggle={(completed) => toggleItem(item.id, completed)}
           />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Loading skeleton — mirrors the map layout while data is fetched ──
+
+function MapViewerSkeleton({ isDark }: { isDark: boolean }) {
+  const block = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+
+  return (
+    <div
+      className="mt-12 pt-10"
+      style={{ borderTop: "1px solid var(--pub-divider)" }}
+      aria-hidden="true"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="space-y-2">
+          <div
+            className="h-6 w-48 rounded-md animate-pulse"
+            style={{ background: block }}
+          />
+          <div
+            className="h-4 w-32 rounded-md animate-pulse"
+            style={{ background: block }}
+          />
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div
+            className="h-7 w-14 rounded-md animate-pulse"
+            style={{ background: block }}
+          />
+          <div
+            className="h-3 w-16 rounded-md animate-pulse"
+            style={{ background: block }}
+          />
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div
+        className="h-2 rounded-full overflow-hidden mb-8 animate-pulse"
+        style={{ background: block }}
+      />
+
+      {/* Items */}
+      <div className="space-y-0">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="flex items-start gap-4 py-4"
+            style={{
+              borderBottom: i === 2 ? "none" : "1px solid var(--pub-divider)",
+            }}
+          >
+            <div
+              className="flex-shrink-0 mt-0.5 h-5 w-5 rounded-md animate-pulse"
+              style={{ background: block }}
+            />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div
+                className="h-4 w-3/4 rounded-md animate-pulse"
+                style={{ background: block }}
+              />
+              <div
+                className="h-4 w-24 rounded-full animate-pulse"
+                style={{ background: block }}
+              />
+            </div>
+          </div>
         ))}
       </div>
     </div>

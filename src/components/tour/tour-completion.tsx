@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TourCompletionProps {
   onCreatePage: () => void;
   onFinish: () => void;
 }
 
+// Forest-green brand family (rebranded chart tokens) instead of off-brand rainbow.
 const CONFETTI_COLORS = [
-  "#f59e0b",
-  "#10b981",
-  "#3b82f6",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#f97316",
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--primary))",
 ];
 
 export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) {
@@ -56,24 +57,42 @@ export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) 
 
       {/* Completion card */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tour-completion-title"
         className="bg-card rounded-2xl shadow-2xl border border-border max-w-md w-full p-8 text-center animate-dopamine-bounce relative z-[63]"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onFinish}
+          aria-label="Close"
+          className="absolute right-3 top-3 h-8 w-8 text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
         {/* Animated checkmark circle */}
-        <div className="mx-auto mb-5 h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center animate-success-pulse">
-          <svg className="h-8 w-8 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <div className="mx-auto mb-5 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center animate-success-pulse">
+          <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" style={{ strokeDasharray: 20, animation: "check-draw 0.4s ease-out 0.3s both" }} />
           </svg>
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-foreground mb-2">
+        <h2
+          id="tour-completion-title"
+          className="text-xl font-bold text-foreground mb-2"
+        >
           You&apos;re All Set!
         </h2>
 
         {/* Progress complete bar */}
         <div className="w-full h-1.5 bg-border rounded-full mb-4 overflow-hidden">
-          <div className="h-full bg-emerald-500 rounded-full animate-progress-fill" style={{ width: "100%" }} />
+          <div className="h-full bg-primary rounded-full animate-progress-fill" style={{ width: "100%" }} />
         </div>
 
         {/* Subtitle */}
@@ -84,18 +103,21 @@ export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) 
 
         {/* Actions */}
         <div className="flex flex-col gap-2.5">
-          <button
+          <Button
+            type="button"
             onClick={onCreatePage}
-            className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all duration-150 animate-glow-pulse"
+            className="w-full h-10 rounded-xl text-sm font-semibold animate-glow-pulse"
           >
             Create Your First Page
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
             onClick={onFinish}
-            className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted active:scale-[0.97] transition-all duration-150"
+            className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             Go to Dashboard
-          </button>
+          </Button>
         </div>
       </div>
     </div>

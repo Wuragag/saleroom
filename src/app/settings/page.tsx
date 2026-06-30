@@ -39,9 +39,14 @@ function SettingsContent() {
         {TABS.map(({ id, label, icon: Icon, ready }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id)}
+            onClick={() => ready && setActiveTab(id)}
+            disabled={!ready}
+            aria-disabled={!ready}
+            title={ready ? undefined : `${label} — coming soon`}
             className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === id
+              !ready
+                ? "border-transparent text-muted-foreground/50 cursor-not-allowed"
+                : activeTab === id
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             }`}
@@ -49,7 +54,7 @@ function SettingsContent() {
             <Icon className="h-4 w-4" />
             {label}
             {!ready && (
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded-full">
                 Soon
               </span>
             )}

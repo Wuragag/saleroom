@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 // ── Quotes ────────────────────────────────────────────────────────────────────
 const QUOTES = [
@@ -130,7 +130,12 @@ function SignInForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error */}
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              <div
+                id="signin-error"
+                role="alert"
+                aria-live="polite"
+                className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"
+              >
                 {error}
               </div>
             )}
@@ -148,6 +153,8 @@ function SignInForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "signin-error" : undefined}
                 className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
               />
             </div>
@@ -174,13 +181,14 @@ function SignInForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? "signin-error" : undefined}
                   className="w-full h-9 px-3 pr-9 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-2.5 rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -194,7 +202,8 @@ function SignInForm() {
               disabled={loading}
               className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
-              Sign in
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         </div>

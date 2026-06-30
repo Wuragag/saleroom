@@ -6,6 +6,7 @@ import { AppNav } from "@/components/app-nav";
 import { AnalyticsTable } from "@/components/analytics-table";
 import { AnalyticsStatCards } from "@/components/analytics-stat-cards";
 import { ViewsChart } from "@/components/views-chart";
+import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/format-utils";
 
 const PAGE_SIZE = 50;
@@ -178,12 +179,12 @@ export default async function AnalyticsPage({
 
 
   const statCards = [
-    { label: "Total Views",       value: totalViews.toLocaleString(),      icon: "Eye",      color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-950/30",    description: "Total page views across all published pages" },
-    { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: "Clock",    color: "text-violet-500",  bg: "bg-violet-50 dark:bg-violet-950/30", description: "Average time visitors spend viewing your pages" },
-    { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", description: "Number of times visitors clicked links in your pages" },
-    { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", color: "text-orange-500",  bg: "bg-orange-50 dark:bg-orange-950/30", description: "Total form responses submitted by visitors" },
-    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: "Users",    color: "text-sky-500",     bg: "bg-sky-50 dark:bg-sky-950/30",      description: "Distinct visitors identified by email across all pages" },
-    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   color: "text-pink-500",    bg: "bg-pink-50 dark:bg-pink-950/30",    description: "Buyers who clicked a CTA or have a high engagement score" },
+    { label: "Total Views",       value: totalViews.toLocaleString(),      icon: "Eye",      color: "text-primary", bg: "bg-primary/10", description: "Total page views across all published pages" },
+    { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: "Clock",    color: "text-primary", bg: "bg-primary/10", description: "Average time visitors spend viewing your pages" },
+    { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    color: "text-primary", bg: "bg-primary/10", description: "Number of times visitors clicked links in your pages" },
+    { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", color: "text-primary", bg: "bg-primary/10", description: "Total form responses submitted by visitors" },
+    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: "Users",    color: "text-primary", bg: "bg-primary/10", description: "Distinct visitors identified by email across all pages" },
+    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   color: "text-primary", bg: "bg-primary/10", description: "Buyers who clicked a CTA or have a high engagement score" },
   ];
 
   return (
@@ -216,20 +217,14 @@ export default async function AnalyticsPage({
               </p>
               <div className="flex items-center gap-2">
                 {currentPage > 1 && (
-                  <a
-                    href={`/analytics?page=${currentPage - 1}`}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:bg-muted transition-colors"
-                  >
-                    Previous
-                  </a>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/analytics?page=${currentPage - 1}`}>Previous</a>
+                  </Button>
                 )}
                 {currentPage < totalPageCount && (
-                  <a
-                    href={`/analytics?page=${currentPage + 1}`}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:bg-muted transition-colors"
-                  >
-                    Next
-                  </a>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/analytics?page=${currentPage + 1}`}>Next</a>
+                  </Button>
                 )}
               </div>
             </div>

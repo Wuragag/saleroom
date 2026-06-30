@@ -162,26 +162,26 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
           <Link href={`/editor/${page.id}`}>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity" title="Edit">
+            <Button variant="ghost" size="sm" aria-label="Edit" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Edit">
               <Pencil className="h-3.5 w-3.5" />
             </Button>
           </Link>
           {page.published ? (
             <Link href={`/p/${page.slug}`} target="_blank">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity" title="View">
+              <Button variant="ghost" size="sm" aria-label="View" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="View">
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
             </Link>
           ) : (
             <Link href={`/preview/${page.id}`} target="_blank">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity" title="Preview">
+              <Button variant="ghost" size="sm" aria-label="Preview" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Preview">
                 <Eye className="h-3.5 w-3.5" />
               </Button>
             </Link>
           )}
           <DropdownMenu open={menuOpen} onOpenChange={(o) => { if (!o) setShowTagEditor(false); setMenuOpen(o); }}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="sm" aria-label="Page actions" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>

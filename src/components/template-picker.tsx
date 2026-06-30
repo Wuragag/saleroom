@@ -4,12 +4,18 @@ import {
   useState,
   useEffect,
   useCallback,
-  useRef,
   KeyboardEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import { X, Loader2, FileText } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 import type { TemplateData } from "@/types";
@@ -35,7 +41,6 @@ export function TemplatePicker({
   onCreateBlank,
 }: TemplatePickerProps) {
   const router = useRouter();
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -68,8 +73,6 @@ export function TemplatePicker({
       setSelectedTemplateId(null);
       setIsCreating(false);
       setLimitError(null);
-      // Focus the modal so keyboard events work
-      setTimeout(() => modalRef.current?.focus(), 50);
     }
   }, [isOpen]);
 
@@ -102,13 +105,10 @@ export function TemplatePicker({
     if (selectedTemplateId) handleUseSpecificTemplate(selectedTemplateId);
   };
 
-  // Keyboard navigation: Arrow keys move selection, Enter confirms, Escape closes
+  // Keyboard navigation: Arrow keys move selection, Enter confirms.
+  // Escape is handled natively by the Dialog primitive.
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
       if (!filteredTemplates.length) return;
 
       const currentIndex = filteredTemplates.findIndex(
@@ -135,43 +135,29 @@ export function TemplatePicker({
         handleUseSelected();
       }
     },
-    [filteredTemplates, selectedTemplateId, onClose, handleUseSelected] // eslint-disable-line react-hooks/exhaustive-deps
+    [filteredTemplates, selectedTemplateId, handleUseSelected] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  if (!isOpen) return null;
-
   return (
-    /* Backdrop */
-    <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-      onClick={onClose}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      {/* Modal */}
-      <div
-        ref={modalRef}
-        tabIndex={-1}
+      <DialogContent
         onKeyDown={handleKeyDown}
-        className="bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden border border-border outline-none"
-        onClick={(e) => e.stopPropagation()}
+        className="sm:max-w-4xl max-h-[88vh] flex flex-col gap-0 overflow-hidden p-0"
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              Choose a Template
-            </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Start with a pre-built page or create from scratch
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <DialogHeader className="px-6 py-4 border-b border-border shrink-0 text-left">
+          <DialogTitle className="text-lg font-semibold text-foreground">
+            Choose a Template
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+            Start with a pre-built page or create from scratch
+          </DialogDescription>
+        </DialogHeader>
 
         {/* ── Body ── */}
         <div className="flex flex-1 overflow-hidden min-h-0">
@@ -279,8 +265,8 @@ export function TemplatePicker({
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

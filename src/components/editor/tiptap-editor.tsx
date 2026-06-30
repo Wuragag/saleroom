@@ -26,6 +26,8 @@ import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle } from
 import { CoverImageEditor } from "./cover-image-editor";
 import { MapPanel } from "./map-panel";
 import { SyncedBlockPicker } from "./synced-block-picker";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Lock } from "lucide-react";
 
 interface TiptapEditorProps {
   page: PageData;
@@ -291,17 +293,53 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
           onRequireEmailChange={setRequireEmail}
         />
         <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-4">
-          <CoverImageEditor
-            pageId={page.id}
-            coverImage={coverImage}
-            onCoverImageChange={setCoverImage}
-          />
-          <EditorToolbar editor={editor} />
+          {!readOnly && (
+            <CoverImageEditor
+              pageId={page.id}
+              coverImage={coverImage}
+              onCoverImageChange={setCoverImage}
+            />
+          )}
+
+          {readOnly ? (
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                {lockedByName
+                  ? `This page is locked by ${lockedByName}. You're viewing in read-only mode.`
+                  : "You're viewing this page in read-only mode."}
+              </span>
+            </div>
+          ) : !editor ? (
+            // Lightweight loading skeleton: toolbar placeholder + canvas shimmer
+            <div
+              className="sticky top-0 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-background p-1.5"
+              aria-hidden="true"
+            >
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-8 rounded-md" />
+              ))}
+              <div className="flex-1" />
+              <Skeleton className="h-8 w-28 rounded-lg" />
+            </div>
+          ) : (
+            <EditorToolbar editor={editor} />
+          )}
+
           <div
             className="mt-4 border border-border rounded-xl bg-card shadow-sm"
             style={getFontStyle(pageStyle.font)}
           >
-            <EditorContent editor={editor} />
+            {editor ? (
+              <EditorContent editor={editor} />
+            ) : (
+              <div className="space-y-3 p-6" aria-hidden="true">
+                <Skeleton className="h-6 w-2/5" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-11/12" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            )}
           </div>
           <MapPanel pageId={page.id} />
         </div>

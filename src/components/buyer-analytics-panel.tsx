@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Target, Clock, RefreshCw } from "lucide-react";
+import {
+  Users,
+  TrendingUp,
+  Target,
+  Clock,
+  RefreshCw,
+  Flame,
+  Sun,
+  Snowflake,
+  type LucideIcon,
+} from "lucide-react";
 import type { BuyerVisitorRow, BuyerAnalyticsSummary } from "@/types";
 import { formatDuration } from "@/lib/format-utils";
 
@@ -12,36 +22,42 @@ interface BuyerAnalyticsPanelProps {
 type Range = "7d" | "30d" | "all";
 
 function IntentBadge({ intent }: { intent: BuyerVisitorRow["intent"] }) {
-  const styles: Record<string, string> = {
-    "High Intent": "bg-emerald-50 text-emerald-700 border-emerald-200",
-    "Warm":        "bg-amber-50 text-amber-700 border-amber-200",
-    "Cold":        "bg-slate-100 text-slate-500 border-slate-200",
+  const config: Record<
+    string,
+    { className: string; Icon: LucideIcon }
+  > = {
+    "High Intent": { className: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: Flame },
+    "Warm":        { className: "bg-amber-50 text-amber-700 border-amber-200",       Icon: Sun },
+    "Cold":        { className: "bg-slate-100 text-slate-500 border-slate-200",      Icon: Snowflake },
   };
+  const { className, Icon } = config[intent] ?? config["Cold"];
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${styles[intent] ?? styles["Cold"]}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${className}`}
     >
+      <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
       {intent}
     </span>
   );
 }
 
 function ScoreBar({ score }: { score: number }) {
-  const color =
-    score >= 70 ? "#10b981" :
-    score >= 40 ? "#f59e0b" :
-    "#94a3b8";
+  const tier =
+    score >= 70 ? { color: "#10b981", label: "High" } :
+    score >= 40 ? { color: "#f59e0b", label: "Medium" } :
+    { color: "#94a3b8", label: "Low" };
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 bg-muted rounded-full overflow-hidden h-1.5" style={{ maxWidth: "72px" }}>
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${score}%`, backgroundColor: color }}
+          style={{ width: `${score}%`, backgroundColor: tier.color }}
         />
       </div>
-      <span className="text-xs font-semibold tabular-nums" style={{ color }}>
+      <span className="text-xs font-semibold tabular-nums" style={{ color: tier.color }}>
         {score}
       </span>
+      <span className="text-[10px] font-medium text-muted-foreground">{tier.label}</span>
     </div>
   );
 }

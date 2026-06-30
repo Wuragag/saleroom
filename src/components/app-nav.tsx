@@ -22,7 +22,7 @@ const NAV_ITEMS: {
   icon: typeof LayoutGrid;
   tourId?: string;
 }[] = [
-  { href: "/", label: "Pages", icon: LayoutGrid },
+  { href: "/dashboard", label: "Pages", icon: LayoutGrid },
   { href: "/analytics", label: "Analytics", icon: BarChart2, tourId: "nav-analytics" },
   { href: "/submissions", label: "Submissions", icon: FileText },
   { href: "/library", label: "Library", icon: Blocks },
@@ -71,7 +71,9 @@ export function AppNav() {
           <nav className="hidden md:flex items-center gap-0.5">
             {NAV_ITEMS.map(({ href, label, tourId }) => {
               const isActive =
-                href === "/" ? pathname === "/" : pathname.startsWith(href);
+                href === "/dashboard"
+                  ? pathname === "/" || pathname.startsWith("/dashboard")
+                  : pathname.startsWith(href);
               return (
                 <Link key={href} href={href} {...(tourId ? { "data-tour": tourId } : {})}>
                   <span

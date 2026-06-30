@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { TourStep } from "./tour-steps";
 import type { TargetRect } from "./use-product-tour";
 
@@ -99,8 +100,12 @@ export function TourTooltipCard({
         {/* Footer */}
         <div className="flex items-center justify-between">
           {/* Step dots + progress */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-1.5">
+          <div
+            className="flex flex-col gap-2"
+            role="img"
+            aria-label={`Step ${stepIndex + 1} of ${totalSteps}`}
+          >
+            <div className="flex items-center gap-1.5" aria-hidden="true">
               {Array.from({ length: totalSteps }).map((_, i) => (
                 <div
                   key={i}
@@ -114,37 +119,47 @@ export function TourTooltipCard({
                 />
               ))}
             </div>
-            <span className="text-[10px] text-muted-foreground font-medium tabular-nums">
+            <span
+              className="text-[10px] text-muted-foreground font-medium tabular-nums"
+              aria-hidden="true"
+            >
               {stepIndex + 1}/{totalSteps}
             </span>
           </div>
 
           {/* Buttons */}
           <div className="flex items-center gap-1.5">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={onSkip}
-              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
             >
               Skip
-            </button>
+            </Button>
 
-            {stepIndex > 0 && (
-              <button
-                onClick={onPrev}
-                className="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Previous step"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onPrev}
+              disabled={stepIndex === 0}
+              className="h-7 w-7 rounded-lg"
+              aria-label="Previous step"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
 
-            <button
+            <Button
+              type="button"
+              size="sm"
               onClick={onNext}
-              className="h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
+              className="h-7 px-3 rounded-lg text-xs font-semibold"
             >
               {isLast ? "Finish" : "Next"}
               {!isLast && <ChevronRight className="h-3 w-3" />}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

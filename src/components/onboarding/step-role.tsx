@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { OnboardingRole } from "./onboarding-flow";
+import { Button } from "@/components/ui/button";
 
 const ROLES: {
   id: OnboardingRole;
@@ -133,11 +134,11 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
 
       {/* Continue button */}
       <div className="mt-8">
-        <button
+        <Button
           type="button"
           onClick={handleContinue}
           disabled={!selected || loading}
-          className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full h-11 rounded-xl text-sm font-semibold"
         >
           {loading ? (
             <>
@@ -150,7 +151,7 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
               <ArrowRight className="h-4 w-4" />
             </>
           )}
-        </button>
+        </Button>
 
         {!selected && (
           <p className="text-center text-xs text-muted-foreground mt-3">

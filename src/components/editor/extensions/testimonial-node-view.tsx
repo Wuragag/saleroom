@@ -61,7 +61,7 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
         <div className="group relative my-2">
           <div
             className="rounded-xl border border-border bg-card/60 p-6"
-            style={{ borderLeft: "4px solid var(--page-accent, #64748b)" }}
+            style={{ borderLeft: "4px solid var(--page-accent, #003B22)" }}
           >
             {/* Quote mark */}
             <svg
@@ -97,7 +97,7 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
               ) : node.attrs.author ? (
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                  style={{ background: "var(--page-accent, #64748b)" }}
+                  style={{ background: "var(--page-accent, #003B22)" }}
                 >
                   {node.attrs.author
                     .split(" ")
@@ -123,8 +123,10 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
           </div>
 
           <button
+            type="button"
             onClick={() => setEditing(true)}
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-muted/80 hover:bg-muted rounded-full p-1.5"
+            aria-label="Edit testimonial"
+            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-muted/80 hover:bg-muted rounded-full p-1.5"
           >
             <Pencil className="h-3 w-3 text-muted-foreground" />
           </button>

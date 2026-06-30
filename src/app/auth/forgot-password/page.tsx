@@ -67,7 +67,12 @@ export default function ForgotPasswordPage() {
               </p>
 
               {error && (
-                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <div
+                  id="forgot-error"
+                  role="alert"
+                  aria-live="polite"
+                  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+                >
                   {error}
                 </div>
               )}
@@ -84,6 +89,8 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? "forgot-error" : undefined}
                   className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                 />
               </div>

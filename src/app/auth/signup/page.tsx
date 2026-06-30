@@ -80,7 +80,12 @@ export default function SignUpPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error */}
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              <div
+                id="signup-error"
+                role="alert"
+                aria-live="polite"
+                className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"
+              >
                 {error}
               </div>
             )}
@@ -150,18 +155,31 @@ export default function SignUpPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
+                  aria-invalid={error === "Password must be at least 8 characters" ? true : undefined}
+                  aria-describedby="password-requirements"
                   className="w-full h-9 px-3 pr-9 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-2.5 rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p
+                id="password-requirements"
+                className={`text-xs transition-colors ${
+                  password.length === 0
+                    ? "text-muted-foreground"
+                    : password.length >= 8
+                      ? "text-primary"
+                      : "text-destructive"
+                }`}
+              >
+                Must be at least 8 characters
+              </p>
             </div>
 
             {/* Confirm password */}
@@ -178,13 +196,14 @@ export default function SignUpPage() {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="••••••••"
+                  aria-invalid={error === "Passwords do not match" ? true : undefined}
+                  aria-describedby={error === "Passwords do not match" ? "signup-error" : undefined}
                   className="w-full h-9 px-3 pr-9 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
-                  className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-2.5 rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-colors"
                   aria-label={showConfirm ? "Hide password" : "Show password"}
                 >
                   {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

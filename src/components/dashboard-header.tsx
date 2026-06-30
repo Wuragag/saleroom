@@ -57,7 +57,17 @@ export function DashboardHeader() {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="rounded-lg gap-1.5 shrink-0 bg-gradient-to-r from-[#003B22] to-[#0d9488] hover:from-[#004d2d] hover:to-[#0f766e] text-white border-0 shadow-sm hover:shadow-md transition-all duration-200 dark:from-[#0d7a5f] dark:to-[#14b8a6] dark:hover:from-[#0fa97c] dark:hover:to-[#2dd4bf]"
+            className="rounded-lg gap-1.5 shrink-0"
+            onClick={() => setIsPickerOpen(true)}
+            disabled={isCreating}
+            data-tour="new-page"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {isCreating ? "Creating…" : "New Page"}
+          </Button>
+          <Button
+            size="sm"
+            className="gradient-ai text-white border-0 rounded-lg gap-1.5 shrink-0"
             onClick={() => setIsImportOpen(true)}
             data-tour="ai-import"
           >
@@ -66,22 +76,12 @@ export function DashboardHeader() {
           </Button>
           <Button
             size="sm"
-            className="rounded-lg gap-1.5 shrink-0 bg-gradient-to-r from-[#003B22] to-[#0d9488] hover:from-[#004d2d] hover:to-[#0f766e] text-white border-0 shadow-sm hover:shadow-md transition-all duration-200 dark:from-[#0d7a5f] dark:to-[#14b8a6] dark:hover:from-[#0fa97c] dark:hover:to-[#2dd4bf]"
+            className="gradient-ai text-white border-0 rounded-lg gap-1.5 shrink-0"
             onClick={() => setIsAiWriteOpen(true)}
             data-tour="ai-write"
           >
             <PenLine className="h-3.5 w-3.5" />
             AI Write
-          </Button>
-          <Button
-            size="sm"
-            className="rounded-lg gap-1.5 shrink-0"
-            onClick={() => setIsPickerOpen(true)}
-            disabled={isCreating}
-            data-tour="new-page"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {isCreating ? "Creating…" : "New Page"}
           </Button>
         </div>
       </div>

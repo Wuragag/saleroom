@@ -152,6 +152,47 @@
   .animate-glow-pulse {
     animation: glow-pulse 2s ease-in-out infinite;
   }
+  /* Brand AI accent gradient — single source of truth for AI-feature buttons */
+  .gradient-ai {
+    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(152 50% 28%));
+  }
+  .gradient-ai:hover {
+    background-image: linear-gradient(to right, hsl(152 100% 16%), hsl(152 52% 34%));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   REDUCED MOTION — respect users who request less animation
+   (WCAG 2.3.3). Neutralizes the dopamine/entrance animation
+   system app-wide and on the public buyer surface.
+   ═══════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Infinite/looping decorative animations: stop entirely */
+  .animate-save-dot,
+  .animate-glow-pulse,
+  .animate-shimmer,
+  .animate-ai-sparkle,
+  .animate-confetti-fall,
+  .animate-celebrate-ring {
+    animation: none !important;
+  }
+  /* Entrance/stagger must not leave content hidden when motion is cut */
+  .pub-header,
+  .pub-title,
+  .pub-tab-content,
+  .pub-content > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* Tiptap editor styles */
@@ -648,6 +689,15 @@ div[data-type="contact-card"] > div:hover {
 .pub-tab-bar::-webkit-scrollbar { display: none; }
 .pub-tab-bar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ── Keyboard focus on the buyer surface (tabs, links, CTA) ── */
+.pub-tab-bar button:focus-visible,
+.pub-content a:focus-visible,
+div[data-type="cta-button"] a:focus-visible {
+  outline: 2px solid var(--pub-accent, #003B22);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ── Mobile ── */
 @media (max-width: 640px) {
   .pub-content h1 { font-size: 2rem; }
@@ -695,11 +745,12 @@ div[data-type="contact-card"] > div:hover {
     --input: 0 0% 100%;
     --ring: 152 100% 12%;
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* Brand-aligned chart palette — forest-green family, not the default rainbow */
+    --chart-1: 152 60% 30%;
+    --chart-2: 152 42% 46%;
+    --chart-3: 168 38% 40%;
+    --chart-4: 120 28% 55%;
+    --chart-5: 200 32% 46%;
     --radius: 0.625rem;
   }
   .dark {
@@ -722,10 +773,10 @@ div[data-type="contact-card"] > div:hover {
     --border: 225 8% 22%;
     --input: 225 8% 18%;
     --ring: 152 60% 35%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 152 50% 45%;
+    --chart-2: 152 40% 60%;
+    --chart-3: 168 45% 52%;
+    --chart-4: 120 30% 60%;
+    --chart-5: 200 38% 56%;
   }
 }

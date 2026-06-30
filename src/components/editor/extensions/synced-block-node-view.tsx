@@ -84,7 +84,7 @@ export function SyncedBlockNodeView({ node, selected }: NodeViewProps) {
   if (loading) {
     return (
       <NodeViewWrapper data-type="synced-block">
-        <div className="border border-dashed border-blue-300 rounded-lg p-4 my-2">
+        <div className="border border-dashed border-primary/40 rounded-lg p-4 my-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Loading synced block...</span>
@@ -97,8 +97,8 @@ export function SyncedBlockNodeView({ node, selected }: NodeViewProps) {
   if (error) {
     return (
       <NodeViewWrapper data-type="synced-block">
-        <div className="border border-dashed border-amber-400 rounded-lg p-4 my-2 bg-amber-50">
-          <div className="flex items-center gap-2 text-sm text-amber-700">
+        <div className="border border-dashed border-destructive/40 rounded-lg p-4 my-2 bg-destructive/5">
+          <div className="flex items-center gap-2 text-sm text-destructive">
             <AlertTriangle className="h-4 w-4" />
             <span>This synced block was deleted or is unavailable</span>
           </div>
@@ -112,12 +112,12 @@ export function SyncedBlockNodeView({ node, selected }: NodeViewProps) {
       data-type="synced-block"
       className={selected ? "ring-2 ring-primary rounded-lg" : ""}
     >
-      <div className="relative border border-dashed border-blue-300 rounded-lg my-2 overflow-hidden">
+      <div className="relative border border-dashed border-primary/40 rounded-lg my-2 overflow-hidden">
         {/* Header badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border-b border-blue-200 text-xs font-medium text-blue-700">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border-b border-primary/20 text-xs font-medium text-primary">
           <Link2 className="h-3 w-3" />
           <span className="truncate">{name || "Synced Block"}</span>
-          <span className="text-blue-400 ml-auto">synced</span>
+          <span className="text-primary/60 ml-auto">synced</span>
         </div>
         {/* Content preview */}
         <div

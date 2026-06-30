@@ -1,6 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TourWelcomeDialogProps {
   onStart: () => void;
@@ -11,16 +12,34 @@ export function TourWelcomeDialog({ onStart, onSkip }: TourWelcomeDialogProps) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
       <div
-        className="bg-card rounded-2xl shadow-2xl border border-border max-w-md w-full p-8 text-center animate-in fade-in-0 zoom-in-95 duration-300"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tour-welcome-title"
+        className="bg-card rounded-2xl shadow-2xl border border-border max-w-md w-full p-8 text-center animate-in fade-in-0 zoom-in-95 duration-300 relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onSkip}
+          aria-label="Close tour"
+          className="absolute right-3 top-3 h-8 w-8 text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
         {/* Icon */}
         <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
           <Sparkles className="h-7 w-7 text-primary" />
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-foreground mb-2">
+        <h2
+          id="tour-welcome-title"
+          className="text-xl font-bold text-foreground mb-2"
+        >
           Welcome to SalesRoom!
         </h2>
 
@@ -34,18 +53,21 @@ export function TourWelcomeDialog({ onStart, onSkip }: TourWelcomeDialogProps) {
 
         {/* Actions */}
         <div className="flex flex-col gap-2.5">
-          <button
+          <Button
+            type="button"
             onClick={onStart}
-            className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+            className="w-full h-10 rounded-xl text-sm font-semibold"
           >
             Start Tour
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
             onClick={onSkip}
-            className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             I&apos;ll explore on my own
-          </button>
+          </Button>
         </div>
       </div>
     </div>

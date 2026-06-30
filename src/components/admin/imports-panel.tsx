@@ -269,7 +269,8 @@ export function ImportsPanel() {
                         <button
                           onClick={() => handleRetry(item)}
                           disabled={retryingId === item.id}
-                          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                          aria-label={`Retry import for ${item.title ?? item.id}`}
+                          className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {retryingId === item.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />

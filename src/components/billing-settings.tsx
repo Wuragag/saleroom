@@ -29,6 +29,12 @@ interface BillingData {
   };
 }
 
+const PLAN_LABELS: Record<BillingData["plan"], string> = {
+  FREE: "Free plan",
+  PRO: "Pro",
+  TEAM: "Team",
+};
+
 const PLAN_CARDS = [
   {
     plan: "FREE" as const,
@@ -174,7 +180,7 @@ export function BillingSettings() {
             </h3>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-2xl font-bold text-foreground">
-                {billing.plan}
+                {PLAN_LABELS[billing.plan] ?? billing.plan}
               </span>
               <span
                 className={`text-xs font-medium px-2 py-0.5 rounded-full ${

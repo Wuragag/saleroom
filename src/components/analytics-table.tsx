@@ -43,14 +43,24 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
 
   return (
     <div className="divide-y divide-border">
-      {pages.map((p) => (
+      {pages.map((p) => {
+        const isExpanded = expanded === p.id;
+        return (
         <div key={p.id}>
-          <div
-            className="px-6 py-4 flex items-center gap-4 hover:bg-muted/40 transition-colors cursor-pointer"
-            onClick={() => setExpanded(expanded === p.id ? null : p.id)}
-          >
+          <div className="relative px-6 py-4 flex items-center gap-4 hover:bg-muted/40 transition-colors">
+            {/* Full-row toggle: an actual button layered behind the content for
+                keyboard + screen-reader support (Enter/Space, aria-expanded). */}
+            <button
+              type="button"
+              onClick={() => setExpanded(isExpanded ? null : p.id)}
+              aria-expanded={isExpanded}
+              aria-controls={`buyer-panel-${p.id}`}
+              aria-label={`${isExpanded ? "Collapse" : "Expand"} buyer analytics for ${p.title}`}
+              className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-none"
+            />
+
             {/* Title + status */}
-            <div className="flex-1 min-w-0">
+            <div className="relative z-10 flex-1 min-w-0 pointer-events-none [&_a]:pointer-events-auto">
               <div className="flex items-center gap-2 min-w-0">
                 {p.published ? (
                   <Globe className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -73,7 +83,7 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
             </div>
 
             {/* Bar */}
-            <div className="w-24 hidden sm:block">
+            <div className="relative z-10 w-24 hidden sm:block pointer-events-none">
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary/70 rounded-full"
@@ -83,7 +93,7 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
+            <div className="relative z-10 flex items-center gap-4 text-xs text-muted-foreground shrink-0 pointer-events-none">
               <span className="flex items-center gap-1">
                 <Eye className="h-3 w-3" />
                 <span className="font-medium text-foreground tabular-nums">{p.views}</span>
@@ -107,16 +117,20 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
               </span>
             </div>
 
-            {/* Expand toggle */}
+            {/* Expand indicator — the full-row button above handles the
+                accessible toggle, so this stays a redundant mouse affordance
+                (kept out of the tab order and hidden from assistive tech). */}
             <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
               onClick={(e) => {
                 e.stopPropagation();
-                setExpanded(expanded === p.id ? null : p.id);
+                setExpanded(isExpanded ? null : p.id);
               }}
-              className="ml-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-              title="Toggle buyer analytics"
+              className="relative z-10 ml-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
             >
-              {expanded === p.id ? (
+              {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
                 <ChevronDown className="h-4 w-4" />
@@ -125,14 +139,15 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
           </div>
 
           {/* Expandable buyer panel + activity timeline */}
-          {expanded === p.id && (
-            <div className="px-6 pb-6 bg-muted/20 space-y-4">
+          {isExpanded && (
+            <div id={`buyer-panel-${p.id}`} className="px-6 pb-6 bg-muted/20 space-y-4">
               <BuyerAnalyticsPanel pageId={p.id} />
               <ActivityTimeline pageId={p.id} />
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

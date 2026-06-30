@@ -111,14 +111,14 @@ export function TabbedPageView({
       <div className="flex gap-10">
         {/* Sticky left sidebar */}
         <nav className="flex-shrink-0 w-44 pt-0.5">
-          <div className="sticky top-10 flex flex-col gap-0.5">
+          <div className="pub-tab-bar sticky top-10 flex flex-col gap-0.5">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab?.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all w-full"
+                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{
                     fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
                     color: isActive ? accentColor : "var(--pub-body-color)",
@@ -188,7 +188,7 @@ export function TabbedPageView({
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className="relative flex-shrink-0 px-4 py-3.5 text-sm font-medium transition-colors whitespace-nowrap"
+                className="relative flex-shrink-0 px-4 py-3.5 text-sm font-medium transition-colors whitespace-nowrap rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 style={{
                   fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
                   color: isActive

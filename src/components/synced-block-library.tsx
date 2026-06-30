@@ -5,6 +5,17 @@ import { Plus, Link2, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { SyncedBlockEditor } from "./synced-block-editor";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
 import type { BillingPlan } from "@/generated/prisma";
 
 interface BlockItem {
@@ -31,6 +42,7 @@ export function SyncedBlockLibrary({
   const [editingBlock, setEditingBlock] = useState<BlockItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<BlockItem | null>(null);
 
   const canCreate =
     maxBlocks === -1 || blocks.length < maxBlocks;
@@ -168,8 +180,8 @@ export function SyncedBlockLibrary({
               className="group flex items-center gap-4 p-4 border rounded-xl bg-card hover:border-primary/30 hover:shadow-sm hover:bg-card/80 transition-all cursor-pointer"
               onClick={() => setEditingBlock(block)}
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Link2 className="h-5 w-5 text-blue-600" />
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Link2 className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{block.name}</p>
@@ -181,12 +193,11 @@ export function SyncedBlockLibrary({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm("Delete this synced block? Pages using it will show a placeholder.")) {
-                    handleDelete(block.id);
-                  }
+                  setPendingDelete(block);
                 }}
                 disabled={deleting === block.id}
-                className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                aria-label={`Delete ${block.name}`}
+                className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -194,6 +205,39 @@ export function SyncedBlockLibrary({
           ))}
         </div>
       )}
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this synced block?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? (
+                <>
+                  &ldquo;{pendingDelete.name}&rdquo; will be deleted. Pages using
+                  it will show a placeholder.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (pendingDelete) handleDelete(pendingDelete.id);
+                setPendingDelete(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

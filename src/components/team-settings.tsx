@@ -16,6 +16,18 @@ import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 import type { TeamMemberData, TeamInviteData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function TeamSettings() {
   const { data: session } = useSession();
@@ -29,6 +41,9 @@ export function TeamSettings() {
   const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState("");
   const [loading, setLoading] = useState(true);
+  const [memberToRemove, setMemberToRemove] = useState<TeamMemberData | null>(
+    null
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isOwner = (session?.user as any)?.teamRole === "OWNER";
@@ -98,8 +113,6 @@ export function TeamSettings() {
   }
 
   async function handleRemoveMember(memberId: string) {
-    if (!confirm("Are you sure you want to remove this member?")) return;
-
     try {
       await apiClient.delete(`/api/team/members/${memberId}`);
       setMembers((prev) => prev.filter((m) => m.id !== memberId));
@@ -138,37 +151,33 @@ export function TeamSettings() {
         <div className="flex items-center gap-3">
           {editingName && isOwner ? (
             <>
-              <input
+              <Input
                 type="text"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
-                className="flex-1 h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                aria-label="Team name"
+                className="flex-1"
                 autoFocus
               />
-              <button
-                onClick={handleSaveName}
-                disabled={savingName}
-                className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
-              >
+              <Button onClick={handleSaveName} disabled={savingName}>
                 {savingName ? "Saving..." : "Save"}
-              </button>
-              <button
-                onClick={() => setEditingName(false)}
-                className="h-9 px-3 rounded-lg border border-border text-sm hover:bg-muted"
-              >
+              </Button>
+              <Button variant="outline" onClick={() => setEditingName(false)}>
                 Cancel
-              </button>
+              </Button>
             </>
           ) : (
             <>
               <span className="text-sm text-foreground font-medium">{teamName}</span>
               {isOwner && (
-                <button
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
                   onClick={() => setEditingName(true)}
-                  className="text-xs text-primary hover:underline"
                 >
                   Edit
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -218,11 +227,12 @@ export function TeamSettings() {
                 )}
                 {isOwner && member.userId !== session?.user?.id && (
                   <button
-                    onClick={() => handleRemoveMember(member.id)}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    onClick={() => setMemberToRemove(member)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40"
+                    aria-label={`Remove ${member.user.name ?? "member"} ${member.user.lastName ?? ""}`.trim()}
                     title="Remove member"
                   >
-                    <UserMinus className="h-3.5 w-3.5" />
+                    <UserMinus className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -246,7 +256,7 @@ export function TeamSettings() {
           </h3>
 
           <form onSubmit={handleInvite} className="flex items-center gap-2">
-            <input
+            <Input
               type="email"
               value={inviteEmail}
               onChange={(e) => {
@@ -255,20 +265,17 @@ export function TeamSettings() {
                 setInviteSuccess("");
               }}
               placeholder="colleague@company.com"
-              className="flex-1 h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              aria-label="Invite member by email"
+              className="flex-1"
             />
-            <button
-              type="submit"
-              disabled={inviteLoading || !inviteEmail.trim()}
-              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-1.5"
-            >
+            <Button type="submit" disabled={inviteLoading || !inviteEmail.trim()}>
               {inviteLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
               Send
-            </button>
+            </Button>
           </form>
 
           {inviteError && (
@@ -299,10 +306,11 @@ export function TeamSettings() {
                     </div>
                     <button
                       onClick={() => handleCancelInvite(invite.id)}
-                      className="p-1 rounded text-muted-foreground hover:text-red-500 transition-colors"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40"
+                      aria-label={`Cancel invite to ${invite.email}`}
                       title="Cancel invite"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
@@ -311,6 +319,48 @@ export function TeamSettings() {
           )}
         </div>
       )}
+
+      {/* Remove member confirmation */}
+      <AlertDialog
+        open={memberToRemove !== null}
+        onOpenChange={(open) => {
+          if (!open) setMemberToRemove(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {memberToRemove && (
+                <>
+                  This will remove{" "}
+                  <span className="font-medium text-foreground">
+                    {`${memberToRemove.user.name ?? ""} ${
+                      memberToRemove.user.lastName ?? ""
+                    }`.trim() || memberToRemove.user.email}
+                  </span>{" "}
+                  ({memberToRemove.user.email}) from the team. They&apos;ll lose
+                  access to all team pages. This can&apos;t be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (memberToRemove) {
+                  handleRemoveMember(memberToRemove.id);
+                  setMemberToRemove(null);
+                }
+              }}
+            >
+              Remove member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -288,7 +288,7 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 rounded-lg gap-1.5"
+            className="rounded-lg gap-1.5"
             onClick={() => handleSend(false)}
             disabled={sending || chips.length === 0}
           >

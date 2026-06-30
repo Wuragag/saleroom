@@ -76,20 +76,26 @@ export default async function PasswordPage({
             <Lock className="h-5 w-5" style={{ color: accentColor }} />
           </div>
 
-          {/* Title */}
+          {/* Primary task: unlock this page */}
           <h1
-            className="text-xl font-bold text-center mb-1"
+            className="text-xl font-bold text-center mb-1.5"
             style={{ color: textColor }}
           >
-            {page.title}
+            Enter password
           </h1>
           <p className="text-sm text-center mb-6" style={{ color: subtextColor }}>
-            This page is password protected.
+            Enter the password to view{" "}
+            <span className="font-medium" style={{ color: textColor }}>
+              {page.title}
+            </span>
+            .
           </p>
 
           {/* Error message */}
           {hasError && (
-            <div className="mb-4 px-3 py-2 rounded-lg text-sm text-center"
+            <div
+              role="alert"
+              className="mb-4 px-3 py-2 rounded-lg text-sm text-center"
               style={{ backgroundColor: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}
             >
               Incorrect password. Please try again.
@@ -113,23 +119,31 @@ export default async function PasswordPage({
                 type="password"
                 required
                 autoFocus
-                className="w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none transition-colors"
+                aria-label="Password"
+                className="w-full px-3 py-2.5 text-sm rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                 style={{
                   backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#f9fafb",
                   borderColor: isDark ? "rgba(255,255,255,0.15)" : "#d1d5db",
                   color: textColor,
-                  // @ts-expect-error - focus ring via inline style not fully typed
+                  // @ts-expect-error - CSS custom props for the per-page accent focus ring are not fully typed
                   "--tw-ring-color": accentColor,
+                  "--tw-ring-offset-color": isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
                 }}
                 placeholder="Enter password…"
               />
             </div>
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
-              style={{ backgroundColor: accentColor, color: "#ffffff" }}
+              className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{
+                backgroundColor: accentColor,
+                color: "#ffffff",
+                // @ts-expect-error - CSS custom props for the per-page accent focus ring are not fully typed
+                "--tw-ring-color": accentColor,
+                "--tw-ring-offset-color": isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
+              }}
             >
-              Unlock Page
+              Unlock page
             </button>
           </form>
         </div>

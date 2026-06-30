@@ -28,8 +28,10 @@ import {
   ArrowUpDown,
   Check,
   ChevronDown,
+  FileText,
   LayoutGrid,
   List,
+  Plus,
   Search,
   SlidersHorizontal,
   Tag,
@@ -237,7 +239,19 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
   if (pages.length === 0) {
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground text-base">No pages yet. Create your first sales page!</p>
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <FileText className="h-6 w-6 text-primary" />
+        </div>
+        <h3 className="text-base font-semibold text-foreground">No pages yet</h3>
+        <p className="text-muted-foreground text-sm mt-1">Create your first sales page to get started.</p>
+        <Button
+          size="sm"
+          className="rounded-lg gap-1.5 mt-5"
+          onClick={() => document.querySelector<HTMLButtonElement>('[data-tour="new-page"]')?.click()}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New Page
+        </Button>
       </div>
     );
   }

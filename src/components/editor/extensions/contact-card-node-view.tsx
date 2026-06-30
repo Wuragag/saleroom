@@ -9,15 +9,12 @@ import type { ContactPerson } from "./contact-card-node";
 
 // ─── Avatar helpers ───────────────────────────────────────────────────────────
 
+// Shades of the brand forest green so all contact avatars read as one family.
 const GRADIENTS = [
-  ["#667eea", "#764ba2"],
-  ["#f093fb", "#f5576c"],
-  ["#4facfe", "#00f2fe"],
-  ["#43e97b", "#38f9d7"],
-  ["#fa709a", "#fee140"],
-  ["#a18cd1", "#fbc2eb"],
-  ["#48c6ef", "#6f86d6"],
-  ["#ff9a9e", "#fecfef"],
+  ["#003B22", "#0a5a36"],
+  ["#0a5a36", "#15784b"],
+  ["#15784b", "#1f9560"],
+  ["#0d4f30", "#2a8a5c"],
 ] as const;
 
 function getGradient(name: string): readonly [string, string] {
@@ -60,9 +57,11 @@ function ContactCard({
     <div className="relative group bg-card border border-border rounded-2xl p-4 flex flex-col gap-3 transition-shadow hover:shadow-md">
       {/* Remove button */}
       <button
+        type="button"
         onClick={onRemove}
-        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-destructive/10"
+        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity p-1 rounded-full hover:bg-destructive/10"
         title="Remove contact"
+        aria-label="Remove contact"
       >
         <X className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
       </button>

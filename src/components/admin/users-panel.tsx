@@ -4,6 +4,25 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck, KeyRound } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 
@@ -38,6 +57,13 @@ export function UsersPanel() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
+  // Confirmation state for high-power actions (impersonate / grant-revoke admin)
+  const [pendingAction, setPendingAction] = useState<
+    { kind: "admin" | "impersonate"; user: UserRow } | null
+  >(null);
+  // Reset-password modal state (replaces window.prompt)
+  const [resetUser, setResetUser] = useState<UserRow | null>(null);
+  const [resetPwd, setResetPwd] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
 
@@ -101,22 +127,33 @@ export function UsersPanel() {
     }
   };
 
-  const handleResetPassword = async (user: UserRow) => {
-    const password = window.prompt(`New password for ${user.email} (min 8 chars):`);
-    if (!password) return;
-    if (password.length < 8) {
+  const handleResetPassword = async () => {
+    if (!resetUser) return;
+    if (resetPwd.length < 8) {
       toast.error("Password must be at least 8 characters");
       return;
     }
+    const user = resetUser;
     setResettingId(user.id);
     try {
-      await apiClient.post(`/api/admin/users/${user.id}/reset-password`, { password });
+      await apiClient.post(`/api/admin/users/${user.id}/reset-password`, { password: resetPwd });
       toast.success(`Password reset for ${user.email}`);
+      setResetUser(null);
+      setResetPwd("");
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to reset password");
     } finally {
       setResettingId(null);
     }
+  };
+
+  // Runs the confirmed high-power action, then closes the dialog.
+  const runPendingAction = async () => {
+    if (!pendingAction) return;
+    const { kind, user } = pendingAction;
+    setPendingAction(null);
+    if (kind === "admin") await handleToggleAdmin(user);
+    else await handleImpersonate(user);
   };
 
   const totalPages = Math.ceil(total / LIMIT);
@@ -187,10 +224,10 @@ export function UsersPanel() {
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => handleToggleAdmin(user)}
+                      onClick={() => setPendingAction({ kind: "admin", user })}
                       disabled={togglingId === user.id}
                       title={user.isAdmin ? "Remove admin" : "Make admin"}
-                      className="flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {togglingId === user.id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -211,10 +248,10 @@ export function UsersPanel() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => handleResetPassword(user)}
+                        onClick={() => { setResetUser(user); setResetPwd(""); }}
                         disabled={resettingId === user.id}
                         title="Reset password"
-                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {resettingId === user.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -224,10 +261,10 @@ export function UsersPanel() {
                         <span>Reset pwd</span>
                       </button>
                       <button
-                        onClick={() => handleImpersonate(user)}
+                        onClick={() => setPendingAction({ kind: "impersonate", user })}
                         disabled={impersonatingId === user.id}
                         title="Log in as this user"
-                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {impersonatingId === user.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -276,6 +313,89 @@ export function UsersPanel() {
           </div>
         </div>
       )}
+
+      {/* Confirm high-power actions (grant/revoke admin, impersonate) */}
+      <AlertDialog
+        open={pendingAction !== null}
+        onOpenChange={(open) => { if (!open) setPendingAction(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingAction?.kind === "impersonate"
+                ? `Log in as ${pendingAction.user.name ?? pendingAction.user.email}?`
+                : pendingAction?.user.isAdmin
+                  ? `Remove admin from ${pendingAction?.user.name ?? pendingAction?.user.email}?`
+                  : `Make ${pendingAction?.user.name ?? pendingAction?.user.email} an admin?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction?.kind === "impersonate"
+                ? "You'll be signed in as this user and see the app exactly as they do until you stop impersonating."
+                : pendingAction?.user.isAdmin
+                  ? "They will lose access to the admin console and all admin actions."
+                  : "They will gain full admin access — including impersonation, password resets, and billing overrides for every team."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={runPendingAction}>
+              {pendingAction?.kind === "impersonate"
+                ? "Log in as user"
+                : pendingAction?.user.isAdmin
+                  ? "Remove admin"
+                  : "Grant admin"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset password (styled — replaces window.prompt) */}
+      <Dialog
+        open={resetUser !== null}
+        onOpenChange={(open) => { if (!open) { setResetUser(null); setResetPwd(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset password</DialogTitle>
+            <DialogDescription>
+              Set a new password for <strong>{resetUser?.email}</strong>. They&apos;ll need to use it on their next sign-in.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleResetPassword(); }}
+            className="space-y-3"
+          >
+            <label htmlFor="admin-reset-pwd" className="text-sm font-medium text-foreground">
+              New password
+            </label>
+            <Input
+              id="admin-reset-pwd"
+              type="password"
+              value={resetPwd}
+              onChange={(e) => setResetPwd(e.target.value)}
+              placeholder="At least 8 characters"
+              autoComplete="new-password"
+              autoFocus
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => { setResetUser(null); setResetPwd(""); }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={resetPwd.length < 8 || resettingId === resetUser?.id}>
+                {resettingId === resetUser?.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Reset password"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

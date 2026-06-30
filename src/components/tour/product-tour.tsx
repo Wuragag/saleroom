@@ -23,6 +23,8 @@ export function ProductTour() {
     finishTour,
   } = useProductTour();
 
+  const canGoBack = stepIndex > 0;
+
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -38,8 +40,12 @@ export function ProductTour() {
           e.preventDefault();
           nextStep();
         } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-          e.preventDefault();
-          prevStep();
+          // No "back" on the first step — leave the key as a no-op
+          // instead of swallowing it with preventDefault.
+          if (canGoBack) {
+            e.preventDefault();
+            prevStep();
+          }
         } else if (e.key === "Enter") {
           e.preventDefault();
           nextStep();
@@ -51,7 +57,7 @@ export function ProductTour() {
         startTour();
       }
     },
-    [state, skipTour, nextStep, prevStep, startTour]
+    [state, skipTour, nextStep, prevStep, startTour, canGoBack]
   );
 
   useEffect(() => {

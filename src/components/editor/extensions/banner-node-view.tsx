@@ -31,7 +31,7 @@ export function BannerNodeView({ node, updateAttributes, selected }: NodeViewPro
   /* ── Preview colours in editor ── */
   const previewStyle: React.CSSProperties =
     bgStyle === "accent"
-      ? { backgroundColor: "var(--page-accent, #64748b)", color: "#fff" }
+      ? { backgroundColor: "var(--page-accent, #003B22)", color: "#fff" }
       : bgStyle === "warning"
       ? { backgroundColor: "#fef3c7", color: "#92400e" }
       : { backgroundColor: "#f1f5f9", color: "#334155" };
@@ -123,8 +123,10 @@ export function BannerNodeView({ node, updateAttributes, selected }: NodeViewPro
 
           {/* Edit button */}
           <button
+            type="button"
             onClick={() => setEditing(true)}
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 hover:bg-white/30 rounded-full p-1.5 backdrop-blur-sm"
+            aria-label="Edit banner"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-white/20 hover:bg-white/30 rounded-full p-1.5 backdrop-blur-sm"
           >
             <Pencil className="h-3 w-3" style={{ color: previewStyle.color }} />
           </button>

@@ -22,6 +22,11 @@ export function OnboardingFlow({ userName }: Props) {
   const { update } = useSession();
   const [role, setRole] = useState<OnboardingRole>(null);
 
+  // Single-step flow: surface real progress so the bar isn't mistaken for "done".
+  const currentStep = 1;
+  const totalSteps = 1;
+  const progressPercent = (currentStep / (totalSteps + 1)) * 100;
+
   async function handleComplete(selectedRole: OnboardingRole) {
     try {
       await apiClient.patch("/api/onboarding", { role: selectedRole, onboardingCompleted: true });
@@ -39,15 +44,25 @@ export function OnboardingFlow({ userName }: Props) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Progress bar */}
-      <div className="w-full h-1.5 bg-border overflow-hidden">
+      <div
+        className="w-full h-1.5 bg-border overflow-hidden"
+        role="progressbar"
+        aria-valuenow={currentStep}
+        aria-valuemin={0}
+        aria-valuemax={totalSteps}
+        aria-label={`Step ${currentStep} of ${totalSteps}`}
+      >
         <div
           className="h-full bg-primary rounded-r-full animate-progress-fill transition-all duration-700 ease-out"
-          style={{ width: "100%" }}
+          style={{ width: `${progressPercent}%` }}
         />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-end px-6 py-4 max-w-2xl mx-auto w-full">
+      <div className="flex items-center justify-between px-6 py-4 max-w-2xl mx-auto w-full">
+        <span className="text-xs font-medium text-muted-foreground tracking-tight">
+          Step {currentStep} of {totalSteps}
+        </span>
         <span className="text-xs font-semibold text-foreground tracking-tight">
           SalesRoom
         </span>

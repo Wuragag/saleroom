@@ -97,11 +97,11 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
               <div
                 key={i}
                 className="text-center py-5 px-3 rounded-lg"
-                style={{ background: "color-mix(in srgb, var(--page-accent, #64748b) 8%, transparent)" }}
+                style={{ background: "color-mix(in srgb, var(--page-accent, #003B22) 8%, transparent)" }}
               >
                 <div
                   className="text-2xl font-bold tracking-tight leading-none mb-1.5"
-                  style={{ color: "var(--page-accent, #64748b)" }}
+                  style={{ color: "var(--page-accent, #003B22)" }}
                 >
                   {metric.value}
                 </div>
@@ -113,8 +113,10 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
           </div>
 
           <button
+            type="button"
             onClick={() => setEditing(true)}
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-muted/80 hover:bg-muted rounded-full p-1.5"
+            aria-label="Edit metrics"
+            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-muted/80 hover:bg-muted rounded-full p-1.5"
           >
             <Pencil className="h-3 w-3 text-muted-foreground" />
           </button>

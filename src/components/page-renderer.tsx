@@ -242,8 +242,8 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
           : HTMLAttributes.fields || [];
 
       const inputStyle = isDark
-        ? `width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:15px;background:rgba(255,255,255,0.06);color:#f0efe9;font-family:inherit;box-sizing:border-box;outline:none;`
-        : `width:100%;padding:10px 14px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;font-size:15px;background:#ffffff;color:#0f172a;font-family:inherit;box-sizing:border-box;outline:none;`;
+        ? `width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:15px;background:rgba(255,255,255,0.06);color:#f0efe9;font-family:inherit;box-sizing:border-box;`
+        : `width:100%;padding:10px 14px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;font-size:15px;background:#ffffff;color:#0f172a;font-family:inherit;box-sizing:border-box;`;
 
       const labelStyle = isDark
         ? `display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#f0efe9;letter-spacing:0.01em;`
@@ -260,6 +260,7 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
                 {
                   name: field.id,
                   placeholder: field.label,
+                  "aria-label": field.label,
                   style: `${inputStyle}min-height:88px;resize:vertical;`,
                 },
               ]
@@ -269,6 +270,7 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
                   type: field.type === "phone" ? "tel" : field.type,
                   name: field.id,
                   placeholder: field.label,
+                  "aria-label": field.label,
                   style: inputStyle,
                 },
               ],
@@ -314,20 +316,23 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
 // Contact Card node — dark-aware card backgrounds
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CARD_GRADIENTS = [
-  ["#667eea", "#764ba2"],
-  ["#f093fb", "#f5576c"],
-  ["#4facfe", "#00f2fe"],
-  ["#43e97b", "#38f9d7"],
-  ["#fa709a", "#fee140"],
-  ["#a18cd1", "#fbc2eb"],
-  ["#48c6ef", "#6f86d6"],
-  ["#ff9a9e", "#fecfef"],
-] as const;
-
-function cardGradient(name: string): readonly [string, string] {
-  const idx = (name.charCodeAt(0) || 0) % CARD_GRADIENTS.length;
-  return CARD_GRADIENTS[idx];
+/**
+ * Derives an on-brand avatar gradient from the page accent color. The hue is
+ * always the accent itself; only the lightness/opacity of the two stops varies
+ * subtly by name so distinct contacts read as a cohesive set rather than the
+ * old off-brand rainbow.
+ */
+function cardGradient(
+  name: string,
+  accentColor: string
+): readonly [string, string] {
+  const variant = (name.charCodeAt(0) || 0) % 4;
+  const topMix = 100 - variant * 8; // 100 / 92 / 84 / 76
+  const bottomMix = 78 - variant * 6; // 78 / 72 / 66 / 60
+  return [
+    `color-mix(in srgb, ${accentColor} ${topMix}%, #ffffff)`,
+    `color-mix(in srgb, ${accentColor} ${bottomMix}%, #000000)`,
+  ];
 }
 
 function cardInitials(name: string): string {
@@ -398,7 +403,7 @@ function createContactCardNode(isDark: boolean, accentColor: string) {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cardEls: any[] = contacts.map((contact) => {
-        const [c1, c2] = cardGradient(contact.name || "A");
+        const [c1, c2] = cardGradient(contact.name || "A", accentColor);
         const initials = cardInitials(contact.name || "?");
 
         const safePhoto = sanitizeUrl(contact.photo);

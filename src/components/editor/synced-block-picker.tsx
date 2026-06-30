@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link2, Search, Plus, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import type { Editor } from "@tiptap/core";
 import type { SyncedBlockListItem } from "@/types";
 
@@ -59,35 +66,24 @@ export function SyncedBlockPicker({ editor }: SyncedBlockPickerProps) {
     b.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={() => setOpen(false)}
-      />
-      {/* Dialog */}
-      <div className="relative bg-popover border rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md gap-0 overflow-hidden p-0">
         {/* Search header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <input
-            type="text"
-            placeholder="Search synced blocks..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            autoFocus
-          />
-          <button
-            onClick={() => setOpen(false)}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Esc
-          </button>
-        </div>
+        <DialogHeader className="border-b px-4 py-3 text-left">
+          <DialogTitle className="sr-only">Insert synced block</DialogTitle>
+          <div className="flex items-center gap-2 pr-6">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Input
+              type="text"
+              placeholder="Search synced blocks..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-auto flex-1 border-none bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:shadow-none"
+              autoFocus
+            />
+          </div>
+        </DialogHeader>
 
         {/* Content */}
         <div className="max-h-72 overflow-y-auto p-1">
@@ -118,10 +114,10 @@ export function SyncedBlockPicker({ editor }: SyncedBlockPickerProps) {
               <button
                 key={block.id}
                 onClick={() => handleSelect(block)}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors hover:bg-accent/50"
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
-                  <Link2 className="h-4 w-4 text-blue-600" />
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                  <Link2 className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-medium truncate">{block.name}</div>
@@ -147,7 +143,7 @@ export function SyncedBlockPicker({ editor }: SyncedBlockPickerProps) {
             </a>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

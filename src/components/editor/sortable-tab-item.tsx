@@ -71,7 +71,9 @@ export function SortableTabItem({
       onClick={onSelect}
     >
       <button
-        className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity"
+        type="button"
+        aria-label={`Reorder ${tab.name}`}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
         {...attributes}
         {...listeners}
       >
@@ -110,7 +112,8 @@ export function SortableTabItem({
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          aria-label={`Delete ${tab.name}`}
+          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity flex-shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             setConfirmingDelete(true);

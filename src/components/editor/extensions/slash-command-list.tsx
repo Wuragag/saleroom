@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   forwardRef,
   useImperativeHandle,
 } from "react";
@@ -64,10 +65,15 @@ export const SlashCommandList = forwardRef(function SlashCommandList(
   ref
 ) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     setSelectedIndex(0);
   }, [items]);
+
+  useEffect(() => {
+    optionRefs.current[selectedIndex]?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex]);
 
   const onKeyDown = useCallback(
     ({ event }: { event: KeyboardEvent }) => {
@@ -100,12 +106,24 @@ export const SlashCommandList = forwardRef(function SlashCommandList(
   }
 
   return (
-    <div className="bg-popover border rounded-lg shadow-lg p-1 max-h-80 overflow-y-auto w-72">
+    <div
+      role="listbox"
+      aria-label="Slash commands"
+      aria-activedescendant={`slash-command-option-${selectedIndex}`}
+      className="bg-popover border rounded-lg shadow-lg p-1 max-h-80 overflow-y-auto w-72"
+    >
       {items.map((item, index) => {
         const Icon = ICON_MAP[item.icon];
         return (
           <button
             key={item.title}
+            id={`slash-command-option-${index}`}
+            ref={(el) => {
+              optionRefs.current[index] = el;
+            }}
+            role="option"
+            aria-selected={index === selectedIndex}
+            type="button"
             onClick={() => command(item)}
             className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-left transition-colors ${
               index === selectedIndex

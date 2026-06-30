@@ -351,6 +351,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
         aria-label="Text color"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         style={{
           display: "inline-flex",
           flexDirection: "column",
@@ -420,6 +421,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
           <button
             type="button"
             onClick={clearColor}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             style={{
               display: "flex",
               alignItems: "center",
@@ -485,6 +487,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
                   aria-label={swatch.label}
                   aria-pressed={isActive}
                   onClick={() => applyColor(swatch.value)}
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                   style={{
                     width: "24px",
                     height: "24px",
@@ -492,7 +495,6 @@ function ColorPicker({ editor }: { editor: Editor }) {
                     border: isActive
                       ? "2.5px solid hsl(var(--foreground))"
                       : "2px solid transparent",
-                    outline: "none",
                     background: swatch.value,
                     cursor: "pointer",
                     transform: isActive ? "scale(1.15)" : "scale(1)",
@@ -571,7 +573,7 @@ function BlockInserter({ editor }: { editor: Editor }) {
         aria-label="Add element"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold transition-colors shrink-0"
+        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         style={{
           border: "none",
           background: open ? "hsl(var(--primary))" : "hsl(var(--primary))",
@@ -633,7 +635,7 @@ function BlockInserter({ editor }: { editor: Editor }) {
                   key={block.id}
                   type="button"
                   onClick={() => handleInsert(block)}
-                  className="group"
+                  className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   style={{
                     display: "flex",
                     alignItems: "center",
