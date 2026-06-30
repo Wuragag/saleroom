@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
-import { canCreateTab } from "@/lib/plan-limits";
+import { assertCanCreateTabsTx, withResourceLock } from "@/lib/plan-limits";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 
@@ -17,23 +17,15 @@ export const POST = withErrorHandler(async (
     return NextResponse.json({ error: access.reason }, { status });
   }
 
-  // ── Plan limit check ──
-  if (access.page?.teamId) {
-    const limitCheck = await canCreateTab(id, access.page.teamId);
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
-        { status: 403 }
-      );
-    }
-  }
-
   const body = await safeJson<{ name?: string }>(request) ?? {};
   const name = body.name || DEFAULT_TAB_NAME;
 
-  // Atomic: find max order + create inside a transaction to prevent
-  // concurrent requests from assigning the same order value.
-  const tab = await prisma.$transaction(async (tx) => {
+  // Atomic: take an advisory lock on the page, enforce the tab cap, and assign
+  // the next order inside one transaction so concurrent requests can neither
+  // exceed the plan limit nor collide on `order`.
+  const tab = await withResourceLock(`page:${id}:tabs`, async (tx) => {
+    await assertCanCreateTabsTx(tx, id, access.page?.teamId ?? null, 1);
+
     const lastTab = await tx.tab.findFirst({
       where: { pageId: id },
       orderBy: { order: "desc" },

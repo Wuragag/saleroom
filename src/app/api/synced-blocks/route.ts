@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
-import { canCreateSyncedBlock } from "@/lib/plan-limits";
+import { assertCanCreateSyncedBlockTx, withResourceLock } from "@/lib/plan-limits";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 
 export const GET = withErrorHandler(async () => {
@@ -41,25 +41,24 @@ export const POST = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "No team found" }, { status: 400 });
   }
 
-  const limitCheck = await canCreateSyncedBlock(teamId);
-  if (!limitCheck.allowed) {
-    return NextResponse.json(
-      { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
-      { status: 403 }
-    );
-  }
-
   const body = await safeJson<{ name?: string }>(request) ?? {};
   const name = body.name || "Untitled Block";
 
-  const block = await prisma.syncedBlock.create({
-    data: {
-      name,
-      teamId,
-      createdById: session.user.id,
-    },
-    include: { createdBy: { select: { name: true } } },
-  });
+  // Atomic plan-limit enforcement + create (prevents concurrent over-creation).
+  const block = await withResourceLock(
+    `team:${teamId}:synced-blocks`,
+    async (tx) => {
+      await assertCanCreateSyncedBlockTx(tx, teamId);
+      return tx.syncedBlock.create({
+        data: {
+          name,
+          teamId,
+          createdById: session.user.id,
+        },
+        include: { createdBy: { select: { name: true } } },
+      });
+    }
+  );
 
   return NextResponse.json(block, { status: 201 });
 });

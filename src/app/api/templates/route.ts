@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 
 // ---------------------------------------------------------------------------
@@ -17,8 +18,15 @@ export const GET = withErrorHandler(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
 
+  // Only return global/default templates plus templates owned by the caller's
+  // team. User-saved templates must never leak across tenants.
+  const teamId = await getUserTeamId(session.user.id);
+  const scope = teamId
+    ? { OR: [{ isDefault: true }, { teamId }] }
+    : { isDefault: true };
+
   const templates = await prisma.template.findMany({
-    where: category ? { category } : undefined,
+    where: category ? { AND: [{ category }, scope] } : scope,
     orderBy: { usageCount: "desc" },
   });
 
@@ -51,6 +59,15 @@ export const POST = withErrorHandler(async (request: Request) => {
     );
   }
 
+  // A saved template is owned by the creator's team so it stays private to it.
+  const teamId = await getUserTeamId(session.user.id);
+  if (!teamId) {
+    return NextResponse.json(
+      { error: "You need a team to save templates." },
+      { status: 400 }
+    );
+  }
+
   // Fetch page with tabs (must belong to current user)
   const page = await prisma.page.findFirst({
     where: { id: pageId, userId: session.user.id },
@@ -76,6 +93,7 @@ export const POST = withErrorHandler(async (request: Request) => {
       tabs: JSON.stringify(tabs),
       isDefault: false,
       usageCount: 0,
+      teamId,
     },
   });
 

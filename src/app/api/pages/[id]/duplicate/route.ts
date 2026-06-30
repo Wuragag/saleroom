@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess, getUserTeamId } from "@/lib/team-auth";
-import { canCreatePage } from "@/lib/plan-limits";
+import {
+  assertCanCreatePageTx,
+  assertCanCreateTabsTx,
+  withResourceLock,
+  pageLockKey,
+} from "@/lib/plan-limits";
 import { withErrorHandler } from "@/lib/api-error";
 import slugify from "slugify";
 
@@ -54,55 +59,51 @@ export const POST = withErrorHandler(async (
   // Assign to the duplicating user's team
   const teamId = await getUserTeamId(access.session.user.id);
 
-  // ── Plan limit check ──
-  if (teamId) {
-    const limitCheck = await canCreatePage(teamId);
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
-        { status: 403 }
-      );
-    }
-  }
+  // Atomic plan-limit enforcement + create. The advisory lock makes the page
+  // cap (and the per-page tab cap on the copied tabs) hold under concurrency.
+  const copy = await withResourceLock(
+    pageLockKey(teamId, access.session.user.id),
+    async (tx) => {
+      await assertCanCreatePageTx(tx, teamId, access.session.user.id);
 
-  // Create duplicated page + tabs in a transaction
-  const copy = await prisma.$transaction(async (tx) => {
-    const newPage = await tx.page.create({
-      data: {
-        title: copyTitle,
-        slug,
-        content: original.content,
-        published: false,
-        userId: access.session.user.id,
-        teamId,
-        font: original.font,
-        accentColor: original.accentColor,
-        layoutWidth: original.layoutWidth,
-        background: original.background,
-        tabPlacement: original.tabPlacement,
-        logoUrl: original.logoUrl,
-        links: original.links,
-        // Intentionally NOT copying password — duplicates start unprotected
-      },
-    });
+      const newPage = await tx.page.create({
+        data: {
+          title: copyTitle,
+          slug,
+          content: original.content,
+          published: false,
+          userId: access.session.user.id,
+          teamId,
+          font: original.font,
+          accentColor: original.accentColor,
+          layoutWidth: original.layoutWidth,
+          background: original.background,
+          tabPlacement: original.tabPlacement,
+          logoUrl: original.logoUrl,
+          links: original.links,
+          // Intentionally NOT copying password — duplicates start unprotected
+        },
+      });
 
-    // Duplicate all tabs
-    if (original.tabs.length > 0) {
-      await tx.tab.createMany({
-        data: original.tabs.map((tab) => ({
-          name: tab.name,
-          order: tab.order,
-          content: tab.content,
-          pageId: newPage.id,
-        })),
+      // Duplicate all tabs
+      if (original.tabs.length > 0) {
+        await assertCanCreateTabsTx(tx, newPage.id, teamId, original.tabs.length);
+        await tx.tab.createMany({
+          data: original.tabs.map((tab) => ({
+            name: tab.name,
+            order: tab.order,
+            content: tab.content,
+            pageId: newPage.id,
+          })),
+        });
+      }
+
+      return tx.page.findUnique({
+        where: { id: newPage.id },
+        include: { tabs: { orderBy: { order: "asc" } } },
       });
     }
-
-    return tx.page.findUnique({
-      where: { id: newPage.id },
-      include: { tabs: { orderBy: { order: "asc" } } },
-    });
-  });
+  );
 
   return NextResponse.json(copy, { status: 201 });
 });

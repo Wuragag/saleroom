@@ -35,10 +35,12 @@ export const GET = withErrorHandler(async (
     const pageParam = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1);
     const limit = Math.min(200, Math.max(1, parseInt(req.nextUrl.searchParams.get("limit") ?? "50", 10) || 50));
 
-    // Verify access: page must belong to the user's team or user directly
+    // Verify access: page must belong to the user's team or user directly.
+    // PRIVATE pages are creator-only — a teammate must NOT see them even when
+    // the page still carries the team's id (matches checkPageAccess semantics).
     const page = await prisma.page.findUnique({
       where: { id: pageId },
-      select: { userId: true, teamId: true },
+      select: { userId: true, teamId: true, visibility: true },
     });
 
     if (!page) {
@@ -48,7 +50,7 @@ export const GET = withErrorHandler(async (
     const teamId = await getUserTeamId(session.user.id);
     const hasAccess =
       page.userId === session.user.id ||
-      (teamId && page.teamId === teamId);
+      (page.visibility !== "PRIVATE" && !!teamId && page.teamId === teamId);
 
     if (!hasAccess) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

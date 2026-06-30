@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { canAddTeamMember } from "@/lib/plan-limits";
+import { canAddTeamMember, assertCanAddTeamMemberTx } from "@/lib/plan-limits";
 import { withErrorHandler } from "@/lib/api-error";
 
 // POST /api/team/invite/accept — accept an invite (authenticated user)
@@ -42,6 +42,18 @@ export const POST = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "This invite has expired" }, { status: 400 });
   }
 
+  // ── Email binding ──
+  // The invite is issued to a specific (normalized) email; only the logged-in
+  // user who owns that address may accept it. Without this check, anyone who
+  // obtains the link (forwarded email, leaked URL) could join the team.
+  const sessionEmail = session.user.email?.trim().toLowerCase();
+  if (!sessionEmail || sessionEmail !== invite.email) {
+    return NextResponse.json(
+      { error: "This invite was issued to a different email address." },
+      { status: 403 }
+    );
+  }
+
   // ── Plan limit check ──
   const limitCheck = await canAddTeamMember(invite.teamId);
   if (!limitCheck.allowed) {
@@ -75,6 +87,11 @@ export const POST = withErrorHandler(async (request: Request) => {
   // team, so we clean that up here to avoid broken multi-team state.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const txResult = await prisma.$transaction(async (tx: any) => {
+    // Serialize concurrent accepts for this team so the seat cap can't be raced,
+    // and re-check the limit authoritatively inside the locked transaction.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`team:${invite.teamId}:members`})::bigint)`;
+    await assertCanAddTeamMemberTx(tx, invite.teamId);
+
     const oldMembership = await tx.teamMember.findFirst({
       where: { userId: session.user.id },
       include: { team: true },

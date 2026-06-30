@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 // This is a SEPARATE serverless function with its own timeout.
 // On Vercel Hobby: 60s, Pro: up to 300s.
 export const maxDuration = 60;
 
 const AI_MODEL = "claude-haiku-4-5-20251001";
+
+// Each call is a paid 16K-token completion — cap per user.
+const processLimiter = rateLimit({ limit: 10, window: "60s", prefix: "import-process" });
 
 const SYSTEM_PROMPT = `You are a document-to-Tiptap converter. You receive raw text extracted from a document (PDF, DOCX, or PPTX) and must convert it into a Tiptap-compatible JSON structure.
 
@@ -55,12 +59,23 @@ Rules:
  * Reads extracted text from DB, sends to Claude, saves result.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ pageId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit per user — each successful call is a paid LLM completion.
+  const { success } = await processLimiter.limit(
+    `${session.user.id}:${getClientIp(request)}`
+  );
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429 }
+    );
   }
 
   const { pageId } = await params;
@@ -80,9 +95,19 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (page.importStatus !== "processing") {
-    // Already processed or errored — no-op
-    return NextResponse.json({ status: page.importStatus });
+  // Atomically claim the job: only the request that flips "processing" → a
+  // claimed state proceeds to the paid LLM call. Concurrent replays match 0
+  // rows and return the current status without firing duplicate completions.
+  const claim = await prisma.page.updateMany({
+    where: { id: pageId, userId: session.user.id, importStatus: "processing" },
+    data: { importStatus: "generating" },
+  });
+  if (claim.count === 0) {
+    const fresh = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: { importStatus: true },
+    });
+    return NextResponse.json({ status: fresh?.importStatus ?? "complete" });
   }
 
   if (!page.importText) {

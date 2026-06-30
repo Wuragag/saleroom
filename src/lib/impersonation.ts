@@ -27,7 +27,7 @@ export function createImpersonateToken(
 /** Verify a token; returns payload or null on failure/expiry */
 export function verifyImpersonateToken(
   token: string
-): { adminId: string; targetUserId: string } | null {
+): { adminId: string; targetUserId: string; nonce: string; exp: number } | null {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [base64, sig] = parts;
@@ -46,7 +46,13 @@ export function verifyImpersonateToken(
     if (typeof payload.exp !== "number" || payload.exp < Date.now())
       return null;
     if (!payload.adminId || !payload.targetUserId) return null;
-    return { adminId: payload.adminId, targetUserId: payload.targetUserId };
+    if (typeof payload.nonce !== "string") return null;
+    return {
+      adminId: payload.adminId,
+      targetUserId: payload.targetUserId,
+      nonce: payload.nonce,
+      exp: payload.exp,
+    };
   } catch {
     return null;
   }

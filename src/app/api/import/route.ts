@@ -2,12 +2,22 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
-import { canCreatePage } from "@/lib/plan-limits";
+import {
+  assertCanCreatePageTx,
+  withResourceLock,
+  pageLockKey,
+  PlanLimitError,
+} from "@/lib/plan-limits";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { extractText, isSupportedType } from "@/lib/document-parser";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
 import slugify from "slugify";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+// Each import parses a document server-side and triggers a paid LLM call —
+// cap per user to stop CPU/cost abuse.
+const importLimiter = rateLimit({ limit: 10, window: "60s", prefix: "import" });
 
 function generateSlug(title: string): string {
   const base = slugify(title, { lower: true, strict: true }) || "imported";
@@ -25,23 +35,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const teamId = await getUserTeamId(session.user.id);
-
-  // Plan limit check
-  if (teamId) {
-    const limitCheck = await canCreatePage(teamId);
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: limitCheck.reason,
-          code: "PLAN_LIMIT",
-          current: limitCheck.current,
-          limit: limitCheck.limit,
-        },
-        { status: 403 }
-      );
-    }
+  // Rate limit per user (and IP) before doing any parsing or paid work.
+  const { success } = await importLimiter.limit(
+    `${session.user.id}:${getClientIp(request)}`
+  );
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many import requests. Please slow down and try again shortly." },
+      { status: 429 }
+    );
   }
+
+  const teamId = await getUserTeamId(session.user.id);
 
   try {
     const formData = await request.formData();
@@ -104,24 +109,31 @@ export async function POST(request: Request) {
       content: [{ type: "paragraph" }],
     });
 
-    const page = await prisma.page.create({
-      data: {
-        title: placeholderTitle,
-        slug,
-        content: placeholderContent,
-        importStatus: "processing",
-        importText: text, // Store extracted text for the processing step
-        userId: session.user.id,
-        teamId,
-        tabs: {
-          create: {
-            name: DEFAULT_TAB_NAME,
-            order: 0,
+    // Atomic plan-limit enforcement + create (also caps teamless users at FREE).
+    const page = await withResourceLock(
+      pageLockKey(teamId, session.user.id),
+      async (tx) => {
+        await assertCanCreatePageTx(tx, teamId, session.user.id);
+        return tx.page.create({
+          data: {
+            title: placeholderTitle,
+            slug,
             content: placeholderContent,
+            importStatus: "processing",
+            importText: text, // Store extracted text for the processing step
+            userId: session.user.id,
+            teamId,
+            tabs: {
+              create: {
+                name: DEFAULT_TAB_NAME,
+                order: 0,
+                content: placeholderContent,
+              },
+            },
           },
-        },
-      },
-    });
+        });
+      }
+    );
 
     // Return immediately — frontend will trigger processing separately
     return NextResponse.json(
@@ -129,6 +141,12 @@ export async function POST(request: Request) {
       { status: 202 }
     );
   } catch (err) {
+    if (err instanceof PlanLimitError) {
+      return NextResponse.json(
+        { error: err.message, code: err.code, current: err.current, limit: err.limit },
+        { status: 403 }
+      );
+    }
     console.error("Import error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(

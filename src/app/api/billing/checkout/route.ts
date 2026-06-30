@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe, PLAN_PRICE_MAP } from "@/lib/stripe";
-import { getUserTeamId } from "@/lib/team-auth";
+import { requireTeamOwner } from "@/lib/team-auth";
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Billing changes are owner-only (matches the billing portal route).
+  const ownerCheck = await requireTeamOwner();
+  if (!ownerCheck.authorized) {
+    const status = !ownerCheck.session ? 401 : 403;
+    return NextResponse.json({ error: ownerCheck.reason }, { status });
   }
+  const teamId = ownerCheck.teamId!;
 
   try {
     const body = await request.json();
@@ -24,11 +26,6 @@ export async function POST(request: Request) {
         { error: "Pricing not configured for this plan" },
         { status: 500 }
       );
-    }
-
-    const teamId = await getUserTeamId(session.user.id);
-    if (!teamId) {
-      return NextResponse.json({ error: "No team found" }, { status: 404 });
     }
 
     const subscription = await prisma.subscription.findUnique({
@@ -62,9 +59,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const appUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+    const appUrl =
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
 
     const checkoutSession = await getStripe().checkout.sessions.create({
       mode: "subscription",

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PlanLimitError } from "@/lib/plan-limits";
 
 // ---- Types ----
 
@@ -84,6 +85,19 @@ export function withErrorHandler(handler: RouteHandler): RouteHandler {
       return await handler(request, ...rest);
     } catch (err) {
       const pathname = new URL(request.url).pathname;
+
+      // 0. Plan-limit violations thrown by the atomic *Tx asserts
+      if (err instanceof PlanLimitError) {
+        return NextResponse.json(
+          {
+            error: err.message,
+            code: err.code,
+            current: err.current,
+            limit: err.limit,
+          },
+          { status: 403 }
+        );
+      }
 
       // 1. Prisma errors
       const prismaError = mapPrismaError(err);

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
-import { canCreatePage } from "@/lib/plan-limits";
+import { assertCanCreatePageTx, withResourceLock, pageLockKey } from "@/lib/plan-limits";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import slugify from "slugify";
 
@@ -43,34 +43,32 @@ export const POST = withErrorHandler(async (request: Request) => {
   // Assign to user's team
   const teamId = await getUserTeamId(session.user.id);
 
-  // ── Plan limit check ──
-  if (teamId) {
-    const limitCheck = await canCreatePage(teamId);
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
-        { status: 403 }
-      );
-    }
-  }
-
-  const page = await prisma.page.create({
-    data: {
-      title,
-      slug,
-      content: JSON.stringify(DEFAULT_CONTENT),
-      userId: session.user.id,
-      teamId,
-      tabs: {
-        create: {
-          name: DEFAULT_TAB_NAME,
-          order: 0,
+  // Atomic plan-limit enforcement + create. The advisory lock serializes
+  // concurrent creates for this team/user so the count can't be raced
+  // (PlanLimitError → 403 PLAN_LIMIT via withErrorHandler).
+  const page = await withResourceLock(
+    pageLockKey(teamId, session.user.id),
+    async (tx) => {
+      await assertCanCreatePageTx(tx, teamId, session.user.id);
+      return tx.page.create({
+        data: {
+          title,
+          slug,
           content: JSON.stringify(DEFAULT_CONTENT),
+          userId: session.user.id,
+          teamId,
+          tabs: {
+            create: {
+              name: DEFAULT_TAB_NAME,
+              order: 0,
+              content: JSON.stringify(DEFAULT_CONTENT),
+            },
+          },
         },
-      },
-    },
-    include: { tabs: { orderBy: { order: "asc" } } },
-  });
+        include: { tabs: { orderBy: { order: "asc" } } },
+      });
+    }
+  );
 
   return NextResponse.json(page, { status: 201 });
 });

@@ -3,7 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
-import { canCreatePage } from "@/lib/plan-limits";
+import {
+  assertCanCreatePageTx,
+  assertCanCreateTabsTx,
+  withResourceLock,
+  pageLockKey,
+} from "@/lib/plan-limits";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import slugify from "slugify";
 
@@ -33,9 +38,18 @@ export const POST = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "templateId is required" }, { status: 400 });
   }
 
+  // Assign to user's team (also used to authorize template access below)
+  const teamId = await getUserTeamId(session.user.id);
+
   const template = await prisma.template.findUnique({ where: { id: templateId } });
 
   if (!template) {
+    return NextResponse.json({ error: "Template not found" }, { status: 404 });
+  }
+
+  // Authorize: only global/default templates or templates owned by the caller's
+  // team may be instantiated. Prevents reading another tenant's saved content.
+  if (!template.isDefault && (!teamId || template.teamId !== teamId)) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
 
@@ -72,38 +86,36 @@ export const POST = withErrorHandler(async (request: Request) => {
   // First tab's content becomes the page's top-level content
   const firstTabContent = tabs[0]?.content ?? DEFAULT_CONTENT;
 
-  // Assign to user's team
-  const teamId = await getUserTeamId(session.user.id);
-
-  // ── Plan limit check ──
-  if (teamId) {
-    const limitCheck = await canCreatePage(teamId);
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
-        { status: 403 }
-      );
+  // Atomic plan-limit enforcement + create. Enforces both the page cap and the
+  // per-page tab cap (a FREE plan can't instantiate a template with more tabs
+  // than its limit) inside one advisory-locked transaction.
+  const page = await withResourceLock(
+    pageLockKey(teamId, session.user.id),
+    async (tx) => {
+      await assertCanCreatePageTx(tx, teamId, session.user.id);
+      const created = await tx.page.create({
+        data: {
+          title,
+          slug,
+          content: JSON.stringify(firstTabContent),
+          userId: session.user.id,
+          teamId,
+        },
+      });
+      await assertCanCreateTabsTx(tx, created.id, teamId, tabs.length || 1);
+      if (tabs.length > 0) {
+        await tx.tab.createMany({
+          data: tabs.map((tab, i) => ({
+            name: tab.label,
+            order: i,
+            content: JSON.stringify(tab.content),
+            pageId: created.id,
+          })),
+        });
+      }
+      return created;
     }
-  }
-
-  // Create page with all tabs
-  const page = await prisma.page.create({
-    data: {
-      title,
-      slug,
-      content: JSON.stringify(firstTabContent),
-      userId: session.user.id,
-      teamId,
-      tabs: {
-        create: tabs.map((tab, i) => ({
-          name: tab.label,
-          order: i,
-          content: JSON.stringify(tab.content),
-        })),
-      },
-    },
-    include: { tabs: { orderBy: { order: "asc" } } },
-  });
+  );
 
   // Increment usageCount
   await prisma.template.update({

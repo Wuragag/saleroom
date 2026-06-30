@@ -35,15 +35,18 @@ export const GET = withErrorHandler(async (
     const visitorFilter = url.get("visitorId");
     const typeFilter = url.get("types")?.split(",").filter(Boolean) as TimelineEventType[] | undefined;
 
-    // Auth: verify page access
+    // Auth: verify page access. PRIVATE pages are creator-only even when they
+    // still carry the team's id (matches checkPageAccess semantics).
     const page = await prisma.page.findUnique({
       where: { id: pageId },
-      select: { userId: true, teamId: true },
+      select: { userId: true, teamId: true, visibility: true },
     });
     if (!page) return NextResponse.json({ error: "Page not found" }, { status: 404 });
 
     const teamId = await getUserTeamId(session.user.id);
-    const hasAccess = page.userId === session.user.id || (teamId && page.teamId === teamId);
+    const hasAccess =
+      page.userId === session.user.id ||
+      (page.visibility !== "PRIVATE" && !!teamId && page.teamId === teamId);
     if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const sinceDate = getRangeDate(range);

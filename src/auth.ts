@@ -25,14 +25,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           );
           if (!payload) return null;
 
+          // Single-use: consume the token's nonce. A replay collides on the
+          // primary key and is rejected, so a still-valid signed token can't be
+          // reused. (Cleanup of expired rows happens opportunistically.)
+          try {
+            await prisma.usedImpersonationToken.create({
+              data: { nonce: payload.nonce, expiresAt: new Date(payload.exp) },
+            });
+          } catch {
+            return null;
+          }
+
           const [target, admin] = await Promise.all([
             prisma.user.findUnique({ where: { id: payload.targetUserId } }),
             prisma.user.findUnique({
               where: { id: payload.adminId },
-              select: { id: true, name: true, email: true },
+              select: { id: true, name: true, email: true, isAdmin: true },
             }),
           ]);
           if (!target || !admin) return null;
+          // The minting user must still be an admin at consume time.
+          if (!admin.isAdmin) return null;
 
           return {
             id: target.id,

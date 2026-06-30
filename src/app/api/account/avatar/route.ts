@@ -2,15 +2,28 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { put, del } from "@vercel/blob";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
+const avatarLimiter = rateLimit({ limit: 20, window: "60s", prefix: "avatar" });
+
 export const POST = withErrorHandler(async (request: Request) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { success } = await avatarLimiter.limit(
+    `${session.user.id}:${getClientIp(request)}`
+  );
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many uploads. Please slow down." },
+      { status: 429 }
+    );
   }
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {

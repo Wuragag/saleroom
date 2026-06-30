@@ -75,6 +75,7 @@ model Team {
   invites      TeamInvite[]
   pages        Page[]
   syncedBlocks SyncedBlock[]
+  templates    Template[]
   subscription Subscription?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -225,7 +226,22 @@ model Template {
   tabs        String   @default("[]")
   isDefault   Boolean  @default(true)
   usageCount  Int      @default(0)
+  // null teamId == global/default template (seeded). User-saved templates are
+  // scoped to the creator's team so private page content never leaks cross-tenant.
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+
+  @@index([teamId])
+}
+
+// Single-use record for consumed impersonation tokens (prevents token replay).
+model UsedImpersonationToken {
+  nonce     String   @id
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model PasswordResetToken {
