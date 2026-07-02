@@ -12,9 +12,19 @@ const badgeVariants = cva(
           "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        outline: "text-foreground",
+        // Solid destructive (kept for back-compat)
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
+        // ── Subtle status tints (badges, pills, banners) — token-driven ──
+        success:
+          "border-transparent bg-success-subtle text-success-subtle-foreground",
+        warning:
+          "border-transparent bg-warning-subtle text-warning-subtle-foreground",
+        info: "border-transparent bg-info-subtle text-info-subtle-foreground",
+        danger:
+          "border-transparent bg-destructive-subtle text-destructive-subtle-foreground",
+        neutral: "border-transparent bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

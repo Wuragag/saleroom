@@ -1,3 +1,29 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "overrides": [
+    {
+      "files": ["src/components/**/*.tsx", "src/app/**/*.tsx"],
+      "excludedFiles": [
+        "src/app/(marketing)/**",
+        "src/components/marketing/**",
+        "src/components/ui/**",
+        "src/components/editor/extensions/**",
+        "src/components/page-renderer.tsx",
+        "src/components/published-form.tsx",
+        "src/components/tabbed-page-view.tsx",
+        "src/components/page-thumbnail.tsx",
+        "src/app/p/**",
+        "src/app/preview/**"
+      ],
+      "rules": {
+        "no-restricted-syntax": [
+          "warn",
+          {
+            "selector": "Literal[value=/#[0-9a-fA-F]{6}/]",
+            "message": "Hardcoded hex color in product UI — use a design token (bg-primary, text-success, ...). See docs/DESIGN-SYSTEM.md; run `npm run lint:design`."
+          }
+        ]
+      }
+    }
+  ]
 }

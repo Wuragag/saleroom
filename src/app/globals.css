@@ -751,6 +751,40 @@ div[data-type="cta-button"] a:focus-visible {
     --chart-3: 168 38% 40%;
     --chart-4: 120 28% 55%;
     --chart-5: 200 32% 46%;
+
+    /* ── Semantic status (solid + subtle-tint pairs) ──────────────────────
+       Use via Tailwind: bg-success / text-success-foreground (solid),
+       bg-success-subtle / text-success-subtle-foreground (badge/banner tint).
+       These replace every ad-hoc emerald/amber/red/blue-* utility. */
+    --success: 152 55% 30%;
+    --success-foreground: 0 0% 100%;
+    --success-subtle: 150 46% 92%;
+    --success-subtle-foreground: 152 60% 22%;
+
+    --warning: 35 92% 42%;
+    --warning-foreground: 0 0% 100%;
+    --warning-subtle: 42 90% 90%;
+    --warning-subtle-foreground: 30 80% 28%;
+
+    --info: 205 72% 40%;
+    --info-foreground: 0 0% 100%;
+    --info-subtle: 205 78% 93%;
+    --info-subtle-foreground: 205 70% 28%;
+
+    /* danger === destructive (solid pair defined above); add the tint pair */
+    --destructive-subtle: 0 80% 95%;
+    --destructive-subtle-foreground: 0 65% 40%;
+
+    /* ── Categorical palette (tags & avatars, hashed deterministically).
+       Distinct-but-tasteful hues. Consumed ONLY by the Tag/Avatar primitives —
+       never hardcode these hues in feature code. */
+    --cat-1: 205 65% 45%;
+    --cat-2: 265 45% 52%;
+    --cat-3: 152 45% 35%;
+    --cat-4: 25 75% 48%;
+    --cat-5: 330 55% 50%;
+    --cat-6: 190 60% 40%;
+
     --radius: 0.625rem;
   }
   .dark {
@@ -778,5 +812,32 @@ div[data-type="cta-button"] a:focus-visible {
     --chart-3: 168 45% 52%;
     --chart-4: 120 30% 60%;
     --chart-5: 200 38% 56%;
+
+    /* ── Semantic status (dark) ── */
+    --success: 152 50% 42%;
+    --success-foreground: 0 0% 100%;
+    --success-subtle: 152 40% 16%;
+    --success-subtle-foreground: 150 55% 72%;
+
+    --warning: 38 85% 52%;
+    --warning-foreground: 40 90% 8%;
+    --warning-subtle: 36 55% 16%;
+    --warning-subtle-foreground: 42 90% 72%;
+
+    --info: 205 70% 55%;
+    --info-foreground: 0 0% 100%;
+    --info-subtle: 205 50% 18%;
+    --info-subtle-foreground: 205 75% 76%;
+
+    --destructive-subtle: 0 45% 20%;
+    --destructive-subtle-foreground: 0 80% 80%;
+
+    /* ── Categorical palette (dark) ── */
+    --cat-1: 205 60% 58%;
+    --cat-2: 265 50% 68%;
+    --cat-3: 152 45% 52%;
+    --cat-4: 25 70% 58%;
+    --cat-5: 330 55% 66%;
+    --cat-6: 190 55% 54%;
   }
 }
