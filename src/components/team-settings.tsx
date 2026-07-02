@@ -18,6 +18,8 @@ import type { TeamMemberData, TeamInviteData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -143,7 +145,7 @@ export function TeamSettings() {
   return (
     <div className="space-y-6">
       {/* Team name */}
-      <div className="bg-card border border-border rounded-xl p-6">
+      <Card className="p-6">
         <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
           <Users className="h-4 w-4" />
           Team
@@ -182,10 +184,10 @@ export function TeamSettings() {
             </>
           )}
         </div>
-      </div>
+      </Card>
 
       {/* Members */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground">
             Members ({members.length})
@@ -220,10 +222,10 @@ export function TeamSettings() {
               </div>
               <div className="flex items-center gap-2">
                 {member.role === "OWNER" && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
+                  <Badge variant="warning" className="gap-1 rounded-full font-medium">
                     <Crown className="h-3 w-3" />
                     Owner
-                  </span>
+                  </Badge>
                 )}
                 {isOwner && member.userId !== session?.user?.id && (
                   <button
@@ -239,7 +241,7 @@ export function TeamSettings() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Invite (owner only) */}
       {isOwner && !canInvite && (
@@ -249,7 +251,7 @@ export function TeamSettings() {
         />
       )}
       {isOwner && canInvite && (
-        <div className="bg-card border border-border rounded-xl p-6">
+        <Card className="p-6">
           <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <Mail className="h-4 w-4" />
             Invite members
@@ -279,10 +281,15 @@ export function TeamSettings() {
           </form>
 
           {inviteError && (
-            <p className="text-sm text-red-500 mt-2">{inviteError}</p>
+            <div
+              role="alert"
+              className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {inviteError}
+            </div>
           )}
           {inviteSuccess && (
-            <p className="text-sm text-emerald-600 mt-2">{inviteSuccess}</p>
+            <p className="text-sm text-success mt-2">{inviteSuccess}</p>
           )}
 
           {/* Pending invites */}
@@ -317,7 +324,7 @@ export function TeamSettings() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Remove member confirmation */}

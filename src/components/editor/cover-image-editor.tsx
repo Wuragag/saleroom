@@ -106,7 +106,7 @@ export function CoverImageEditor({
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-xs font-medium w-fit"
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-xs font-medium w-fit focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ImageIcon className="h-3.5 w-3.5" />
           {uploading ? "Uploading…" : "Add cover image"}
@@ -138,12 +138,12 @@ export function CoverImageEditor({
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
 
         {/* Action buttons */}
-        <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <Upload className="h-3 w-3" />
             {uploading ? "Uploading…" : "Change"}
@@ -151,7 +151,7 @@ export function CoverImageEditor({
           <button
             type="button"
             onClick={handleRemove}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <X className="h-3 w-3" />
             Remove

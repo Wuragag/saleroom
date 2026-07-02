@@ -41,24 +41,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { detectProvider } from "./extensions/embed-utils";
-
-// ---------------------------------------------------------------------------
-// Color palette
-// ---------------------------------------------------------------------------
-const SWATCHES = [
-  { label: "Black",     value: "#000000" },
-  { label: "Dark Gray", value: "#374151" },
-  { label: "Gray",      value: "#6B7280" },
-  { label: "Silver",    value: "#D1D5DB" },
-  { label: "Red",       value: "#EF4444" },
-  { label: "Orange",    value: "#F97316" },
-  { label: "Yellow",    value: "#EAB308" },
-  { label: "Green",     value: "#22C55E" },
-  { label: "Teal",      value: "#14B8A6" },
-  { label: "Blue",      value: "#3B82F6" },
-  { label: "Violet",    value: "#7C3AED" },
-  { label: "Pink",      value: "#EC4899" },
-];
+import { SWATCHES } from "@/lib/color-palettes";
 
 // ---------------------------------------------------------------------------
 // Block element definitions for the inserter
@@ -739,6 +722,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Bold"
+        aria-pressed={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
         data-active={editor.isActive("bold")}
         className="data-[active=true]:bg-muted"
@@ -748,6 +733,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Italic"
+        aria-pressed={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         data-active={editor.isActive("italic")}
         className="data-[active=true]:bg-muted"
@@ -757,6 +744,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Strikethrough"
+        aria-pressed={editor.isActive("strike")}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         data-active={editor.isActive("strike")}
         className="data-[active=true]:bg-muted"
@@ -773,6 +762,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Heading 1"
+        aria-pressed={editor.isActive("heading", { level: 1 })}
         onClick={() =>
           editor.chain().focus().toggleHeading({ level: 1 }).run()
         }
@@ -784,6 +775,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Heading 2"
+        aria-pressed={editor.isActive("heading", { level: 2 })}
         onClick={() =>
           editor.chain().focus().toggleHeading({ level: 2 }).run()
         }
@@ -795,6 +788,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Heading 3"
+        aria-pressed={editor.isActive("heading", { level: 3 })}
         onClick={() =>
           editor.chain().focus().toggleHeading({ level: 3 }).run()
         }
@@ -810,6 +805,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Bullet list"
+        aria-pressed={editor.isActive("bulletList")}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         data-active={editor.isActive("bulletList")}
         className="data-[active=true]:bg-muted"
@@ -819,6 +816,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Ordered list"
+        aria-pressed={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         data-active={editor.isActive("orderedList")}
         className="data-[active=true]:bg-muted"
@@ -828,6 +827,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Quote"
+        aria-pressed={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         data-active={editor.isActive("blockquote")}
         className="data-[active=true]:bg-muted"
@@ -840,7 +841,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* ── Image ── */}
       <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" aria-label="Insert image">
             <ImageIcon className="h-4 w-4" />
           </Button>
         </DialogTrigger>
@@ -863,6 +864,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Horizontal rule"
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
       >
         <Minus className="h-4 w-4" />
@@ -874,6 +876,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Undo"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
       >
@@ -882,6 +885,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="Redo"
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
       >

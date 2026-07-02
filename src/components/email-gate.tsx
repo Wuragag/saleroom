@@ -84,7 +84,7 @@ export function EmailGate({ pageId, slug }: EmailGateProps) {
             </Button>
           </form>
 
-          <p className="text-[10px] text-muted-foreground text-center">
+          <p className="text-3xs text-muted-foreground text-center">
             By continuing, you agree that your email and activity on this page may be shared with the sender.
           </p>
         </div>

@@ -7,6 +7,7 @@ import { Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 export function AccountSettings() {
   const { data: session, update } = useSession();
@@ -135,7 +136,7 @@ export function AccountSettings() {
   return (
     <div className="space-y-6">
       {/* Avatar + Profile section */}
-      <div className="bg-card border border-border rounded-xl p-6">
+      <Card className="p-6">
         <h3 className="text-sm font-semibold text-foreground mb-5">Profile</h3>
 
         {/* Avatar */}
@@ -186,7 +187,10 @@ export function AccountSettings() {
         {/* Profile form */}
         <form onSubmit={handleProfileSave} className="space-y-4">
           {profileError && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {profileError}
             </div>
           )}
@@ -247,17 +251,20 @@ export function AccountSettings() {
             </Button>
           </div>
         </form>
-      </div>
+      </Card>
 
       {/* Password section */}
-      <div className="bg-card border border-border rounded-xl p-6">
+      <Card className="p-6">
         <h3 className="text-sm font-semibold text-foreground mb-5">
           Change password
         </h3>
 
         <form onSubmit={handlePasswordSave} className="space-y-4">
           {passwordError && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {passwordError}
             </div>
           )}
@@ -327,7 +334,7 @@ export function AccountSettings() {
             </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

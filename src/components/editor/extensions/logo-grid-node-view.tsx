@@ -38,9 +38,9 @@ export function LogoGridNodeView({
   return (
     <NodeViewWrapper
       data-type="logo-grid"
-      className={selected ? "ring-2 ring-primary rounded-lg" : ""}
+      className={selected ? "ring-2 ring-primary rounded-xl" : ""}
     >
-      <div className="py-6 my-4 border-2 border-dashed rounded-lg">
+      <div className="py-6 my-4 border-2 border-dashed rounded-xl">
         {logos.length === 0 && !showInput ? (
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <ImageIcon className="h-6 w-6" />
@@ -62,9 +62,11 @@ export function LogoGridNodeView({
                   type="button"
                   onClick={() => removeLogo(i)}
                   aria-label="Remove logo"
-                  className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full p-0.5"
+                  className="absolute -top-2.5 -right-2.5 flex h-8 w-8 items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <X className="h-3 w-3" />
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                    <X className="h-3 w-3" />
+                  </span>
                 </button>
               </div>
             ))}

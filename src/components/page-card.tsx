@@ -24,38 +24,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Pencil, ExternalLink, MoreVertical, Trash2, Copy,
-  Eye, Clock, Link2, Tag, X, Plus, Lock, EyeOff,
+  Eye, Clock, Link2, Tag as TagIcon, X, Plus, Lock, EyeOff,
 } from "lucide-react";
 import { PageThumbnail } from "@/components/page-thumbnail";
+import { Tag } from "@/components/ui/tag";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import type { PageAnalytics, PageListItem } from "@/types";
 import { getAccentColor } from "@/lib/page-styles";
-
-// ── Tag palette ──────────────────────────────────────────────────────────────
-const TAG_PALETTE = [
-  { bg: "#eff6ff", text: "#1d4ed8" },
-  { bg: "#f5f3ff", text: "#6d28d9" },
-  { bg: "#ecfdf5", text: "#065f46" },
-  { bg: "#fff7ed", text: "#9a3412" },
-  { bg: "#fdf2f8", text: "#9d174d" },
-  { bg: "#fefce8", text: "#854d0e" },
-];
-
-export function tagColor(tag: string) {
-  const hash = tag.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return TAG_PALETTE[hash % TAG_PALETTE.length];
-}
-
-// ── User avatar ──────────────────────────────────────────────────────────────
-const AVATAR_COLORS = ["#7c3aed","#0284c7","#059669","#d97706","#e11d48","#0891b2"];
-
-function avatarBg(name: string) {
-  const hash = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-
-function initials(name: string) {
-  return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 export function timeAgo(dateStr: string) {
@@ -104,15 +80,12 @@ export function TagEditor({
       <p className="text-xs font-semibold text-foreground">Tags</p>
       <div className="flex flex-wrap gap-1 min-h-[22px]">
         {localTags.length === 0 && <span className="text-xs text-muted-foreground">No tags</span>}
-        {localTags.map((t) => {
-          const c = tagColor(t);
-          return (
-            <span key={t} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.text }}>
-              {t}
-              <button onClick={() => setLocalTags(localTags.filter((x) => x !== t))}><X className="h-2.5 w-2.5" /></button>
-            </span>
-          );
-        })}
+        {localTags.map((t) => (
+          <span key={t} className="inline-flex items-center gap-1">
+            <Tag label={t} size="sm" />
+            <button onClick={() => setLocalTags(localTags.filter((x) => x !== t))}><X className="h-2.5 w-2.5" /></button>
+          </span>
+        ))}
       </div>
       {localTags.length < 6 && (
         <div className="flex gap-1">
@@ -190,7 +163,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
           {/* Title + menu */}
           <div className="flex items-start justify-between gap-2">
             <Link href={`/editor/${page.id}`} className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground text-[0.9375rem] leading-snug truncate hover:text-primary transition-colors">
+              <h3 className="font-semibold text-foreground text-sm leading-snug truncate hover:text-primary transition-colors">
                 {page.title}
               </h3>
             </Link>
@@ -206,7 +179,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
                 ) : (
                   <div className="py-1">
                     <DropdownMenuItem className="cursor-pointer gap-2 mx-1 rounded-md" onClick={(e) => { e.preventDefault(); setShowTagEditor(true); }}>
-                      <Tag className="h-4 w-4" />Manage tags
+                      <TagIcon className="h-4 w-4" />Manage tags
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="cursor-pointer gap-2 mx-1 rounded-md">
                       <Copy className="h-4 w-4" />{duplicating ? "Duplicating…" : "Duplicate"}
@@ -224,10 +197,9 @@ export function PageCard({ page, analytics }: PageCardProps) {
           {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {tags.map((t) => {
-                const c = tagColor(t);
-                return <span key={t} className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.text }}>{t}</span>;
-              })}
+              {tags.map((t) => (
+                <Tag key={t} label={t} size="sm" />
+              ))}
             </div>
           )}
 
@@ -235,23 +207,23 @@ export function PageCard({ page, analytics }: PageCardProps) {
           {(page.lockedById || page.visibility === "PRIVATE") && (
             <div className="flex items-center gap-1.5">
               {page.lockedById && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                <Badge variant="warning" className="gap-1 rounded-full text-3xs font-medium px-2 py-0.5">
                   <Lock className="h-2.5 w-2.5" />
                   {page.lockedByName ? `Locked by ${page.lockedByName}` : "Locked"}
-                </span>
+                </Badge>
               )}
               {page.visibility === "PRIVATE" && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                <Badge variant="neutral" className="gap-1 rounded-full text-3xs font-medium px-2 py-0.5">
                   <EyeOff className="h-2.5 w-2.5" />
                   Private
-                </span>
+                </Badge>
               )}
             </div>
           )}
 
           {/* Analytics */}
           {analytics && analytics.views > 0 && (
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-3 text-2xs text-muted-foreground">
               <span className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-200">
                 <Eye className="h-3 w-3" />
                 <span className="tabular-nums font-medium">{analytics.views}</span> views
@@ -274,27 +246,22 @@ export function PageCard({ page, analytics }: PageCardProps) {
           {/* Footer: avatar + time + status */}
           <div className="mt-auto flex items-center justify-between gap-2 pt-2.5 border-t border-border">
             <div className="flex items-center gap-1.5 min-w-0">
-              <div
-                className="h-5 w-5 rounded-full flex items-center justify-center text-white shrink-0"
-                style={{ backgroundColor: avatarBg(page.user.name), fontSize: "8px", fontWeight: 700 }}
-              >
-                {initials(page.user.name)}
-              </div>
-              <span className="text-[11px] text-muted-foreground truncate">{timeAgo(page.updatedAt)}</span>
+              <Avatar name={page.user.name} size="xs" />
+              <span className="text-2xs text-muted-foreground truncate">{timeAgo(page.updatedAt)}</span>
             </div>
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 transition-all duration-200"
-              style={page.published
-                ? { backgroundColor: `${accent}18`, color: accent }
-                : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
-            >
-              {page.published ? (
+            {page.published ? (
+              <span
+                className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 transition-all duration-200"
+                style={{ backgroundColor: `${accent}18`, color: accent }}
+              >
                 <span className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-current animate-save-dot" />
                   Live
                 </span>
-              ) : "Draft"}
-            </span>
+              </span>
+            ) : (
+              <Badge variant="neutral" className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0">Draft</Badge>
+            )}
           </div>
         </div>
 

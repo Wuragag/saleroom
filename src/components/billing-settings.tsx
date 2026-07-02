@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface BillingData {
   plan: "FREE" | "PRO" | "TEAM";
@@ -171,7 +174,7 @@ export function BillingSettings() {
   return (
     <div className="space-y-6">
       {/* Current plan header */}
-      <div className="bg-card border border-border rounded-xl p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -182,24 +185,27 @@ export function BillingSettings() {
               <span className="text-2xl font-bold text-foreground">
                 {PLAN_LABELS[billing.plan] ?? billing.plan}
               </span>
-              <span
-                className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+              <Badge
+                variant={
                   billing.status === "ACTIVE"
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                    ? "success"
                     : billing.status === "PAST_DUE"
-                    ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                    ? "danger"
+                    : "neutral"
+                }
+                className="rounded-full font-medium"
               >
                 {billing.status}
-              </span>
+              </Badge>
             </div>
           </div>
           {billing.plan !== "FREE" && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handlePortal}
               disabled={portalLoading}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+              className="text-primary hover:text-primary/80"
             >
               {portalLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -207,15 +213,15 @@ export function BillingSettings() {
                 <ExternalLink className="h-3.5 w-3.5" />
               )}
               Manage Billing
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Cancellation notice */}
         {billing.cancelAtPeriodEnd && billing.currentPeriodEnd && (
-          <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
+          <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-subtle border border-warning/30">
+            <AlertCircle className="h-4 w-4 text-warning shrink-0" />
+            <p className="text-sm text-warning-subtle-foreground">
               Your plan is set to cancel on{" "}
               {new Date(billing.currentPeriodEnd).toLocaleDateString("en-US", {
                 month: "long",
@@ -226,10 +232,10 @@ export function BillingSettings() {
             </p>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Usage meters */}
-      <div className="bg-card border border-border rounded-xl p-6">
+      <Card className="p-6">
         <h3 className="text-sm font-semibold text-foreground mb-4">Usage</h3>
         <div className="space-y-4">
           <UsageMeter
@@ -243,7 +249,7 @@ export function BillingSettings() {
             limit={billing.usage.members.limit}
           />
         </div>
-      </div>
+      </Card>
 
       {/* Plan comparison */}
       <div>
@@ -261,16 +267,16 @@ export function BillingSettings() {
               (billing.plan === "PRO" && card.plan === "FREE");
 
             return (
-              <div
+              <Card
                 key={card.plan}
-                className={`relative bg-card border rounded-xl p-5 flex flex-col ${
+                className={`relative p-5 flex flex-col ${
                   card.popular
                     ? "border-primary shadow-sm ring-1 ring-primary/20"
-                    : "border-border"
+                    : ""
                 }`}
               >
                 {card.popular && (
-                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-semibold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-0.5 rounded-full">
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-3xs font-semibold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-0.5 rounded-full">
                     Popular
                   </span>
                 )}
@@ -294,7 +300,7 @@ export function BillingSettings() {
                       className="flex items-center gap-2 text-sm text-foreground"
                     >
                       {f.included ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                        <Check className="h-3.5 w-3.5 text-success shrink-0" />
                       ) : (
                         <X className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                       )}
@@ -311,10 +317,10 @@ export function BillingSettings() {
                       Current plan
                     </div>
                   ) : isUpgrade ? (
-                    <button
+                    <Button
                       onClick={() => handleCheckout(card.plan as "PRO" | "TEAM")}
                       disabled={!!checkoutLoading}
-                      className="w-full py-2 text-center text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors"
+                      className="w-full"
                     >
                       {checkoutLoading === card.plan ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -324,18 +330,19 @@ export function BillingSettings() {
                       {checkoutLoading === card.plan
                         ? "Redirecting…"
                         : `Upgrade to ${card.name}`}
-                    </button>
+                    </Button>
                   ) : isDowngrade ? (
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={handlePortal}
                       disabled={portalLoading}
-                      className="w-full py-2 text-center text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+                      className="w-full text-muted-foreground"
                     >
                       Manage in Portal
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -343,7 +350,10 @@ export function BillingSettings() {
 
       {/* Error message */}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3">
+        <div
+          role="alert"
+          className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3"
+        >
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -367,6 +377,13 @@ function UsageMeter({
   const percent = isUnlimited ? 0 : Math.min((current / limit) * 100, 100);
   const isAtLimit = !isUnlimited && current >= limit;
 
+  // Threshold color driven by usage data — mapped to design tokens.
+  const barColor = isAtLimit
+    ? "hsl(var(--destructive))"
+    : percent > 80
+    ? "hsl(var(--warning))"
+    : "hsl(var(--primary))";
+
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-1.5">
@@ -377,14 +394,11 @@ function UsageMeter({
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${
-            isAtLimit
-              ? "bg-red-500"
-              : percent > 80
-              ? "bg-amber-500"
-              : "bg-primary"
-          }`}
-          style={{ width: isUnlimited ? "0%" : `${percent}%` }}
+          className="h-full rounded-full transition-all"
+          style={{
+            width: isUnlimited ? "0%" : `${percent}%`,
+            backgroundColor: barColor,
+          }}
         />
       </div>
     </div>

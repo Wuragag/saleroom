@@ -5,6 +5,8 @@ import { Loader2, ChevronLeft, ChevronRight, Shield, ShieldOff, UserCheck, KeyRo
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeProps } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,10 +43,10 @@ interface UserRow {
   } | null;
 }
 
-const PLAN_COLORS: Record<string, string> = {
-  TEAM: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  PRO: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  FREE: "bg-muted text-muted-foreground",
+const PLAN_VARIANTS: Record<string, BadgeProps["variant"]> = {
+  TEAM: "success",
+  PRO: "info",
+  FREE: "neutral",
 };
 
 export function UsersPanel() {
@@ -208,13 +210,12 @@ export function UsersPanel() {
                     {user.team?.name ?? <span className="italic">—</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide ${
-                        PLAN_COLORS[user.team?.plan ?? "FREE"]
-                      }`}
+                    <Badge
+                      variant={PLAN_VARIANTS[user.team?.plan ?? "FREE"]}
+                      className="rounded-full text-2xs uppercase tracking-wide"
                     >
                       {user.team?.plan ?? "FREE"}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground capitalize">
                     {user.role?.toLowerCase() ?? "—"}

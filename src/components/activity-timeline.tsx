@@ -1,6 +1,7 @@
 "use client";
 
 import { RefreshCw, Activity, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useActivityTimeline } from "@/hooks/use-activity-timeline";
 import { TimelineEventRow } from "@/components/activity-timeline-event";
 import { getVisitorColor, getVisitorLabel, TIMELINE_EVENT_CONFIG } from "@/lib/timeline-utils";
@@ -89,7 +90,8 @@ export function ActivityTimeline({ pageId }: ActivityTimelineProps) {
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1.5 transition-colors ${
+                aria-pressed={range === r}
+                className={`px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
                   range === r
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -101,8 +103,9 @@ export function ActivityTimeline({ pageId }: ActivityTimelineProps) {
           </div>
           <button
             onClick={refresh}
-            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Refresh"
+            aria-label="Refresh"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
@@ -117,6 +120,7 @@ export function ActivityTimeline({ pageId }: ActivityTimelineProps) {
         <select
           value={visitorId ?? ""}
           onChange={(e) => setVisitorFilter(e.target.value || null)}
+          aria-label="Filter by visitor"
           className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">All visitors</option>
@@ -133,7 +137,8 @@ export function ActivityTimeline({ pageId }: ActivityTimelineProps) {
             <button
               key={value}
               onClick={() => toggleType(value)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+              aria-pressed={types.includes(value)}
+              className={`px-2.5 py-1 rounded-full text-2xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 types.includes(value)
                   ? "bg-primary text-primary-foreground border-primary"
                   : "text-muted-foreground border-border hover:border-foreground/20 hover:text-foreground"
@@ -148,7 +153,7 @@ export function ActivityTimeline({ pageId }: ActivityTimelineProps) {
                 setVisitorFilter(null);
                 setTypeFilter([]);
               }}
-              className="px-2 py-1 rounded-full text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="px-2 py-1 rounded-full text-2xs font-medium text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Clear
             </button>
@@ -219,13 +224,14 @@ export function ActivityTimeline({ pageId }: ActivityTimelineProps) {
           {/* Load more */}
           {hasMore && (
             <div className="px-5 py-4 text-center border-t border-border">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={loadMore}
                 disabled={loading}
-                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
               >
                 {loading ? "Loading…" : "Load more"}
-              </button>
+              </Button>
             </div>
           )}
         </div>

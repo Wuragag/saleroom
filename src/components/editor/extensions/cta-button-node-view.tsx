@@ -58,7 +58,7 @@ export function CTAButtonNodeView({
               type="button"
               onClick={() => setEditing(true)}
               aria-label="Edit button"
-              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-background border rounded-full p-1 shadow-sm"
+              className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-background border rounded-full shadow-sm"
             >
               <Pencil className="h-3 w-3" />
             </button>

@@ -116,7 +116,7 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
             type="button"
             onClick={() => setEditing(true)}
             aria-label="Edit metrics"
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-muted/80 hover:bg-muted rounded-full p-1.5"
+            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-muted/80 hover:bg-muted rounded-full"
           >
             <Pencil className="h-3 w-3 text-muted-foreground" />
           </button>

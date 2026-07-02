@@ -106,7 +106,7 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
                     : "bg-muted text-muted-foreground"
                 }`}
               >
-                <Icon className="h-4.5 w-4.5" style={{ width: "1.125rem", height: "1.125rem" }} />
+                <Icon style={{ width: "1.125rem", height: "1.125rem" }} />
               </div>
 
               <div className="flex-1 min-w-0">

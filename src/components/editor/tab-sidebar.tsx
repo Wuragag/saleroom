@@ -16,6 +16,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Plus, AlertCircle, X } from "lucide-react";
 import { SortableTabItem } from "./sortable-tab-item";
 import { StylePanel } from "./style-panel";
@@ -40,6 +41,10 @@ interface TabSidebarProps {
   tabLimitError?: string | null;
   onClearTabLimitError?: () => void;
   passwordProtection?: boolean;
+  /** Mobile drawer state — when true the sidebar shows as an off-canvas drawer under md. */
+  mobileOpen?: boolean;
+  /** Called to close the mobile drawer (backdrop click / tab select / close button). */
+  onMobileClose?: () => void;
 }
 
 export function TabSidebar({
@@ -59,6 +64,8 @@ export function TabSidebar({
   tabLimitError,
   onClearTabLimitError,
   passwordProtection,
+  mobileOpen = false,
+  onMobileClose,
 }: TabSidebarProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,12 +90,13 @@ export function TabSidebar({
     onReorderTabs(newOrder);
   };
 
-  return (
-    <div className="w-56 border-r border-border bg-background flex flex-col h-screen sticky top-0 overflow-y-auto">
+  // Shared sidebar content — rendered in both the desktop in-flow column and
+  // the mobile drawer so the two never drift. `selectTab` lets the mobile
+  // drawer close itself after a tab is chosen.
+  const inner = (selectTab: (tabId: string) => void) => (
+    <>
       <div className="px-3 py-3 border-b border-border flex-shrink-0">
-        <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-          Tabs
-        </h3>
+        <SectionLabel>Tabs</SectionLabel>
       </div>
 
       <div className="p-2 space-y-0.5 flex-shrink-0">
@@ -107,7 +115,7 @@ export function TabSidebar({
                 tab={tab}
                 isActive={tab.id === activeTabId}
                 canDelete={tabs.length > 1}
-                onSelect={() => onSelectTab(tab.id)}
+                onSelect={() => selectTab(tab.id)}
                 onRename={(name) => onRenameTab(tab.id, name)}
                 onDelete={() => onDeleteTab(tab.id)}
               />
@@ -127,15 +135,15 @@ export function TabSidebar({
           Add Tab
         </Button>
         {tabLimitError && (
-          <div className="mt-1.5 flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-            <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-tight flex-1">
+          <div className="mt-1.5 flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-warning-subtle border border-warning/30">
+            <AlertCircle className="h-3 w-3 text-warning shrink-0 mt-0.5" />
+            <p className="text-2xs text-warning-subtle-foreground leading-tight flex-1">
               {tabLimitError}
             </p>
             {onClearTabLimitError && (
               <button
                 onClick={onClearTabLimitError}
-                className="shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
+                className="shrink-0 text-warning hover:text-warning-subtle-foreground rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 aria-label="Dismiss"
               >
                 <X className="h-3 w-3" />
@@ -158,6 +166,43 @@ export function TabSidebar({
           passwordProtection={passwordProtection}
         />
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop: in-flow sidebar (identical behavior at md+) */}
+      <div className="hidden md:flex w-56 border-r border-border bg-background flex-col h-screen sticky top-0 overflow-y-auto">
+        {inner(onSelectTab)}
+      </div>
+
+      {/* Mobile: off-canvas drawer under md */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={onMobileClose}
+            aria-hidden="true"
+          />
+          {/* Drawer panel */}
+          <div className="absolute inset-y-0 left-0 z-40 w-72 max-w-[85vw] border-r border-border bg-background flex flex-col overflow-y-auto shadow-xl animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-end px-2 py-2 border-b border-border flex-shrink-0">
+              <button
+                onClick={onMobileClose}
+                className="flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                aria-label="Close tabs & style"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {inner((tabId) => {
+              onSelectTab(tabId);
+              onMobileClose?.();
+            })}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

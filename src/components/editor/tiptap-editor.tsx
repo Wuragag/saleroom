@@ -27,7 +27,8 @@ import { CoverImageEditor } from "./cover-image-editor";
 import { MapPanel } from "./map-panel";
 import { SyncedBlockPicker } from "./synced-block-picker";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Lock, PanelLeft } from "lucide-react";
 
 interface TiptapEditorProps {
   page: PageData;
@@ -42,6 +43,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
   const passwordProtection = (session?.user as any)?.planLimits?.passwordProtection ?? true;
   const [title, setTitle] = useState(page.title);
   const [published, setPublished] = useState(page.published);
+  // Mobile off-canvas sidebar (tabs + style) drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [isLocked, setIsLocked] = useState(!!(page as any).lockedById);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -271,6 +274,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
         tabLimitError={tabLimitError}
         onClearTabLimitError={clearTabLimitError}
         passwordProtection={passwordProtection}
+        mobileOpen={drawerOpen}
+        onMobileClose={() => setDrawerOpen(false)}
       />
       <div className="flex-1 min-w-0 flex flex-col">
         <EditorHeader
@@ -293,6 +298,21 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false }
           onRequireEmailChange={setRequireEmail}
         />
         <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-4">
+          {/* Mobile: open the tabs & style drawer (sidebar is off-canvas under md) */}
+          <div className="md:hidden mb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg gap-1.5"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open tabs & style"
+              aria-expanded={drawerOpen}
+            >
+              <PanelLeft className="h-4 w-4" />
+              Tabs &amp; Style
+            </Button>
+          </div>
+
           {!readOnly && (
             <CoverImageEditor
               pageId={page.id}

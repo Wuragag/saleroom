@@ -214,7 +214,7 @@ export function AiWriteModal({ isOpen, onClose }: Props) {
                   }
                 }}
               />
-              <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
+              <span className="absolute bottom-2 right-2 text-3xs text-muted-foreground">
                 {prompt.length}/{MAX_PROMPT_LENGTH}
               </span>
             </div>

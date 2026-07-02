@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   ArrowUpDown,
   Check,
@@ -238,21 +239,21 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
 
   if (pages.length === 0) {
     return (
-      <div className="text-center py-20">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <FileText className="h-6 w-6 text-primary" />
-        </div>
-        <h3 className="text-base font-semibold text-foreground">No pages yet</h3>
-        <p className="text-muted-foreground text-sm mt-1">Create your first sales page to get started.</p>
-        <Button
-          size="sm"
-          className="rounded-lg gap-1.5 mt-5"
-          onClick={() => document.querySelector<HTMLButtonElement>('[data-tour="new-page"]')?.click()}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Page
-        </Button>
-      </div>
+      <EmptyState
+        icon={FileText}
+        title="No pages yet"
+        description="Create your first sales page to get started."
+        action={
+          <Button
+            size="sm"
+            className="rounded-lg gap-1.5"
+            onClick={() => document.querySelector<HTMLButtonElement>('[data-tour="new-page"]')?.click()}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Page
+          </Button>
+        }
+      />
     );
   }
 
@@ -350,7 +351,7 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
           >
             <X className="h-3 w-3" />
             Clear
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-3xs font-semibold">
               {activeFilterCount}
             </span>
           </button>
@@ -416,13 +417,15 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
 
       {/* ── Empty state ──────────────────────────────────────────────── */}
       {sorted.length === 0 && (
-        <div className="text-center py-16">
-          <SlidersHorizontal className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm font-medium">No pages match your filters</p>
-          <button onClick={clearAllFilters} className="mt-2 text-sm text-primary hover:underline">
-            Clear all filters
-          </button>
-        </div>
+        <EmptyState
+          icon={SlidersHorizontal}
+          title="No pages match your filters"
+          action={
+            <Button variant="ghost" size="sm" className="rounded-lg text-primary hover:text-primary" onClick={clearAllFilters}>
+              Clear all filters
+            </Button>
+          }
+        />
       )}
 
       {/* ── Card view ────────────────────────────────────────────────── */}

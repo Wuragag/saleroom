@@ -110,9 +110,9 @@ export function SyncedBlockNodeView({ node, selected }: NodeViewProps) {
   return (
     <NodeViewWrapper
       data-type="synced-block"
-      className={selected ? "ring-2 ring-primary rounded-lg" : ""}
+      className={selected ? "ring-2 ring-primary rounded-xl" : ""}
     >
-      <div className="relative border border-dashed border-primary/40 rounded-lg my-2 overflow-hidden">
+      <div className="relative border border-dashed border-primary/40 rounded-xl my-2 overflow-hidden">
         {/* Header badge */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border-b border-primary/20 text-xs font-medium text-primary">
           <Link2 className="h-3 w-3" />

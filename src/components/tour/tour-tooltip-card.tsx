@@ -120,7 +120,7 @@ export function TourTooltipCard({
               ))}
             </div>
             <span
-              className="text-[10px] text-muted-foreground font-medium tabular-nums"
+              className="text-3xs text-muted-foreground font-medium tabular-nums"
               aria-hidden="true"
             >
               {stepIndex + 1}/{totalSteps}
@@ -134,7 +134,7 @@ export function TourTooltipCard({
               variant="ghost"
               size="sm"
               onClick={onSkip}
-              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+              className="h-8 px-2 text-2xs text-muted-foreground hover:text-foreground"
             >
               Skip
             </Button>
@@ -145,7 +145,7 @@ export function TourTooltipCard({
               size="icon"
               onClick={onPrev}
               disabled={stepIndex === 0}
-              className="h-7 w-7 rounded-lg"
+              className="h-8 w-8 rounded-lg"
               aria-label="Previous step"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
@@ -155,7 +155,7 @@ export function TourTooltipCard({
               type="button"
               size="sm"
               onClick={onNext}
-              className="h-7 px-3 rounded-lg text-xs font-semibold"
+              className="h-8 px-3 rounded-lg text-xs font-semibold"
             >
               {isLast ? "Finish" : "Next"}
               {!isLast && <ChevronRight className="h-3 w-3" />}

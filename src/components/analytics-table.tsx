@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, Clock, Link2, Globe, FileX, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { BuyerAnalyticsPanel } from "@/components/buyer-analytics-panel";
 import { ActivityTimeline } from "@/components/activity-timeline";
+import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/format-utils";
 
 interface PageStat {
@@ -63,7 +64,7 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
             <div className="relative z-10 flex-1 min-w-0 pointer-events-none [&_a]:pointer-events-auto">
               <div className="flex items-center gap-2 min-w-0">
                 {p.published ? (
-                  <Globe className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <Globe className="h-3.5 w-3.5 text-success shrink-0" />
                 ) : (
                   <FileX className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 )}
@@ -110,9 +111,9 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
                 <Users className="h-3 w-3" />
                 <span className="font-medium text-foreground tabular-nums">{p.uniqueBuyers}</span>
                 {p.highIntentCount > 0 && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <Badge variant="success" className="rounded-full px-1.5 py-0.5 text-3xs">
                     {p.highIntentCount} hot
-                  </span>
+                  </Badge>
                 )}
               </span>
             </div>
@@ -128,7 +129,7 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
                 e.stopPropagation();
                 setExpanded(isExpanded ? null : p.id);
               }}
-              className="relative z-10 ml-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              className="relative z-10 ml-2 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />

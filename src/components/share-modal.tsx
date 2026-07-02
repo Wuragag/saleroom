@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -155,9 +157,14 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                     className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary"
                   >
                     {c.name ? `${c.name} <${c.email}>` : c.email}
-                    <button onClick={() => removeChip(c.email)} className="hover:text-destructive">
+                    <IconButton
+                      size="sm"
+                      aria-label={`Remove ${c.email}`}
+                      onClick={() => removeChip(c.email)}
+                      className="h-4 w-4 rounded-sm hover:text-destructive"
+                    >
                       <X className="h-3 w-3" />
-                    </button>
+                    </IconButton>
                   </span>
                 ))}
                 <input
@@ -214,37 +221,40 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                         {c.name || c.email}
                       </p>
                       {c.name && (
-                        <p className="text-[10px] text-muted-foreground truncate">{c.email}</p>
+                        <p className="text-3xs text-muted-foreground truncate">{c.email}</p>
                       )}
                     </div>
                     {/* Engagement */}
                     {c.totalSessions > 0 && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-3xs text-muted-foreground">
                         {c.totalSessions} visit{c.totalSessions !== 1 ? "s" : ""}
                       </span>
                     )}
                     {c.intent && (
-                      <span
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                      <Badge
+                        variant={
                           c.intent === "High Intent"
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                            ? "success"
                             : c.intent === "Warm"
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
-                            : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                        }`}
+                            ? "warning"
+                            : "neutral"
+                        }
+                        className="text-3xs font-medium px-1.5 py-0.5 rounded-full"
                       >
                         {c.intent}
-                      </span>
+                      </Badge>
                     )}
                     {/* Actions */}
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
+                      <IconButton
+                        size="sm"
+                        aria-label="Copy link"
                         onClick={() => copyContactLink(c.id, c.refToken)}
-                        className={`h-6 w-6 flex items-center justify-center rounded-md transition-all duration-200 ${copiedId === c.id ? "bg-emerald-50 dark:bg-emerald-950/30" : "hover:bg-muted"}`}
+                        className={`h-6 w-6 rounded-md ${copiedId === c.id ? "bg-success-subtle hover:bg-success-subtle" : ""}`}
                         title="Copy link"
                       >
-                        {copiedId === c.id ? <Check className="h-3 w-3 text-emerald-500 animate-dopamine-bounce" /> : <Copy className="h-3 w-3" />}
-                      </button>
+                        {copiedId === c.id ? <Check className="h-3 w-3 text-success animate-dopamine-bounce" /> : <Copy className="h-3 w-3" />}
+                      </IconButton>
                       <a
                         href={`/p/${slug}?ref=${c.refToken}`}
                         target="_blank"
@@ -253,13 +263,15 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                       >
                         <ExternalLink className="h-3 w-3" />
                       </a>
-                      <button
+                      <IconButton
+                        size="sm"
+                        aria-label="Remove contact"
                         onClick={() => handleDeleteContact(c.id)}
-                        className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-destructive"
+                        className="h-6 w-6 rounded-md text-muted-foreground hover:text-destructive"
                         title="Remove"
                       >
                         <Trash2 className="h-3 w-3" />
-                      </button>
+                      </IconButton>
                     </div>
                   </div>
                 ))}

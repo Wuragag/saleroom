@@ -25,7 +25,7 @@ export function EmbedNodeView({ node, selected }: NodeViewProps) {
   return (
     <NodeViewWrapper
       data-type="embed"
-      className={selected ? "ring-2 ring-primary rounded-lg" : ""}
+      className={selected ? "ring-2 ring-primary rounded-xl" : ""}
     >
       <div className="relative my-4">
         <div className="absolute top-2 left-2 z-10 bg-black/60 text-white text-xs px-2 py-0.5 rounded capitalize">

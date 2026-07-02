@@ -64,7 +64,9 @@ export function MapPanel({ pageId }: MapPanelProps) {
         </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+          aria-label={collapsed ? "Expand action plan" : "Collapse action plan"}
+          aria-expanded={!collapsed}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           {collapsed ? (
             <ChevronDown className="h-4 w-4" />
@@ -79,7 +81,7 @@ export function MapPanel({ pageId }: MapPanelProps) {
           {/* Title + Close Date row */}
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+              <label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
                 Plan Title
               </label>
               <input
@@ -90,7 +92,7 @@ export function MapPanel({ pageId }: MapPanelProps) {
               />
             </div>
             <div className="w-52">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+              <label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
                 Target Close Date
               </label>
               <DatePicker
@@ -116,7 +118,7 @@ export function MapPanel({ pageId }: MapPanelProps) {
           {map.items.length > 0 && (
             <div className="border border-border rounded-lg overflow-hidden">
               {/* Table header */}
-              <div className="grid grid-cols-[32px_1fr_110px_130px_120px_36px] gap-0 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/50 border-b border-border">
+              <div className="grid grid-cols-[32px_1fr_110px_130px_120px_36px] gap-0 text-2xs font-medium text-muted-foreground uppercase tracking-wider bg-muted/50 border-b border-border">
                 <div className="px-2 py-2.5" />
                 <div className="px-3 py-2.5">Task</div>
                 <div className="px-3 py-2.5">Owner</div>
@@ -145,7 +147,7 @@ export function MapPanel({ pageId }: MapPanelProps) {
           <div className="flex justify-end">
             <button
               onClick={disableMap}
-              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors rounded-md px-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               Remove Action Plan
             </button>
@@ -182,7 +184,9 @@ function MapItemRow({
       <div className="px-2 py-2.5 flex justify-center">
         <button
           onClick={() => onUpdate({ completed: !item.completed })}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={item.completed ? "Mark task incomplete" : "Mark task complete"}
+          aria-pressed={item.completed}
+          className="text-muted-foreground hover:text-foreground transition-colors rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           {item.completed ? (
             <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -248,7 +252,7 @@ function MapItemRow({
           onChange={(date) => onUpdate({ dueDate: date ? date.toISOString().split("T")[0] : null })}
           placeholder="Due date"
           compact
-          className={cn("w-full", isOverdue && "text-red-500 border-red-200")}
+          className={cn("w-full", isOverdue && "text-destructive border-destructive/30")}
         />
       </div>
 
@@ -256,7 +260,8 @@ function MapItemRow({
       <div className="px-2 py-2.5 flex justify-center">
         <button
           onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+          aria-label="Delete task"
+          className="opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity text-muted-foreground hover:text-destructive rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -315,7 +320,7 @@ function AddItemRow({
     <div className="border border-border rounded-lg p-3 bg-muted/20 space-y-3">
       <div className="grid grid-cols-[1fr_110px_130px_120px] gap-2 items-end">
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Task</label>
+          <label className="text-2xs font-medium text-muted-foreground mb-1 block">Task</label>
           <input
             autoFocus
             value={title}
@@ -329,7 +334,7 @@ function AddItemRow({
           />
         </div>
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Owner</label>
+          <label className="text-2xs font-medium text-muted-foreground mb-1 block">Owner</label>
           <select
             value={ownerType}
             onChange={(e) => setOwnerType(e.target.value as "seller" | "buyer")}
@@ -340,7 +345,7 @@ function AddItemRow({
           </select>
         </div>
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Assigned To</label>
+          <label className="text-2xs font-medium text-muted-foreground mb-1 block">Assigned To</label>
           <input
             value={ownerName}
             onChange={(e) => setOwnerName(e.target.value)}
@@ -349,7 +354,7 @@ function AddItemRow({
           />
         </div>
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Due Date</label>
+          <label className="text-2xs font-medium text-muted-foreground mb-1 block">Due Date</label>
           <DatePicker
             value={dueDate ? new Date(dueDate) : null}
             onChange={(date) => setDueDate(date ? date.toISOString().split("T")[0] : "")}

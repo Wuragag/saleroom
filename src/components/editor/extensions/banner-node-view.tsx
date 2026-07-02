@@ -68,7 +68,8 @@ export function BannerNodeView({ node, updateAttributes, selected }: NodeViewPro
               <button
                 key={s.value}
                 onClick={() => setBgStyle(s.value)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                aria-pressed={bgStyle === s.value}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   bgStyle === s.value
                     ? "border-primary ring-2 ring-primary/30"
                     : "border-border hover:border-muted-foreground"
@@ -126,7 +127,7 @@ export function BannerNodeView({ node, updateAttributes, selected }: NodeViewPro
             type="button"
             onClick={() => setEditing(true)}
             aria-label="Edit banner"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-white/20 hover:bg-white/30 rounded-full p-1.5 backdrop-blur-sm"
+            className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm"
           >
             <Pencil className="h-3 w-3" style={{ color: previewStyle.color }} />
           </button>

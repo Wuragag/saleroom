@@ -59,7 +59,7 @@ function ContactCard({
       <button
         type="button"
         onClick={onRemove}
-        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity p-1 rounded-full hover:bg-destructive/10"
+        className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity rounded-full hover:bg-destructive/10"
         title="Remove contact"
         aria-label="Remove contact"
       >
@@ -182,11 +182,11 @@ export function ContactCardNodeView({
       data-type="contact-card"
       className={
         selected
-          ? "ring-2 ring-primary rounded-2xl"
+          ? "ring-2 ring-primary rounded-xl"
           : ""
       }
     >
-      <div className="my-4 border border-dashed border-border rounded-2xl p-5 bg-muted/10">
+      <div className="my-4 border border-dashed border-border rounded-xl p-5 bg-muted/10">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
           <UserRound className="h-4 w-4 text-primary" />

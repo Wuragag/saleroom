@@ -13,19 +13,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, ExternalLink, Eye, MoreVertical, Trash2, Copy, Clock, Link2, Tag } from "lucide-react";
-import { tagColor, timeAgo, formatDuration, TagEditor } from "@/components/page-card";
+import { Pencil, ExternalLink, Eye, MoreVertical, Trash2, Copy, Clock, Link2, Tag as TagIcon } from "lucide-react";
+import { timeAgo, formatDuration, TagEditor } from "@/components/page-card";
+import { Tag } from "@/components/ui/tag";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import type { PageAnalytics, PageListItem } from "@/types";
 import { getAccentColor } from "@/lib/page-styles";
-
-const AVATAR_COLORS = ["#7c3aed","#0284c7","#059669","#d97706","#e11d48","#0891b2"];
-function avatarBg(name: string) {
-  const hash = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-function initials(name: string) {
-  return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-}
 
 interface PageListRowProps {
   page: PageListItem;
@@ -96,27 +90,22 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
           <Link href={`/editor/${page.id}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block">
             {page.title}
           </Link>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{timeAgo(page.updatedAt)}</p>
+          <p className="text-2xs text-muted-foreground mt-0.5">{timeAgo(page.updatedAt)}</p>
         </div>
 
         {/* Tags column */}
         <div className="hidden lg:flex items-center gap-1 shrink-0 w-40">
           {tags.length > 0 ? (
             <>
-              {tags.slice(0, 3).map((t) => {
-                const c = tagColor(t);
-                return (
-                  <span key={t} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full truncate max-w-[4.5rem]" style={{ backgroundColor: c.bg, color: c.text }}>
-                    {t}
-                  </span>
-                );
-              })}
+              {tags.slice(0, 3).map((t) => (
+                <Tag key={t} label={t} size="sm" className="truncate max-w-[4.5rem]" />
+              ))}
               {tags.length > 3 && (
-                <span className="text-[10px] text-muted-foreground">+{tags.length - 3}</span>
+                <span className="text-3xs text-muted-foreground">+{tags.length - 3}</span>
               )}
             </>
           ) : (
-            <span className="text-[10px] text-muted-foreground">—</span>
+            <span className="text-3xs text-muted-foreground">—</span>
           )}
         </div>
 
@@ -141,47 +130,46 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
         </div>
 
         {/* Status badge */}
-        <span
-          className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex"
-          style={page.published
-            ? { backgroundColor: `${accent}18`, color: accent }
-            : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
-        >
-          {page.published ? "Published" : "Draft"}
-        </span>
+        {page.published ? (
+          <span
+            className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex"
+            style={{ backgroundColor: `${accent}18`, color: accent }}
+          >
+            Published
+          </span>
+        ) : (
+          <Badge variant="neutral" className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex">Draft</Badge>
+        )}
 
         {/* User avatar */}
-        <div
-          className="h-6 w-6 rounded-full flex items-center justify-center text-white shrink-0"
-          style={{ backgroundColor: avatarBg(page.user.name), fontSize: "9px", fontWeight: 700 }}
-          title={page.user.name}
-        >
-          {initials(page.user.name)}
-        </div>
+        <span title={page.user.name} className="shrink-0">
+          <Avatar name={page.user.name} size="sm" className="h-6 w-6 text-3xs" />
+        </span>
+
 
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
           <Link href={`/editor/${page.id}`}>
-            <Button variant="ghost" size="sm" aria-label="Edit" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Edit">
+            <Button variant="ghost" size="sm" aria-label="Edit" className="h-8 w-8 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Edit">
               <Pencil className="h-3.5 w-3.5" />
             </Button>
           </Link>
           {page.published ? (
             <Link href={`/p/${page.slug}`} target="_blank">
-              <Button variant="ghost" size="sm" aria-label="View" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="View">
+              <Button variant="ghost" size="sm" aria-label="View" className="h-8 w-8 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="View">
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
             </Link>
           ) : (
             <Link href={`/preview/${page.id}`} target="_blank">
-              <Button variant="ghost" size="sm" aria-label="Preview" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Preview">
+              <Button variant="ghost" size="sm" aria-label="Preview" className="h-8 w-8 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Preview">
                 <Eye className="h-3.5 w-3.5" />
               </Button>
             </Link>
           )}
           <DropdownMenu open={menuOpen} onOpenChange={(o) => { if (!o) setShowTagEditor(false); setMenuOpen(o); }}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" aria-label="Page actions" className="h-7 w-7 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
+              <Button variant="ghost" size="sm" aria-label="Page actions" className="h-8 w-8 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -191,7 +179,7 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
               ) : (
                 <div className="py-1">
                   <DropdownMenuItem className="cursor-pointer gap-2 mx-1 rounded-md" onClick={(e) => { e.preventDefault(); setShowTagEditor(true); }}>
-                    <Tag className="h-4 w-4" />Manage tags
+                    <TagIcon className="h-4 w-4" />Manage tags
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="cursor-pointer gap-2 mx-1 rounded-md">
                     <Copy className="h-4 w-4" />{duplicating ? "Duplicating…" : "Duplicate"}

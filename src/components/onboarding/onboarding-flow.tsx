@@ -22,10 +22,10 @@ export function OnboardingFlow({ userName }: Props) {
   const { update } = useSession();
   const [role, setRole] = useState<OnboardingRole>(null);
 
-  // Single-step flow: surface real progress so the bar isn't mistaken for "done".
+  // Single-step flow: fill the bar to 100% so it reads as a clear "you're on the only step".
   const currentStep = 1;
   const totalSteps = 1;
-  const progressPercent = (currentStep / (totalSteps + 1)) * 100;
+  const progressPercent = 100;
 
   async function handleComplete(selectedRole: OnboardingRole) {
     try {
@@ -53,13 +53,13 @@ export function OnboardingFlow({ userName }: Props) {
         aria-label={`Step ${currentStep} of ${totalSteps}`}
       >
         <div
-          className="h-full bg-primary rounded-r-full animate-progress-fill transition-all duration-700 ease-out"
+          className="h-full bg-primary rounded-r-full transition-all duration-700 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 max-w-2xl mx-auto w-full">
+      <div className="flex items-center justify-between px-6 py-4 max-w-lg mx-auto w-full">
         <span className="text-xs font-medium text-muted-foreground tracking-tight">
           Step {currentStep} of {totalSteps}
         </span>

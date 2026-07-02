@@ -5,6 +5,7 @@ import { getUserTeamId } from "@/lib/team-auth";
 import { getTeamPlanLimits } from "@/lib/plan-limits";
 import { SyncedBlockLibrary } from "@/components/synced-block-library";
 import { AppNav } from "@/components/app-nav";
+import { PageContainer } from "@/components/ui/page-container";
 
 export default async function LibraryPage() {
   const session = await auth();
@@ -34,13 +35,13 @@ export default async function LibraryPage() {
   return (
     <main className="min-h-screen bg-background">
       <AppNav />
-      <div className="max-w-5xl mx-auto px-6 py-6">
+      <PageContainer size="md">
         <SyncedBlockLibrary
           initialBlocks={serialized}
           maxBlocks={planLimits.maxSyncedBlocks}
           plan={planLimits.plan}
         />
-      </div>
+      </PageContainer>
     </main>
   );
 }

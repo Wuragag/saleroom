@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +10,13 @@ interface TourWelcomeDialogProps {
 }
 
 export function TourWelcomeDialog({ onStart, onSkip }: TourWelcomeDialogProps) {
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus to the primary action when the dialog mounts
+  useEffect(() => {
+    startButtonRef.current?.focus();
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
       <div
@@ -54,6 +62,7 @@ export function TourWelcomeDialog({ onStart, onSkip }: TourWelcomeDialogProps) {
         {/* Actions */}
         <div className="flex flex-col gap-2.5">
           <Button
+            ref={startButtonRef}
             type="button"
             onClick={onStart}
             className="w-full h-10 rounded-xl text-sm font-semibold"

@@ -1,11 +1,14 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
 import { AccountSettings } from "@/components/account-settings";
 import { TeamSettings } from "@/components/team-settings";
 import { BillingSettings } from "@/components/billing-settings";
+import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeader } from "@/components/ui/page-header";
 import { User, Users, CreditCard, Paintbrush, Bell, Plug, Loader2 } from "lucide-react";
 
 const TABS = [
@@ -19,33 +22,36 @@ const TABS = [
 
 function SettingsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = searchParams.get("tab") || "account";
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  const handleTabChange = (id: string) => {
+    setActiveTab(id);
+    router.replace(`/settings?tab=${id}`, { scroll: false });
+  };
+
   return (
-    <div className="max-w-3xl mx-auto px-6 py-6">
+    <PageContainer size="sm">
       {/* Heading */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">
-          Settings
-        </h2>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          Manage your account and preferences
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your account and preferences"
+        className="mb-6"
+      />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mb-6 border-b border-border">
+      <div className="flex flex-nowrap items-center gap-1 mb-6 border-b border-border overflow-x-auto">
         {TABS.map(({ id, label, icon: Icon, ready }) => (
           <button
             key={id}
-            onClick={() => ready && setActiveTab(id)}
+            onClick={() => ready && handleTabChange(id)}
             disabled={!ready}
             aria-disabled={!ready}
             title={ready ? undefined : `${label} — coming soon`}
-            className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               !ready
-                ? "border-transparent text-muted-foreground/50 cursor-not-allowed"
+                ? "border-transparent text-muted-foreground/70 cursor-not-allowed"
                 : activeTab === id
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
@@ -54,7 +60,7 @@ function SettingsContent() {
             <Icon className="h-4 w-4" />
             {label}
             {!ready && (
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded-full">
+              <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded-full">
                 Soon
               </span>
             )}
@@ -68,7 +74,7 @@ function SettingsContent() {
       {activeTab === "billing" && <BillingSettings />}
 
       {activeTab !== "account" && activeTab !== "team" && activeTab !== "billing" && (
-        <div className="bg-card border border-border rounded-xl p-12 text-center">
+        <Card className="p-12 text-center">
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
             {TABS.find((t) => t.id === activeTab)?.icon &&
               (() => {
@@ -84,9 +90,9 @@ function SettingsContent() {
           <p className="text-sm text-muted-foreground">
             This section is coming soon.
           </p>
-        </div>
+        </Card>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

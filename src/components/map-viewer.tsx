@@ -292,7 +292,9 @@ function MapViewerItem({
             <span
               className="flex items-center gap-1 text-xs"
               style={{
-                color: isOverdue ? "#ef4444" : "var(--pub-body-color)",
+                color: isOverdue
+                  ? "hsl(var(--destructive))"
+                  : "var(--pub-body-color)",
               }}
             >
               <Calendar className="h-3 w-3" />

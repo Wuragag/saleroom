@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // ── Quotes ────────────────────────────────────────────────────────────────────
 const QUOTES = [
@@ -61,10 +62,10 @@ function LoadingScreen() {
           transition: "opacity 0.5s ease",
         }}
       >
-        <p className="text-[13px] text-muted-foreground leading-relaxed italic">
+        <p className="text-sm text-muted-foreground leading-relaxed italic">
           &ldquo;{quote.text}&rdquo;
         </p>
-        <p className="text-[11px] text-muted-foreground/60 mt-2 font-medium tracking-wide">
+        <p className="text-2xs text-muted-foreground/60 mt-2 font-medium tracking-wide">
           — {quote.author}
         </p>
       </div>
@@ -134,7 +135,7 @@ function SignInForm() {
                 id="signin-error"
                 role="alert"
                 aria-live="polite"
-                className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
               >
                 {error}
               </div>
@@ -197,14 +198,14 @@ function SignInForm() {
             </div>
 
             {/* Submit */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              className="w-full mt-2"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading ? "Signing in…" : "Sign in"}
-            </button>
+            </Button>
           </form>
         </div>
 

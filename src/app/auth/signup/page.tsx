@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { Button } from "@/components/ui/button";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function SignUpPage() {
                 id="signup-error"
                 role="alert"
                 aria-live="polite"
-                className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
               >
                 {error}
               </div>
@@ -212,14 +213,14 @@ export default function SignUpPage() {
             </div>
 
             {/* Submit */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              className="w-full mt-2"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading ? "Creating account…" : "Create account"}
-            </button>
+            </Button>
           </form>
         </div>
 

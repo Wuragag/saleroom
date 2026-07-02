@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -71,7 +72,7 @@ export default function ForgotPasswordPage() {
                   id="forgot-error"
                   role="alert"
                   aria-live="polite"
-                  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+                  className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
                 >
                   {error}
                 </div>
@@ -95,14 +96,14 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {loading ? "Sending…" : "Send reset link"}
-              </button>
+              </Button>
             </form>
           )}
         </div>

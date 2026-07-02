@@ -227,11 +227,11 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md overflow-hidden">
         {/* Gradient accent bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#003B22] to-[#0d9488] dark:from-[#0d7a5f] dark:to-[#14b8a6]" />
+        <div className="gradient-ai absolute top-0 left-0 right-0 h-1" />
 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-[#003B22] to-[#0d9488] dark:from-[#0d7a5f] dark:to-[#14b8a6]">
+            <div className="gradient-ai flex items-center justify-center w-7 h-7 rounded-lg">
               <Sparkles className="h-3.5 w-3.5 text-white" />
             </div>
             AI Document Import
@@ -280,7 +280,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
               {["PDF", "DOCX", "PPTX"].map((ext) => (
                 <span
                   key={ext}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-colors duration-200 ${
+                  className={`text-3xs font-semibold px-2 py-0.5 rounded-full transition-colors duration-200 ${
                     isDragging
                       ? "bg-primary/10 text-primary dark:bg-primary/20"
                       : "bg-muted text-muted-foreground"
@@ -297,7 +297,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
         {status === "uploading" && (
           <div className="py-8 text-center">
             <div className="relative mx-auto mb-4 w-14 h-14 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#003B22] border-r-[#0d9488] dark:border-t-[#0d7a5f] dark:border-r-[#14b8a6] animate-spin" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/60 animate-spin" />
               <Sparkles className="h-5 w-5 text-primary animate-ai-sparkle" />
             </div>
             <p className="text-sm font-medium text-foreground">

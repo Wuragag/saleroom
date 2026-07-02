@@ -113,7 +113,7 @@ export function SortableTabItem({
           variant="ghost"
           size="sm"
           aria-label={`Delete ${tab.name}`}
-          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity flex-shrink-0"
+          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity flex-shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             setConfirmingDelete(true);
@@ -129,7 +129,7 @@ export function SortableTabItem({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="text-xs text-destructive font-medium px-1 hover:underline"
+            className="text-xs text-destructive font-medium px-1 rounded-sm hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             onClick={(e) => {
               e.stopPropagation();
               setConfirmingDelete(false);
@@ -139,7 +139,7 @@ export function SortableTabItem({
             Delete
           </button>
           <button
-            className="text-xs text-muted-foreground px-1 hover:underline"
+            className="text-xs text-muted-foreground px-1 rounded-sm hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             onClick={(e) => {
               e.stopPropagation();
               setConfirmingDelete(false);

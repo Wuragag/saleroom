@@ -7,6 +7,8 @@ import { UsersPanel } from "@/components/admin/users-panel";
 import { TeamsPanel } from "@/components/admin/teams-panel";
 import { MetricsPanel } from "@/components/admin/metrics-panel";
 import { ImportsPanel } from "@/components/admin/imports-panel";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeader } from "@/components/ui/page-header";
 
 const TABS = [
   { id: "users", label: "Users", icon: Users },
@@ -21,16 +23,13 @@ function AdminContent() {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6">
+    <PageContainer size="lg">
       {/* Heading */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">
-          Admin Dashboard
-        </h2>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          Manage users, teams, and subscriptions
-        </p>
-      </div>
+      <PageHeader
+        title="Admin Dashboard"
+        description="Manage users, teams, and subscriptions"
+        className="mb-6"
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-6 border-b border-border">
@@ -55,7 +54,7 @@ function AdminContent() {
       {activeTab === "teams" && <TeamsPanel />}
       {activeTab === "imports" && <ImportsPanel />}
       {activeTab === "metrics" && <MetricsPanel />}
-    </div>
+    </PageContainer>
   );
 }
 

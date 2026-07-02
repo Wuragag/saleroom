@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Download, FileText, Search, X, ChevronDown, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,14 +109,11 @@ export function SubmissionsTable({ submissions, pages }: SubmissionsTableProps) 
 
   if (submissions.length === 0) {
     return (
-      <div className="text-center py-20">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-muted mb-4">
-          <FileText className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          No form submissions yet. Add a form block to your pages to start collecting leads.
-        </p>
-      </div>
+      <EmptyState
+        icon={FileText}
+        title="No form submissions yet"
+        description="Add a form block to your pages to start collecting leads."
+      />
     );
   }
 
@@ -127,7 +126,8 @@ export function SubmissionsTable({ submissions, pages }: SubmissionsTableProps) 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors shrink-0 ${
+              aria-pressed={!!filterPageId}
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 filterPageId
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
@@ -186,14 +186,16 @@ export function SubmissionsTable({ submissions, pages }: SubmissionsTableProps) 
           <input
             type="text"
             placeholder="Search…"
+            aria-label="Search submissions"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-40 pl-7 pr-6 rounded-lg border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:w-52 transition-all"
+            className="h-8 w-40 pl-7 pr-6 rounded-lg border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus:border-primary/50 focus:w-52 transition-all"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
             >
               <X className="h-3 w-3" />
             </button>
@@ -201,23 +203,34 @@ export function SubmissionsTable({ submissions, pages }: SubmissionsTableProps) 
         </div>
 
         {/* Export */}
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={exportCsv}
           disabled={filtered.length === 0}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted border border-border bg-card shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+          className="shrink-0 text-muted-foreground hover:text-foreground"
         >
           <Download className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Export CSV</span>
-        </button>
+        </Button>
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────── */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 border border-border rounded-xl bg-card">
-          <p className="text-sm text-muted-foreground font-medium">No submissions match your filters</p>
-          <button onClick={() => { setFilterPageId(""); setSearch(""); }} className="mt-2 text-sm text-primary hover:underline">
-            Clear filters
-          </button>
+        <div className="border border-border rounded-xl bg-card">
+          <EmptyState
+            icon={Search}
+            title="No submissions match your filters"
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setFilterPageId(""); setSearch(""); }}
+              >
+                Clear filters
+              </Button>
+            }
+          />
         </div>
       ) : (
         <div className="border border-border rounded-xl overflow-hidden bg-card">
@@ -226,15 +239,16 @@ export function SubmissionsTable({ submissions, pages }: SubmissionsTableProps) 
               {/* Header */}
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  <th scope="col" className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
                     Page
                   </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  <th scope="col" className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
                     Submitted
                   </th>
                   {fieldKeys.map((key) => (
                     <th
                       key={key}
+                      scope="col"
                       className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap"
                     >
                       {formatKey(key)}

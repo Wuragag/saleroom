@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Users, Building2, FileText, TrendingUp } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
 
 interface Metrics {
@@ -19,14 +20,14 @@ interface Metrics {
 
 const PLAN_BAR_COLORS: Record<string, string> = {
   FREE: "bg-muted-foreground/40",
-  PRO: "bg-blue-500",
-  TEAM: "bg-green-500",
+  PRO: "bg-info",
+  TEAM: "bg-success",
 };
 
 const PLAN_LABEL_COLORS: Record<string, string> = {
   FREE: "text-muted-foreground",
-  PRO: "text-blue-600 dark:text-blue-400",
-  TEAM: "text-green-600 dark:text-green-400",
+  PRO: "text-info",
+  TEAM: "text-success",
 };
 
 export function MetricsPanel() {
@@ -99,7 +100,7 @@ export function MetricsPanel() {
       </div>
 
       {/* Plan distribution */}
-      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <Card className="p-5 space-y-4">
         <h3 className="text-sm font-semibold text-foreground">Plan Distribution</h3>
         <div className="space-y-3">
           {planEntries.map(({ key, label, count }) => {
@@ -124,7 +125,7 @@ export function MetricsPanel() {
             );
           })}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -141,13 +142,13 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+    <Card className="p-4 space-y-2">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Icon className="h-4 w-4" />
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-    </div>
+    </Card>
   );
 }

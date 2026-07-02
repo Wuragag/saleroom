@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeProps } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,17 +31,17 @@ interface TeamRow {
   currentPeriodEnd: string | null;
 }
 
-const PLAN_COLORS: Record<string, string> = {
-  TEAM: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  PRO: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  FREE: "bg-muted text-muted-foreground",
+const PLAN_VARIANTS: Record<string, BadgeProps["variant"]> = {
+  TEAM: "success",
+  PRO: "info",
+  FREE: "neutral",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "text-green-600 dark:text-green-400",
-  PAST_DUE: "text-amber-600 dark:text-amber-400",
-  CANCELED: "text-red-500",
-  TRIALING: "text-blue-600 dark:text-blue-400",
+  ACTIVE: "text-success",
+  PAST_DUE: "text-warning",
+  CANCELED: "text-destructive",
+  TRIALING: "text-info",
 };
 
 export function TeamsPanel() {
@@ -159,13 +161,12 @@ export function TeamsPanel() {
                     {team.owner?.email ?? <span className="italic">—</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide ${
-                        PLAN_COLORS[team.plan] ?? PLAN_COLORS.FREE
-                      }`}
+                    <Badge
+                      variant={PLAN_VARIANTS[team.plan] ?? PLAN_VARIANTS.FREE}
+                      className="rounded-full text-2xs uppercase tracking-wide"
                     >
                       {team.plan}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -202,7 +203,7 @@ export function TeamsPanel() {
                         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />
                       )}
                       {savedId === team.id && (
-                        <Check className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0" />
+                        <Check className="h-3 w-3 text-success shrink-0" />
                       )}
                     </div>
                   </td>

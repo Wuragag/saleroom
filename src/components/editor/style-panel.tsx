@@ -11,22 +11,8 @@ import {
   getAccentColor,
   type PageStyle,
 } from "@/lib/page-styles";
-
-// Curated preset palette — 12 colors, 6 per row
-const PRESET_COLORS = [
-  "#0f172a", // near-black
-  "#1e40af", // deep blue
-  "#2563eb", // blue
-  "#7c3aed", // violet
-  "#a21caf", // fuchsia
-  "#e11d48", // rose
-  "#f97316", // orange
-  "#d97706", // amber
-  "#16a34a", // green
-  "#0d9488", // teal
-  "#0891b2", // cyan
-  "#64748b", // slate
-];
+import { PRESET_COLORS } from "@/lib/color-palettes";
+import { SectionLabel } from "@/components/ui/section-label";
 
 interface StylePanelProps {
   style: PageStyle;
@@ -34,14 +20,6 @@ interface StylePanelProps {
   password: string;
   onPasswordChange: (value: string) => void;
   passwordProtection?: boolean;
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-      {children}
-    </p>
-  );
 }
 
 export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true }: StylePanelProps) {
@@ -71,13 +49,11 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
   return (
     <div className="p-3 space-y-4">
-      <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-        Style
-      </h3>
+      <SectionLabel>Style</SectionLabel>
 
       {/* Theme Presets */}
       <div>
-        <SectionLabel>Theme</SectionLabel>
+        <SectionLabel className="mb-1.5">Theme</SectionLabel>
         <div className="grid grid-cols-3 gap-1">
           {THEME_PRESETS.map((preset) => {
             const bg = BACKGROUND_OPTIONS.find((b) => b.value === preset.background);
@@ -88,6 +64,8 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             return (
               <button
                 key={preset.id}
+                aria-label={`${preset.label} theme`}
+                aria-pressed={isActive}
                 onClick={() =>
                   onChange({
                     font: preset.font,
@@ -95,7 +73,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
                     background: preset.background,
                   })
                 }
-                className={`relative flex flex-col items-center gap-1 py-2 px-1 text-[10px] rounded-lg border transition-all ${
+                className={`relative flex flex-col items-center gap-1 py-2 px-1 text-3xs rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                   isActive
                     ? "border-foreground bg-accent text-accent-foreground ring-1 ring-foreground/20"
                     : "border-border hover:bg-accent/50"
@@ -119,7 +97,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
       {/* Logo */}
       <div>
-        <SectionLabel>Logo</SectionLabel>
+        <SectionLabel className="mb-1.5">Logo</SectionLabel>
         {style.logoUrl ? (
           <div className="relative group inline-block">
             <Image
@@ -132,8 +110,9 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             />
             <button
               onClick={() => onChange({ logoUrl: "" })}
-              className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -top-2 -right-2 h-6 w-6 p-1 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               title="Remove logo"
+              aria-label="Remove logo"
             >
               <X className="h-2.5 w-2.5" />
             </button>
@@ -141,7 +120,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         ) : (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs rounded border border-dashed border-border hover:bg-accent/50 transition-colors text-muted-foreground"
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs rounded border border-dashed border-border hover:bg-accent/50 transition-colors text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <ImagePlus className="h-3.5 w-3.5" />
             Upload logo
@@ -158,14 +137,16 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
       {/* Font */}
       <div>
-        <SectionLabel>Font</SectionLabel>
+        <SectionLabel className="mb-1.5">Font</SectionLabel>
         <div className="grid grid-cols-2 gap-1">
           {FONT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
+              aria-label={`${opt.label} font`}
+              aria-pressed={style.font === opt.value}
               onClick={() => onChange({ font: opt.value })}
               style={opt.style}
-              className={`px-2 py-1 text-xs rounded border transition-colors text-left truncate ${
+              className={`px-2 py-1 text-xs rounded border transition-colors text-left truncate focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                 style.font === opt.value
                   ? "border-foreground bg-accent text-accent-foreground"
                   : "border-border hover:bg-accent/50"
@@ -179,7 +160,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
       {/* Color picker */}
       <div>
-        <SectionLabel>Color</SectionLabel>
+        <SectionLabel className="mb-1.5">Color</SectionLabel>
 
         {/* Swatch trigger + hex input */}
         <div className="flex items-center gap-2 mb-2.5">
@@ -247,9 +228,11 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
               <button
                 key={hex}
                 title={hex}
+                aria-label={`Accent color ${hex}`}
+                aria-pressed={isActive}
                 onClick={() => onChange({ accentColor: hex })}
                 style={{ backgroundColor: hex }}
-                className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 hover:shadow-sm ${
+                className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                   isActive
                     ? "ring-2 ring-offset-1 ring-foreground border-transparent scale-110"
                     : "border-white/30"
@@ -262,13 +245,15 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
       {/* Layout width */}
       <div>
-        <SectionLabel>Width</SectionLabel>
+        <SectionLabel className="mb-1.5">Width</SectionLabel>
         <div className="flex gap-1">
           {WIDTH_OPTIONS.map((opt) => (
             <button
               key={opt.value}
+              aria-label={`${opt.label} width`}
+              aria-pressed={style.layoutWidth === opt.value}
               onClick={() => onChange({ layoutWidth: opt.value })}
-              className={`flex-1 py-1 text-xs rounded border transition-colors ${
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                 style.layoutWidth === opt.value
                   ? "border-foreground bg-accent text-accent-foreground"
                   : "border-border hover:bg-accent/50"
@@ -282,15 +267,17 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
       {/* Background */}
       <div>
-        <SectionLabel>Background</SectionLabel>
+        <SectionLabel className="mb-1.5">Background</SectionLabel>
         <div className="grid grid-cols-7 gap-1.5">
           {BACKGROUND_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               title={opt.label}
+              aria-label={`${opt.label} background`}
+              aria-pressed={style.background === opt.value}
               onClick={() => onChange({ background: opt.value })}
               style={{ backgroundColor: opt.hex }}
-              className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 ${
+              className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                 style.background === opt.value
                   ? "ring-2 ring-offset-1 ring-foreground border-transparent scale-110"
                   : opt.dark ? "border-white/20" : "border-border"
@@ -302,7 +289,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
 
       {/* Tab placement */}
       <div>
-        <SectionLabel>Tabs</SectionLabel>
+        <SectionLabel className="mb-1.5">Tabs</SectionLabel>
         <div className="flex gap-1">
           {[
             { value: "top", label: "Top" },
@@ -310,8 +297,10 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
           ].map((opt) => (
             <button
               key={opt.value}
+              aria-label={`${opt.label} tab placement`}
+              aria-pressed={style.tabPlacement === opt.value}
               onClick={() => onChange({ tabPlacement: opt.value })}
-              className={`flex-1 py-1 text-xs rounded border transition-colors ${
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                 style.tabPlacement === opt.value
                   ? "border-foreground bg-accent text-accent-foreground"
                   : "border-border hover:bg-accent/50"
@@ -328,7 +317,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         <div className="flex items-center justify-between mb-1.5">
           <SectionLabel>Page Access</SectionLabel>
           {password && passwordProtection && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            <span className="text-3xs font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
               Protected
             </span>
           )}
@@ -347,21 +336,22 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
               {password && (
                 <button
                   onClick={() => onPasswordChange("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   title="Remove password"
+                  aria-label="Remove password"
                 >
                   <X className="h-3 w-3" />
                 </button>
               )}
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground/70">
+            <p className="mt-1 text-3xs text-muted-foreground/70">
               {password ? "Visitors must enter this password." : "Leave blank for public access."}
             </p>
           </>
         ) : (
-          <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-            <Zap className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
-            <p className="text-[10px] text-amber-800 dark:text-amber-200">
+          <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-warning-subtle border border-warning/30">
+            <Zap className="h-3 w-3 text-warning shrink-0" />
+            <p className="text-3xs text-warning-subtle-foreground">
               Upgrade to Pro to protect pages with a password.
             </p>
           </div>

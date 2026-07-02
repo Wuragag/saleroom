@@ -250,7 +250,7 @@ export function EditorHeader({
     <>
       <header className="border-b border-border bg-background">
         <div className="px-5 py-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Left: back, badge, save status */}
             <div className="flex items-center gap-3">
               <Link href="/">
@@ -265,7 +265,7 @@ export function EditorHeader({
               </Link>
               <Badge
                 variant={published ? "default" : "secondary"}
-                className="text-[10px] px-2 py-0.5 rounded-full"
+                className="text-3xs px-2 py-0.5 rounded-full"
               >
                 {published ? "Published" : "Draft"}
               </Badge>
@@ -273,14 +273,22 @@ export function EditorHeader({
                 <Circle
                   className={`h-2 w-2 fill-current transition-all duration-300 ${
                     saveStatus === "saved"
-                      ? "text-emerald-500 animate-save-dot"
+                      ? "text-success animate-save-dot"
                       : saveStatus === "saving"
-                      ? "text-amber-500 animate-spin"
-                      : "text-muted-foreground/50"
+                      ? "text-warning animate-spin"
+                      : "text-warning"
                   }`}
                   style={saveStatus === "saving" ? { animationDuration: "1s" } : undefined}
                 />
-                <span className={`transition-all duration-200 ${saveStatus === "saved" ? "text-emerald-600 font-medium" : ""}`}>
+                <span
+                  className={`transition-all duration-200 ${
+                    saveStatus === "saved"
+                      ? "text-success font-medium"
+                      : saveStatus === "unsaved"
+                      ? "text-warning font-medium"
+                      : ""
+                  }`}
+                >
                   {saveStatus === "saved"
                     ? "Saved"
                     : saveStatus === "saving"
@@ -291,7 +299,7 @@ export function EditorHeader({
 
               {/* Lock indicator */}
               {lockedByName && (
-                <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full gap-1 text-amber-600 border-amber-200 dark:border-amber-800">
+                <Badge variant="outline" className="text-3xs px-2 py-0.5 rounded-full gap-1 text-warning border-warning/30">
                   <Lock className="h-2.5 w-2.5" />
                   Locked by {lockedByName}
                 </Badge>
@@ -299,7 +307,7 @@ export function EditorHeader({
 
               {/* Visibility badge */}
               {visibility === "PRIVATE" && (
-                <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full gap-1">
+                <Badge variant="outline" className="text-3xs px-2 py-0.5 rounded-full gap-1">
                   <EyeOffIcon className="h-2.5 w-2.5" />
                   Private
                 </Badge>
@@ -307,31 +315,33 @@ export function EditorHeader({
             </div>
 
             {/* Right: actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 className="rounded-lg gap-1.5"
                 onClick={handlePreview}
+                aria-label="Preview"
               >
                 <ExternalLink className="h-3 w-3" />
-                Preview
+                <span className="hidden sm:inline">Preview</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className={`rounded-lg gap-1.5 transition-all duration-200 ${copied ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400 animate-success-pulse" : ""}`}
+                className={`rounded-lg gap-1.5 transition-all duration-200 ${copied ? "bg-success-subtle border-success/30 text-success-subtle-foreground animate-success-pulse" : ""}`}
                 onClick={copyLink}
+                aria-label="Copy link"
               >
                 {copied ? (
                   <>
                     <Check className="h-3 w-3 animate-dopamine-bounce" />
-                    Copied!
+                    <span className="hidden sm:inline">Copied!</span>
                   </>
                 ) : (
                   <>
                     <Copy className="h-3 w-3" />
-                    Copy Link
+                    <span className="hidden sm:inline">Copy Link</span>
                   </>
                 )}
               </Button>
@@ -340,39 +350,41 @@ export function EditorHeader({
                 size="sm"
                 className="rounded-lg gap-1.5"
                 onClick={() => setShareModalOpen(true)}
+                aria-label="Share"
               >
                 <Share2 className="h-3 w-3" />
-                Share
+                <span className="hidden sm:inline">Share</span>
               </Button>
               <div className="relative">
                 <Button
                   size="sm"
                   variant={published ? "outline" : "default"}
                   className={`rounded-lg gap-1.5 transition-all duration-200 ${
-                    justPublished ? "animate-success-pulse bg-emerald-600 hover:bg-emerald-600 text-white" : ""
-                  } ${!published && !publishing ? "animate-glow-pulse" : ""}`}
+                    justPublished ? "animate-success-pulse bg-success hover:bg-success text-success-foreground" : ""
+                  }`}
                   onClick={handleTogglePublish}
                   disabled={publishing}
+                  aria-label={published ? "Unpublish page" : "Publish page"}
                 >
                   {justPublished ? (
                     <>
                       <Check className="h-3 w-3 animate-dopamine-bounce" />
-                      Published!
+                      <span className="hidden sm:inline">Published!</span>
                     </>
                   ) : published ? (
                     <>
                       <EyeOff className="h-3 w-3" />
-                      {publishing ? "Unpublishing..." : "Unpublish"}
+                      <span className="hidden sm:inline">{publishing ? "Unpublishing..." : "Unpublish"}</span>
                     </>
                   ) : (
                     <>
                       <Globe className="h-3 w-3" />
-                      {publishing ? "Publishing..." : "Publish"}
+                      <span className="hidden sm:inline">{publishing ? "Publishing..." : "Publish"}</span>
                     </>
                   )}
                 </Button>
                 {justPublished && (
-                  <span className="absolute inset-0 rounded-lg animate-celebrate-ring text-emerald-400 pointer-events-none" />
+                  <span className="absolute inset-0 rounded-lg animate-celebrate-ring text-success pointer-events-none" />
                 )}
               </div>
 
@@ -522,8 +534,8 @@ export function EditorHeader({
           {saveSuccess ? (
             <div className="flex flex-col items-center gap-3 py-6">
               <div className="relative">
-                <CheckCircle2 className="h-10 w-10 text-emerald-500 animate-dopamine-bounce" />
-                <span className="absolute inset-0 rounded-full animate-celebrate-ring text-emerald-400 pointer-events-none" />
+                <CheckCircle2 className="h-10 w-10 text-success animate-dopamine-bounce" />
+                <span className="absolute inset-0 rounded-full animate-celebrate-ring text-success pointer-events-none" />
               </div>
               <p className="text-sm font-medium text-foreground animate-slide-up">
                 Template saved!

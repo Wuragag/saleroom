@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +21,7 @@ const CONFETTI_COLORS = [
 
 export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) {
   const [showConfetti, setShowConfetti] = useState(true);
+  const primaryButtonRef = useRef<HTMLButtonElement>(null);
 
   // Auto-hide confetti after 3s
   useEffect(() => {
@@ -28,12 +29,17 @@ export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) 
     return () => clearTimeout(timer);
   }, []);
 
+  // Move focus to the primary action when the dialog mounts
+  useEffect(() => {
+    primaryButtonRef.current?.focus();
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
       {/* Confetti particles */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-[62]">
-          {Array.from({ length: 40 }).map((_, i) => (
+          {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={i}
               className="absolute animate-confetti-fall"
@@ -104,9 +110,10 @@ export function TourCompletion({ onCreatePage, onFinish }: TourCompletionProps) 
         {/* Actions */}
         <div className="flex flex-col gap-2.5">
           <Button
+            ref={primaryButtonRef}
             type="button"
             onClick={onCreatePage}
-            className="w-full h-10 rounded-xl text-sm font-semibold animate-glow-pulse"
+            className="w-full h-10 rounded-xl text-sm font-semibold"
           >
             Create Your First Page
           </Button>

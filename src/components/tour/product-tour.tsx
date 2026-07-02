@@ -108,10 +108,10 @@ export function ProductTour() {
 
   return (
     <>
-      {/* Click-to-skip backdrop (areas outside the spotlight) */}
+      {/* Backdrop (areas outside the spotlight). Exit is via Esc or the explicit
+          Skip button — clicking the backdrop must not permanently end the tour. */}
       <div
         className="fixed inset-0 z-[59]"
-        onClick={skipTour}
         aria-hidden="true"
       />
 

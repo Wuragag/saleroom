@@ -10,10 +10,14 @@ import {
   Flame,
   Sun,
   Snowflake,
+  Check,
+  Minus,
   type LucideIcon,
 } from "lucide-react";
 import type { BuyerVisitorRow, BuyerAnalyticsSummary } from "@/types";
 import { formatDuration } from "@/lib/format-utils";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 interface BuyerAnalyticsPanelProps {
   pageId: string;
@@ -24,28 +28,28 @@ type Range = "7d" | "30d" | "all";
 function IntentBadge({ intent }: { intent: BuyerVisitorRow["intent"] }) {
   const config: Record<
     string,
-    { className: string; Icon: LucideIcon }
+    { variant: "success" | "warning" | "neutral"; Icon: LucideIcon }
   > = {
-    "High Intent": { className: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: Flame },
-    "Warm":        { className: "bg-amber-50 text-amber-700 border-amber-200",       Icon: Sun },
-    "Cold":        { className: "bg-slate-100 text-slate-500 border-slate-200",      Icon: Snowflake },
+    "High Intent": { variant: "success", Icon: Flame },
+    "Warm":        { variant: "warning", Icon: Sun },
+    "Cold":        { variant: "neutral", Icon: Snowflake },
   };
-  const { className, Icon } = config[intent] ?? config["Cold"];
+  const { variant, Icon } = config[intent] ?? config["Cold"];
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${className}`}
-    >
+    <Badge variant={variant} className="gap-1 rounded-full">
       <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
       {intent}
-    </span>
+    </Badge>
   );
 }
 
 function ScoreBar({ score }: { score: number }) {
+  // Tier color comes from a token var (not a hex); the bar width/fill is
+  // data-driven so the color stays an inline style.
   const tier =
-    score >= 70 ? { color: "#10b981", label: "High" } :
-    score >= 40 ? { color: "#f59e0b", label: "Medium" } :
-    { color: "#94a3b8", label: "Low" };
+    score >= 70 ? { color: "hsl(var(--success))", label: "High" } :
+    score >= 40 ? { color: "hsl(var(--warning))", label: "Medium" } :
+    { color: "hsl(var(--muted-foreground))", label: "Low" };
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 bg-muted rounded-full overflow-hidden h-1.5" style={{ maxWidth: "72px" }}>
@@ -57,7 +61,7 @@ function ScoreBar({ score }: { score: number }) {
       <span className="text-xs font-semibold tabular-nums" style={{ color: tier.color }}>
         {score}
       </span>
-      <span className="text-[10px] font-medium text-muted-foreground">{tier.label}</span>
+      <span className="text-3xs font-medium text-muted-foreground">{tier.label}</span>
     </div>
   );
 }
@@ -114,7 +118,8 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1.5 transition-colors ${
+                aria-pressed={range === r}
+                className={`px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
                   range === r
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -126,8 +131,9 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
           </div>
           <button
             onClick={() => load(range)}
-            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Refresh"
+            aria-label="Refresh"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
@@ -160,7 +166,9 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
           Loading buyer data…
         </div>
       ) : error ? (
-        <div className="py-12 text-center text-sm text-destructive">{error}</div>
+        <div className="py-12 text-center text-sm text-destructive">
+          Couldn&apos;t load buyer data.
+        </div>
       ) : visitors.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           No visitors yet for this period.
@@ -182,6 +190,7 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                 ].map((h) => (
                   <th
                     key={h}
+                    scope="col"
                     className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap"
                   >
                     {h}
@@ -195,22 +204,16 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                   <td className="px-4 py-3 text-xs">
                     {v.contactName || v.contactEmail ? (
                       <div className="flex items-center gap-2">
-                        <div
-                          className="h-5 w-5 rounded-full flex items-center justify-center text-white shrink-0"
-                          style={{
-                            backgroundColor: `hsl(${(v.contactEmail || "").length * 37 % 360}, 60%, 50%)`,
-                            fontSize: "8px",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {(v.contactName || v.contactEmail || "?")[0].toUpperCase()}
-                        </div>
+                        <Avatar
+                          name={v.contactName || v.contactEmail || v.visitorHash || "?"}
+                          size="xs"
+                        />
                         <div className="min-w-0">
                           <p className="font-medium text-foreground truncate">
                             {v.contactName || v.contactEmail}
                           </p>
                           {v.contactName && v.contactEmail && (
-                            <p className="text-[10px] text-muted-foreground truncate">{v.contactEmail}</p>
+                            <p className="text-3xs text-muted-foreground truncate">{v.contactEmail}</p>
                           )}
                         </div>
                       </div>
@@ -234,8 +237,18 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                   <td className="px-4 py-3 text-xs max-w-[140px] truncate" title={v.mostViewedTab}>
                     {v.mostViewedTab}
                   </td>
-                  <td className="px-4 py-3 text-center text-base">
-                    {v.ctaClicked ? "✅" : "—"}
+                  <td className="px-4 py-3 text-center">
+                    {v.ctaClicked ? (
+                      <Check
+                        className="h-4 w-4 text-success mx-auto"
+                        aria-label="CTA clicked"
+                      />
+                    ) : (
+                      <Minus
+                        className="h-4 w-4 text-muted-foreground mx-auto"
+                        aria-label="No CTA click"
+                      />
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <IntentBadge intent={v.intent} />

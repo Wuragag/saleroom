@@ -15,7 +15,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
 import type { BillingPlan } from "@/generated/prisma";
 
 interface BlockItem {
@@ -122,63 +125,57 @@ export function SyncedBlockLibrary({
   // ── List view ──
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Content Library
-          </h2>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Create reusable content blocks that stay in sync across all your pages
-          </p>
-        </div>
-        <button
-          onClick={handleCreate}
-          disabled={creating}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" />
-          {creating ? "Creating..." : "New Block"}
-        </button>
-      </div>
+      <PageHeader
+        title="Content Library"
+        description="Create reusable content blocks that stay in sync across all your pages"
+        className="mb-6"
+        actions={
+          <Button onClick={handleCreate} disabled={creating}>
+            <Plus className="h-4 w-4" />
+            {creating ? "Creating..." : "New Block"}
+          </Button>
+        }
+      />
 
       {/* Plan limit notice */}
       {maxBlocks === 0 && (
-        <div className="mb-6 p-4 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-800">
-          Synced blocks are available on Pro and Team plans.{" "}
-          <a href="/settings?tab=billing" className="font-medium underline">
-            Upgrade now
-          </a>
+        <div className="mb-6">
+          <UpgradePrompt message="Synced blocks are available on Pro and Team plans." />
         </div>
       )}
 
       {blocks.length === 0 ? (
-        <div className="text-center py-16 border border-dashed rounded-xl">
-          <Link2 className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-sm font-medium text-foreground mb-1">
-            No synced blocks yet
-          </p>
-          <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-            Create a reusable block — like a security FAQ or team bios — and
-            insert it into any page. Edit once, update everywhere.
-          </p>
-          {canCreate && (
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4" />
-              Create your first block
-            </button>
-          )}
+        <div className="border border-dashed rounded-xl">
+          <EmptyState
+            icon={Link2}
+            title="No synced blocks yet"
+            description="Create a reusable block — like a security FAQ or team bios — and insert it into any page. Edit once, update everywhere."
+            action={
+              canCreate ? (
+                <Button onClick={handleCreate} disabled={creating}>
+                  <Plus className="h-4 w-4" />
+                  Create your first block
+                </Button>
+              ) : undefined
+            }
+          />
         </div>
       ) : (
         <div className="grid gap-3">
           {blocks.map((block) => (
             <div
               key={block.id}
-              className="group flex items-center gap-4 p-4 border rounded-xl bg-card hover:border-primary/30 hover:shadow-sm hover:bg-card/80 transition-all cursor-pointer"
+              role="button"
+              tabIndex={0}
               onClick={() => setEditingBlock(block)}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setEditingBlock(block);
+                }
+              }}
+              className="group flex items-center gap-4 p-4 border rounded-xl bg-card hover:border-primary/30 hover:shadow-sm hover:bg-card/80 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Link2 className="h-5 w-5 text-primary" />
@@ -197,7 +194,7 @@ export function SyncedBlockLibrary({
                 }}
                 disabled={deleting === block.id}
                 aria-label={`Delete ${block.name}`}
-                className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { SubmissionsTable } from "@/components/submissions-table";
 import { AppNav } from "@/components/app-nav";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function SubmissionsPage() {
   const session = await auth();
@@ -44,17 +46,14 @@ export default async function SubmissionsPage() {
   return (
     <main className="min-h-screen bg-background">
       <AppNav />
-      <div className="max-w-5xl mx-auto px-6 py-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Form Submissions
-          </h2>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            View and export form submissions from your pages
-          </p>
-        </div>
+      <PageContainer size="md">
+        <PageHeader
+          title="Form Submissions"
+          description="View and export form submissions from your pages"
+          className="mb-6"
+        />
         <SubmissionsTable submissions={serialized} pages={pages} />
-      </div>
+      </PageContainer>
     </main>
   );
 }

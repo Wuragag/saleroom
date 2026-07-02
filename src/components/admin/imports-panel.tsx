@@ -11,6 +11,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeProps } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 
@@ -30,23 +32,21 @@ interface ImportRow {
 
 const STATUS_CONFIG: Record<
   string,
-  { label: string; className: string; icon: typeof Clock }
+  { label: string; variant: BadgeProps["variant"]; icon: typeof Clock }
 > = {
   processing: {
     label: "Processing",
-    className:
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+    variant: "info",
     icon: Clock,
   },
   complete: {
     label: "Complete",
-    className:
-      "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+    variant: "success",
     icon: CheckCircle2,
   },
   error: {
     label: "Error",
-    className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+    variant: "danger",
     icon: AlertCircle,
   },
 };
@@ -221,14 +221,15 @@ export function ImportsPanel() {
                         <span className="text-foreground text-xs font-medium">
                           {item.user.name ?? "—"}
                         </span>
-                        <span className="text-[11px]">{item.user.email}</span>
+                        <span className="text-2xs">{item.user.email}</span>
                       </div>
                     </td>
 
                     {/* Status */}
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${config.className}`}
+                      <Badge
+                        variant={config.variant}
+                        className="gap-1 rounded-full text-2xs"
                       >
                         {item.importStatus === "processing" ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -237,18 +238,18 @@ export function ImportsPanel() {
                         )}
                         {config.label}
                         {isStuck && (
-                          <span className="ml-1 text-amber-600 dark:text-amber-400">
+                          <span className="ml-1 text-warning">
                             (stuck)
                           </span>
                         )}
-                      </span>
+                      </Badge>
                     </td>
 
                     {/* Error */}
                     <td className="px-4 py-3 text-muted-foreground max-w-[250px]">
                       {item.importError ? (
                         <span
-                          className="text-xs text-red-600 dark:text-red-400 truncate block"
+                          className="text-xs text-destructive truncate block"
                           title={item.importError}
                         >
                           {item.importError}

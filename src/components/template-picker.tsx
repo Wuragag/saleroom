@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 import type { TemplateData } from "@/types";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { SectionLabel } from "@/components/ui/section-label";
 
 const CATEGORIES = [
   { value: "all", label: "All" },
@@ -163,9 +164,9 @@ export function TemplatePicker({
         <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Left sidebar */}
           <aside className="w-48 shrink-0 border-r border-border p-3 flex flex-col gap-0.5 overflow-y-auto">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-2 mb-1.5">
+            <SectionLabel className="px-2 mb-1.5">
               Templates
-            </p>
+            </SectionLabel>
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
@@ -329,13 +330,13 @@ function TemplateCard({
       {/* Footer row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-3xs text-muted-foreground">
             {template.usageCount === 0
               ? "New"
               : `Used ${template.usageCount}×`}
           </span>
           {tabCount > 1 && (
-            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+            <span className="text-3xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
               {tabCount} tabs
             </span>
           )}

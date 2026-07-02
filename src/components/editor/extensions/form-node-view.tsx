@@ -85,7 +85,7 @@ export function FormNodeView({
   return (
     <NodeViewWrapper
       data-type="form-block"
-      className={selected ? "ring-2 ring-primary rounded-lg" : ""}
+      className={selected ? "ring-2 ring-primary rounded-xl" : ""}
     >
       <div className="my-4 border border-dashed border-border rounded-xl p-5 bg-muted/20">
         {/* Header */}
@@ -96,7 +96,9 @@ export function FormNodeView({
           </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Form settings"
+            aria-pressed={showSettings}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Settings className="h-3.5 w-3.5" />
             {showSettings ? (
@@ -120,7 +122,8 @@ export function FormNodeView({
                 <button
                   key={preset.id}
                   onClick={() => togglePreset(preset.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  aria-pressed={enabled}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     enabled
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/50"
@@ -182,7 +185,8 @@ export function FormNodeView({
                   onClick={() =>
                     updateField(field.id, { required: !field.required })
                   }
-                  className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                  aria-pressed={field.required}
+                  className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     field.required
                       ? "bg-primary/10 border-primary/30 text-primary"
                       : "border-border text-muted-foreground"
@@ -193,7 +197,8 @@ export function FormNodeView({
 
                 <button
                   onClick={() => removeField(field.id)}
-                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  aria-label="Remove form"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

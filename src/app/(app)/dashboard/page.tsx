@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AppNav } from "@/components/app-nav";
+import { PageContainer } from "@/components/ui/page-container";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { SortableDashboard } from "@/components/sortable-dashboard";
 import { getUserTeamId } from "@/lib/team-auth";
@@ -93,12 +94,12 @@ export default async function Dashboard() {
   return (
     <main className="min-h-screen bg-background">
       <AppNav />
-      <div className="max-w-5xl mx-auto px-6 py-6">
+      <PageContainer size="md">
         <DashboardHeader />
         <div className="mt-6">
           <SortableDashboard pages={pageItems} analyticsMap={analyticsMap} />
         </div>
-      </div>
+      </PageContainer>
       <ProductTour />
     </main>
   );

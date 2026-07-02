@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
+import { SectionLabel } from "@/components/ui/section-label";
 import type { PageLink } from "@/types";
 
 interface LinksEditorProps {
@@ -39,17 +41,17 @@ export function LinksEditor({ links, onChange }: LinksEditorProps) {
   return (
     <div className="p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-          Links
-        </h3>
+        <SectionLabel>Links</SectionLabel>
         {!adding && (
-          <button
+          <IconButton
+            size="sm"
             onClick={() => setAdding(true)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground"
             title="Add link"
+            aria-label="Add link"
           >
             <Plus className="h-3.5 w-3.5" />
-          </button>
+          </IconButton>
         )}
       </div>
 
@@ -75,12 +77,14 @@ export function LinksEditor({ links, onChange }: LinksEditorProps) {
                 className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
               />
             </div>
-            <button
+            <IconButton
+              size="sm"
               onClick={() => removeLink(link.id)}
-              className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+              aria-label={`Remove link${link.label ? ` ${link.label}` : ""}`}
+              className="mt-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            </IconButton>
           </div>
         ))}
       </div>
@@ -106,13 +110,13 @@ export function LinksEditor({ links, onChange }: LinksEditorProps) {
             className="w-full text-xs px-1.5 py-1 rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
           />
           <div className="flex gap-1">
-            <Button size="sm" className="h-6 text-xs flex-1" onClick={addLink}>
+            <Button size="sm" className="h-8 text-xs flex-1" onClick={addLink}>
               Add
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 text-xs flex-1"
+              className="h-8 text-xs flex-1"
               onClick={() => {
                 setAdding(false);
                 setNewLabel("");
@@ -126,7 +130,7 @@ export function LinksEditor({ links, onChange }: LinksEditorProps) {
       )}
 
       {links.length === 0 && !adding && (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-3xs text-muted-foreground">
           No links yet. Click + to add one.
         </p>
       )}

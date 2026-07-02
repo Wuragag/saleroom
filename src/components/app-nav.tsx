@@ -61,7 +61,7 @@ export function AppNav() {
           {session?.user?.plan === "FREE" && (
             <Link
               href="/settings?tab=billing"
-              className="text-[10px] font-semibold uppercase tracking-wider text-primary-foreground/60 bg-primary-foreground/10 px-2 py-0.5 rounded-full hover:bg-primary-foreground/20 transition-colors"
+              className="text-3xs font-semibold uppercase tracking-wider text-primary-foreground/60 bg-primary-foreground/10 px-2 py-0.5 rounded-full hover:bg-primary-foreground/20 transition-colors"
             >
               Free
             </Link>

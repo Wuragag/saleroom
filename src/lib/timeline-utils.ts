@@ -6,21 +6,21 @@ import type { TimelineEventType } from "@/types";
 
 // ── Visitor colours ──
 
-const VISITOR_PALETTE = [
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#f59e0b", // amber
-  "#10b981", // emerald
-  "#3b82f6", // blue
-  "#ef4444", // red
-  "#14b8a6", // teal
-];
+// Number of categorical hues defined as --cat-1..N in globals.css. Visitor dots
+// draw from the same tokenized palette the <Avatar> primitive uses, so a reskin
+// of the categorical tokens reflows these colors too (no hardcoded hex here).
+const CAT_COUNT = 6;
 
+/**
+ * Deterministic, tokenized visitor color. Returns an `hsl(var(--cat-N))` string
+ * keyed by the same character-sum hash used before, so callers can keep using an
+ * inline `backgroundColor` for a data-driven dot without hardcoding hues.
+ */
 export function getVisitorColor(hash: string): string {
   let code = 0;
   for (let i = 0; i < hash.length; i++) code += hash.charCodeAt(i);
-  return VISITOR_PALETTE[code % VISITOR_PALETTE.length];
+  const idx = (code % CAT_COUNT) + 1;
+  return `hsl(var(--cat-${idx}))`;
 }
 
 export function getVisitorLabel(hash: string, email: string | null): string {
@@ -58,13 +58,17 @@ export interface TimelineEventConfig {
   colorClass: string; // tailwind text-* class
 }
 
+// colorClass maps each event accent to a status/token utility (per the design
+// system's status-color mapping): blue/sky → info, emerald → success, amber →
+// warning, slate → muted. Event types with no status meaning (return visit,
+// form submit) use brand/info tokens so they stay tokenized and distinct.
 export const TIMELINE_EVENT_CONFIG: Record<TimelineEventType, TimelineEventConfig> = {
-  first_visit:          { icon: "UserPlus",      label: "First visit",         colorClass: "text-blue-500" },
-  return_visit:         { icon: "UserCheck",     label: "Return visit",        colorClass: "text-indigo-500" },
-  tab_viewed:           { icon: "Eye",           label: "Viewed tab",          colorClass: "text-slate-500" },
-  cta_clicked:          { icon: "MousePointer",  label: "Clicked CTA",         colorClass: "text-emerald-500" },
-  form_submitted:       { icon: "FileText",      label: "Submitted form",      colorClass: "text-violet-500" },
-  file_downloaded:      { icon: "Download",      label: "Downloaded file",     colorClass: "text-amber-500" },
-  link_shared:          { icon: "Share2",        label: "Link shared",         colorClass: "text-sky-500" },
-  map_item_completed:   { icon: "CheckSquare",   label: "MAP item completed",  colorClass: "text-emerald-600" },
+  first_visit:          { icon: "UserPlus",      label: "First visit",         colorClass: "text-info" },
+  return_visit:         { icon: "UserCheck",     label: "Return visit",        colorClass: "text-primary" },
+  tab_viewed:           { icon: "Eye",           label: "Viewed tab",          colorClass: "text-muted-foreground" },
+  cta_clicked:          { icon: "MousePointer",  label: "Clicked CTA",         colorClass: "text-success" },
+  form_submitted:       { icon: "FileText",      label: "Submitted form",      colorClass: "text-info" },
+  file_downloaded:      { icon: "Download",      label: "Downloaded file",     colorClass: "text-warning" },
+  link_shared:          { icon: "Share2",        label: "Link shared",         colorClass: "text-info" },
+  map_item_completed:   { icon: "CheckSquare",   label: "MAP item completed",  colorClass: "text-success" },
 };

@@ -16,7 +16,7 @@ export function SpacerNodeView({ node, updateAttributes, selected }: NodeViewPro
   return (
     <NodeViewWrapper
       data-type="spacer"
-      className={selected ? "ring-2 ring-primary/30 rounded" : ""}
+      className={selected ? "ring-2 ring-primary/30 rounded-xl" : ""}
     >
       <div
         className="group relative flex items-center justify-center transition-all"
@@ -31,7 +31,8 @@ export function SpacerNodeView({ node, updateAttributes, selected }: NodeViewPro
             <button
               key={s.value}
               onClick={() => updateAttributes({ height: s.value })}
-              className={`px-2 py-0.5 text-[10px] font-semibold rounded-full transition-colors ${
+              aria-pressed={node.attrs.height === s.value}
+              className={`px-2 py-0.5 text-[10px] font-semibold rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 node.attrs.height === s.value
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground"

@@ -7,6 +7,8 @@ import { AnalyticsTable } from "@/components/analytics-table";
 import { AnalyticsStatCards } from "@/components/analytics-stat-cards";
 import { ViewsChart } from "@/components/views-chart";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeader } from "@/components/ui/page-header";
 import { formatDuration } from "@/lib/format-utils";
 
 const PAGE_SIZE = 50;
@@ -178,25 +180,34 @@ export default async function AnalyticsPage({
   }
 
 
+  // Restrained, brand-forward accents:
+  //  - Hero metric (Total Views) → primary forest green.
+  //  - Buyer-intelligence money-metrics (Unique Buyers, High Intent) → distinct
+  //    chart-token accents so they stand out from the neutral supporting metrics.
+  //  - Supporting metrics stay muted/neutral so the eye lands on what matters.
+  const HERO_ACCENT = "hsl(var(--primary))";
+  const BUYER_ACCENT = "hsl(var(--chart-2))";      // teal
+  const INTENT_ACCENT = "hsl(var(--chart-5))";     // warm orange
+  const MUTED_ACCENT = "hsl(var(--muted-foreground))";
+
   const statCards = [
-    { label: "Total Views",       value: totalViews.toLocaleString(),      icon: "Eye",      color: "text-primary", bg: "bg-primary/10", description: "Total page views across all published pages" },
-    { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: "Clock",    color: "text-primary", bg: "bg-primary/10", description: "Average time visitors spend viewing your pages" },
-    { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    color: "text-primary", bg: "bg-primary/10", description: "Number of times visitors clicked links in your pages" },
-    { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", color: "text-primary", bg: "bg-primary/10", description: "Total form responses submitted by visitors" },
-    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: "Users",    color: "text-primary", bg: "bg-primary/10", description: "Distinct visitors identified by email across all pages" },
-    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   color: "text-primary", bg: "bg-primary/10", description: "Buyers who clicked a CTA or have a high engagement score" },
+    { label: "Total Views",       value: totalViews.toLocaleString(),      icon: "Eye",      accent: HERO_ACCENT,   description: "Total page views across all published pages" },
+    { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: "Clock",    accent: MUTED_ACCENT,  description: "Average time visitors spend viewing your pages" },
+    { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    accent: MUTED_ACCENT,  description: "Number of times visitors clicked links in your pages" },
+    { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", accent: MUTED_ACCENT,  description: "Total form responses submitted by visitors" },
+    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: "Users",    accent: BUYER_ACCENT,  description: "Distinct visitors identified by email across all pages" },
+    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   accent: INTENT_ACCENT, description: "Buyers who clicked a CTA or have a high engagement score" },
   ];
 
   return (
     <main className="min-h-screen bg-background">
       <AppNav />
-      <div className="max-w-5xl mx-auto px-6 py-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Analytics</h2>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Performance overview — click any page row to see buyer-level insights
-          </p>
-        </div>
+      <PageContainer size="md">
+        <PageHeader
+          title="Analytics"
+          description="Performance overview — click any page row to see buyer-level insights"
+          className="mb-6"
+        />
 
         <AnalyticsStatCards cards={statCards} />
 
@@ -230,7 +241,7 @@ export default async function AnalyticsPage({
             </div>
           )}
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }
