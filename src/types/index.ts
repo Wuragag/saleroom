@@ -93,6 +93,15 @@ export interface SyncedBlockListItem {
 
 export type IntentLabel = "High Intent" | "Warm" | "Cold";
 
+export interface SectionEngagement {
+  tabId: string;
+  tabName: string;
+  durationSeconds: number;
+  viewCount: number;
+  sharePct: number; // share of the visitor's total section time (0–100)
+  maxScrollPct: number; // deepest scroll within this section (0 if unknown)
+}
+
 export interface BuyerVisitorRow {
   visitorId: string;
   visitorHash: string; // first 8 chars of hash
@@ -107,6 +116,7 @@ export interface BuyerVisitorRow {
   intent: IntentLabel;
   contactName?: string | null;
   contactEmail?: string | null;
+  sections: SectionEngagement[];
 }
 
 export interface PageContactRow {

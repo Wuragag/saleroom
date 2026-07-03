@@ -93,6 +93,7 @@ export const PUT = withErrorHandler(async (
   }
   if (body.content !== undefined) updateData.content = body.content;
   if (body.published !== undefined) updateData.published = body.published;
+  if (body.notifyOnView !== undefined) updateData.notifyOnView = !!body.notifyOnView;
   if (body.slug !== undefined) updateData.slug = body.slug;
   if (body.font !== undefined) updateData.font = body.font;
   if (body.accentColor !== undefined) updateData.accentColor = body.accentColor;

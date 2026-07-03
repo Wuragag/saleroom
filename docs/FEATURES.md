@@ -274,20 +274,37 @@ Two layers of tracking: lightweight page analytics and rich per-buyer intelligen
 
 ### Page Analytics ([`/analytics`](../src/app/analytics/page.tsx))
 - **Page views** with duration (`PageView`) and a **views-over-time chart**.
-- **Page events** (`PageEvent`) — typed interactions (CTA clicks, downloads, etc.).
+- **True attention time** — duration counts only visible-tab time via a shared
+  tracker ([`src/lib/visible-time.ts`](../src/lib/visible-time.ts)); background
+  tabs don't accrue. Server writes are monotonic (`GREATEST`), so late or
+  out-of-order sends never shrink recorded durations.
+- **Page events** (`PageEvent`) — typed interactions (CTA clicks, downloads,
+  shares — a `share` event is recorded when a page is shared with contacts).
 - Per-page stat cards and a sortable table.
 - A non-blocking client tracker
   ([`analytics-tracker`](../src/components/analytics-tracker.tsx)) records views and
-  dwell time; write endpoints are rate-limited.
+  dwell time; write endpoints are rate-limited, only track **published** pages,
+  and skip known bots ([`src/lib/bot-detect.ts`](../src/lib/bot-detect.ts)).
+  Clicked-link URLs are stored without query strings/fragments (PII hygiene).
 
 ### Buyer Intelligence
 Deep, identity-aware engagement on published pages:
 - **Visitors** (`BuyerVisitor`) — deduped by a visitor hash, with first/last seen,
   session count, a computed **engagement score**, and a CTA-clicked flag. Linked to
   a named `PageContact` when known.
-- **Sessions** (`BuyerSession`) — duration, return-visit detection, per-session
-  engagement score.
+- **Sessions** (`BuyerSession`) — visible-time duration, return-visit detection,
+  per-session engagement score. Sessions resumed within 30 minutes are seeded
+  with their accumulated duration/tab state so heartbeats never reset totals.
+- **View notifications** — opt-in per page (`Page.notifyOnView`, toggle in the
+  share modal): the owner gets an email when a new visitor session starts
+  (throttled to 5/hour per page, sent post-response via `after()`).
 - **Per-tab views** (`BuyerTabView`) — which tabs a buyer spent time on.
+- **Per-section engagement** — expand any visitor row in the buyer panel to see a
+  per-tab breakdown: dwell time, share of total time, view count, and deepest
+  scroll reached in that section. Scroll depth is tracked per-section (the
+  tracker tags `SCROLL_*` events with the active tab and resets milestones on tab
+  switch); aggregation is a pure, tested function
+  ([`src/lib/section-engagement.ts`](../src/lib/section-engagement.ts)).
 - **Events** (`BuyerEvent`) — granular in-session actions.
 - **Engagement scoring & intent** — visitor activity rolls up into an engagement
   score and an intent label (e.g. *High Intent / Warm / Cold*) via

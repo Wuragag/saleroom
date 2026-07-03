@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { sendSharePageEmail } from "@/lib/email";
-import { getIntentLabel } from "@/lib/engagement-score";
+import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
 import { withErrorHandler } from "@/lib/api-error";
 
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
@@ -46,7 +46,7 @@ export const GET = withErrorHandler(async (
   const rows = contacts.map((c) => {
     const v = c.visitors[0]; // a contact maps to at most one visitor per page
     const pricingTabViewed = v?.sessions.some((s) =>
-      s.tabViews.some((tv) => tv.tabName.toLowerCase().includes("pric"))
+      s.tabViews.some((tv) => isPricingTabName(tv.tabName))
     ) ?? false;
 
     return {
@@ -145,6 +145,19 @@ export const POST = withErrorHandler(async (
         console.error(`[contacts] Failed to send email to ${email}:`, err);
       }
     }
+  }
+
+  // Record the share on the page's activity timeline / share stats.
+  // One event per share action (not per contact) — this is a seller action,
+  // so it's created here rather than exposed on the public event endpoint.
+  if (created.length > 0) {
+    await prisma.pageEvent.create({
+      data: {
+        pageId: id,
+        type: "share",
+        meta: JSON.stringify({ contacts: created.length }),
+      },
+    });
   }
 
   return NextResponse.json({ contacts: created });

@@ -135,6 +135,7 @@ model Page {
   slug          String         @unique
   content       String         @default("{}")
   published     Boolean        @default(false)
+  notifyOnView  Boolean        @default(false)
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId        String?

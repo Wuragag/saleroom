@@ -29,19 +29,16 @@ export const PATCH = withErrorHandler(async (
   // Clamp duration to a reasonable range (0–86400 seconds = 24 hours)
   const clampedDuration = Math.max(0, Math.min(Math.round(duration), 86_400));
 
-  // Verify the view exists before updating
-  const existing = await prisma.pageView.findUnique({
-    where: { id: viewId },
-    select: { id: true },
-  });
-  if (!existing) {
+  // Monotonic update: durations only grow, so a late/out-of-order keepalive
+  // send can never shrink an already-recorded value. Zero rows = unknown view.
+  const updated = await prisma.$executeRaw`
+    UPDATE "PageView"
+    SET "duration" = GREATEST(COALESCE("duration", 0), ${clampedDuration})
+    WHERE "id" = ${viewId}
+  `;
+  if (updated === 0) {
     return NextResponse.json({ error: "View not found" }, { status: 404 });
   }
-
-  await prisma.pageView.update({
-    where: { id: viewId },
-    data: { duration: clampedDuration },
-  });
 
   return NextResponse.json({ ok: true });
 });

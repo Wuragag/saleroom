@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createVisibleTimeTracker, type VisibleTimeTracker } from "@/lib/visible-time";
 
 interface AnalyticsTrackerProps {
   pageId: string;
@@ -24,52 +25,43 @@ export function AnalyticsTracker({ pageId }: AnalyticsTrackerProps) {
   }, [pageId]);
 
   // Track only visible time — pause when tab is hidden
-  const visibleDuration = useRef(0); // accumulated seconds while visible
-  const lastVisibleAt = useRef(Date.now()); // timestamp when tab last became visible
-  const sending = useRef(false);
+  const visibleTime = useRef<VisibleTimeTracker | null>(null);
 
   useEffect(() => {
     if (!viewId) return;
 
-    const accumulateDuration = () => {
-      if (document.visibilityState !== "hidden") {
-        // Tab is visible, accumulate time since last visible timestamp
-        visibleDuration.current += (Date.now() - lastVisibleAt.current) / 1000;
-        lastVisibleAt.current = Date.now();
-      }
-    };
+    if (!visibleTime.current) {
+      visibleTime.current = createVisibleTimeTracker({
+        initiallyVisible: document.visibilityState !== "hidden",
+      });
+    }
+    const tracker = visibleTime.current;
 
+    // Always send the absolute running total — the server takes the max, so
+    // duplicate or out-of-order sends are harmless.
     const sendDuration = () => {
-      accumulateDuration();
-      if (sending.current) return;
-      sending.current = true;
-      const duration = Math.round(visibleDuration.current);
       fetch(`/api/analytics/view/${viewId}`, {
         method: "PATCH",
         keepalive: true,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ duration }),
-      })
-        .catch(() => {})
-        .finally(() => { sending.current = false; });
+        body: JSON.stringify({ duration: tracker.getSeconds() }),
+      }).catch(() => {});
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        // Tab hidden — accumulate and send
-        sendDuration();
-      } else {
-        // Tab visible again — reset the "last visible" timestamp
-        lastVisibleAt.current = Date.now();
-      }
+      const visible = document.visibilityState !== "hidden";
+      tracker.setVisible(visible);
+      if (!visible) sendDuration();
     };
 
+    // pagehide instead of beforeunload — beforeunload never fires on mobile
+    // Safari; keepalive fetch survives the page teardown.
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", sendDuration);
+    window.addEventListener("pagehide", sendDuration);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("beforeunload", sendDuration);
+      window.removeEventListener("pagehide", sendDuration);
     };
   }, [viewId]);
 
@@ -82,10 +74,18 @@ export function AnalyticsTracker({ pageId }: AnalyticsTrackerProps) {
       if (!href) return;
       // Skip all internal links (same origin)
       if (href.startsWith(window.location.origin)) return;
+      // Strip query/fragment — they can carry tokens, emails, and other PII
+      let meta = href;
+      try {
+        const u = new URL(href);
+        u.search = "";
+        u.hash = "";
+        meta = u.toString();
+      } catch {}
       fetch("/api/analytics/event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageId, type: "link_click", meta: href }),
+        body: JSON.stringify({ pageId, type: "link_click", meta }),
       });
     };
 
