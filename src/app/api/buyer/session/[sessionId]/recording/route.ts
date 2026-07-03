@@ -95,11 +95,39 @@ export const POST = withErrorHandler(async (
   }
 
   // Store the raw array string verbatim — GET stitches these back together.
-  await prisma.sessionRecording.upsert({
-    where: { sessionId_chunkIndex: { sessionId, chunkIndex } },
-    update: { data: rawBody, eventCount: events.length },
-    create: { sessionId, chunkIndex, data: rawBody, eventCount: events.length },
+  //
+  // Make duplicate chunk writes "larger wins". The client can have an interval
+  // flush in flight when pagehide sends a final keepalive for the same index;
+  // without this guard, the smaller interval response can arrive last and
+  // overwrite the more complete final payload.
+  const updated = await prisma.sessionRecording.updateMany({
+    where: {
+      sessionId,
+      chunkIndex,
+      eventCount: { lt: events.length },
+    },
+    data: { data: rawBody, eventCount: events.length },
   });
+
+  if (updated.count === 0) {
+    try {
+      await prisma.sessionRecording.create({
+        data: { sessionId, chunkIndex, data: rawBody, eventCount: events.length },
+      });
+    } catch (err) {
+      const existing = await prisma.sessionRecording.findUnique({
+        where: { sessionId_chunkIndex: { sessionId, chunkIndex } },
+        select: { eventCount: true },
+      });
+      if (!existing) throw err;
+      if (existing.eventCount < events.length) {
+        await prisma.sessionRecording.update({
+          where: { sessionId_chunkIndex: { sessionId, chunkIndex } },
+          data: { data: rawBody, eventCount: events.length },
+        });
+      }
+    }
+  }
 
   return NextResponse.json({ ok: true });
 });

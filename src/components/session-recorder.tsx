@@ -22,6 +22,7 @@ import { useEffect, useRef } from "react";
 import { record, type eventWithTime } from "rrweb";
 
 const RECORDING_API = "/api/buyer/session";
+const FIRST_FLUSH_DELAY_MS = 1_000;
 const FLUSH_INTERVAL_MS = 20_000;
 // Full DOM snapshot every 5 min, not every flush: GET concatenates all chunks
 // into one stream, so a single initial snapshot replays the whole session —
@@ -45,6 +46,7 @@ export function SessionRecorder({ sessionId, startChunkIndex = 0 }: Props) {
     const url = `${RECORDING_API}/${sessionId}/recording`;
     let stopped = false;
     let sending = false;
+    let firstFlushTimer: ReturnType<typeof setTimeout> | undefined;
     let flushTimer: ReturnType<typeof setInterval> | undefined;
     let recordStop: (() => void) | undefined;
 
@@ -53,6 +55,10 @@ export function SessionRecorder({ sessionId, startChunkIndex = 0 }: Props) {
       stopped = true;
       recordStop?.();
       recordStop = undefined;
+      if (firstFlushTimer) {
+        clearTimeout(firstFlushTimer);
+        firstFlushTimer = undefined;
+      }
       if (flushTimer) {
         clearInterval(flushTimer);
         flushTimer = undefined;
@@ -127,10 +133,19 @@ export function SessionRecorder({ sessionId, startChunkIndex = 0 }: Props) {
       checkoutEveryNms: CHECKOUT_INTERVAL_MS,
     });
 
-    flushTimer = setInterval(flush, FLUSH_INTERVAL_MS);
+    // Save the initial full DOM snapshot quickly. Relying only on the 20s
+    // interval means short visits often leave the large first snapshot to the
+    // keepalive unload path, where browsers can size-cap the request.
+    firstFlushTimer = setTimeout(() => {
+      void flush();
+    }, FIRST_FLUSH_DELAY_MS);
+
+    flushTimer = setInterval(() => {
+      void flush();
+    }, FLUSH_INTERVAL_MS);
 
     function onVisibilityChange() {
-      if (document.visibilityState === "hidden") flush();
+      if (document.visibilityState === "hidden") void flush();
     }
 
     document.addEventListener("visibilitychange", onVisibilityChange);

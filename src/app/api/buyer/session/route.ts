@@ -131,11 +131,14 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
           where: { sessionId: recentSession.id },
           select: { tabId: true, tabName: true, duration: true, viewCount: true },
         });
-        // Existing recording chunk count so a resumed session appends its
-        // replay instead of overwriting the earlier visit's chunks.
-        const recordingChunkCount = await tx.sessionRecording.count({
+        // Resume after the highest stored chunk index, not the row count.
+        // A dropped non-retriable chunk can leave gaps; using count would then
+        // overwrite a later chunk on the next visit.
+        const recordingChunkMax = await tx.sessionRecording.aggregate({
           where: { sessionId: recentSession.id },
+          _max: { chunkIndex: true },
         });
+        const recordingChunkCount = (recordingChunkMax._max.chunkIndex ?? -1) + 1;
         return { session: recentSession, visitor, isNew: false, tabViews, recordingChunkCount };
       }
 
