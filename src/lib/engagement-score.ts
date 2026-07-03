@@ -59,6 +59,14 @@ export function aggregateVisitorScore(sessionScores: number[]): number {
   return Math.min(max + bonus, 100);
 }
 
+/**
+ * Single source of truth for "is this tab the pricing tab?" — used by the
+ * client tracker, the buyer analytics endpoint, and the contacts endpoint.
+ */
+export function isPricingTabName(name: string): boolean {
+  return name.toLowerCase().includes("pric");
+}
+
 export type IntentLabel = "High Intent" | "Warm" | "Cold";
 
 export function getIntentLabel(score: number, ctaClicked: boolean, pricingTabViewed: boolean): IntentLabel {

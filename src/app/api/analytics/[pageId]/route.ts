@@ -15,7 +15,7 @@ export const GET = withErrorHandler(async (
     return NextResponse.json({ error: access.reason }, { status });
   }
 
-  const [viewStats, eventStats] = await Promise.all([
+  const [viewStats, eventStats, uniqueVisitors] = await Promise.all([
     prisma.pageView.aggregate({
       where: { pageId },
       _count: { id: true },
@@ -26,6 +26,7 @@ export const GET = withErrorHandler(async (
       where: { pageId },
       _count: { id: true },
     }),
+    prisma.buyerVisitor.count({ where: { pageId } }),
   ]);
 
   const linkClicks =
@@ -38,5 +39,6 @@ export const GET = withErrorHandler(async (
     avgDuration: Math.round(viewStats._avg.duration ?? 0),
     linkClicks,
     shares,
+    uniqueVisitors,
   });
 });

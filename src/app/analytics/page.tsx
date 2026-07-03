@@ -195,7 +195,7 @@ export default async function AnalyticsPage({
     { label: "Avg. Time on Page", value: formatDuration(avgDuration),      icon: "Clock",    accent: MUTED_ACCENT,  description: "Average time visitors spend viewing your pages" },
     { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    accent: MUTED_ACCENT,  description: "Number of times visitors clicked links in your pages" },
     { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", accent: MUTED_ACCENT,  description: "Total form responses submitted by visitors" },
-    { label: "Unique Buyers",     value: totalBuyers.toLocaleString(),     icon: "Users",    accent: BUYER_ACCENT,  description: "Distinct visitors identified by email across all pages" },
+    { label: "Unique Visitors",   value: totalBuyers.toLocaleString(),     icon: "Users",    accent: BUYER_ACCENT,  description: "Distinct visitors (per device) across all pages" },
     { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   accent: INTENT_ACCENT, description: "Buyers who clicked a CTA or have a high engagement score" },
   ];
 

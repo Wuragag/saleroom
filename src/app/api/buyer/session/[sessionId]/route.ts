@@ -77,48 +77,52 @@ export const PATCH = withErrorHandler(async (
 
     const now = new Date();
 
-    await prisma.$transaction(async (tx) => {
-      // Update session
-      await tx.buyerSession.update({
-        where: { id: sessionId },
-        data: {
-          duration,
-          lastActiveAt: now,
-          engagementScore: sessionScore,
-        },
-      });
+    // Monotone approximation of aggregateVisitorScore (max session score +
+    // 5 per extra session, bonus capped at 15) — cheap enough to keep the
+    // stored column fresh, which the dashboard's High Intent counts and the
+    // contacts endpoint read directly.
+    const sessionBonus = Math.min(
+      Math.max(session.visitor.totalSessions - 1, 0) * 5,
+      15
+    );
+    const visitorScore = Math.min(sessionScore + sessionBonus, 100);
 
-      // Upsert tab views
+    await prisma.$transaction(async (tx) => {
+      // Update session — GREATEST so late/out-of-order heartbeats and resumed
+      // sessions can only grow duration/score, never clobber them
+      await tx.$executeRaw`
+        UPDATE "BuyerSession"
+        SET "duration" = GREATEST("duration", ${duration}),
+            "engagementScore" = GREATEST("engagementScore", ${sessionScore}),
+            "lastActiveAt" = ${now}
+        WHERE "id" = ${sessionId}
+      `;
+
+      // Upsert tab views with the same monotonic semantics
       for (const tv of tabViews) {
-        await tx.buyerTabView.upsert({
-          where: { sessionId_tabId: { sessionId, tabId: tv.tabId } },
-          update: {
-            duration: tv.duration,
-            viewCount: tv.viewCount,
-            lastViewedAt: now,
-            tabName: tv.tabName,
-          },
-          create: {
-            sessionId,
-            tabId: tv.tabId,
-            tabName: tv.tabName,
-            duration: tv.duration,
-            viewCount: tv.viewCount,
-            lastViewedAt: now,
-          },
-        });
+        const tabDuration = Math.max(0, Math.min(Number(tv.duration) || 0, 86400));
+        const tabViewCount = Math.max(1, Math.min(Number(tv.viewCount) || 1, 10000));
+        await tx.$executeRaw`
+          INSERT INTO "BuyerTabView" ("id", "sessionId", "tabId", "tabName", "duration", "viewCount", "lastViewedAt")
+          VALUES (${crypto.randomUUID()}, ${sessionId}, ${tv.tabId}, ${tv.tabName}, ${tabDuration}, ${tabViewCount}, ${now})
+          ON CONFLICT ("sessionId", "tabId") DO UPDATE
+          SET "duration" = GREATEST("BuyerTabView"."duration", EXCLUDED."duration"),
+              "viewCount" = GREATEST("BuyerTabView"."viewCount", EXCLUDED."viewCount"),
+              "tabName" = EXCLUDED."tabName",
+              "lastViewedAt" = EXCLUDED."lastViewedAt"
+        `;
       }
 
-      // Update visitor timestamps and flags only — visitor engagementScore is
-      // computed at read-time in the analytics endpoint to avoid the expensive
-      // findMany of all sessions on every heartbeat.
-      await tx.buyerVisitor.update({
-        where: { id: session.visitorId },
-        data: {
-          lastSeenAt: now,
-          ctaClicked: ctaClicked ? true : undefined,
-        },
-      });
+      // Keep the visitor's stored engagement score fresh (monotonic max) —
+      // it was previously never written after creation, which silently broke
+      // every score-based High Intent count.
+      await tx.$executeRaw`
+        UPDATE "BuyerVisitor"
+        SET "engagementScore" = GREATEST("engagementScore", ${visitorScore}),
+            "lastSeenAt" = ${now},
+            "ctaClicked" = "ctaClicked" OR ${ctaClicked === true}
+        WHERE "id" = ${session.visitorId}
+      `;
     });
 
     return NextResponse.json({ ok: true, score: sessionScore });

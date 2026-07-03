@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import {
   Users,
   TrendingUp,
@@ -12,9 +12,11 @@ import {
   Snowflake,
   Check,
   Minus,
+  ChevronRight,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
-import type { BuyerVisitorRow, BuyerAnalyticsSummary } from "@/types";
+import type { BuyerVisitorRow, BuyerAnalyticsSummary, SectionEngagement } from "@/types";
 import { formatDuration } from "@/lib/format-utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +70,59 @@ function ScoreBar({ score }: { score: number }) {
 
 // formatDuration imported from @/lib/format-utils
 
+/** Per-section engagement breakdown shown when a visitor row is expanded. */
+function SectionBreakdown({ sections }: { sections: SectionEngagement[] }) {
+  if (!sections || sections.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground px-1 py-2">
+        No section activity recorded for this visitor yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-0.5">
+        <Layers className="h-3.5 w-3.5" />
+        Section engagement
+      </div>
+      {sections.map((s) => (
+        <div key={s.tabId} className="flex items-center gap-3">
+          <span className="w-32 shrink-0 truncate text-xs font-medium text-foreground" title={s.tabName}>
+            {s.tabName}
+          </span>
+          {/* Dwell share bar */}
+          <div className="flex-1 min-w-[80px] bg-muted rounded-full overflow-hidden h-2">
+            <div
+              className="h-full rounded-full bg-primary/80 transition-all"
+              style={{ width: `${Math.max(2, s.sharePct)}%` }}
+            />
+          </div>
+          <span className="w-16 shrink-0 text-right text-xs font-mono text-muted-foreground tabular-nums">
+            {formatDuration(s.durationSeconds)}
+          </span>
+          <span
+            className="w-14 shrink-0 text-right text-3xs text-muted-foreground tabular-nums"
+            title={`${s.viewCount} view${s.viewCount === 1 ? "" : "s"}`}
+          >
+            {s.viewCount}×
+          </span>
+          <span
+            className="w-20 shrink-0 text-right text-3xs tabular-nums"
+            title="Deepest scroll reached in this section"
+          >
+            {s.maxScrollPct > 0 ? (
+              <span className="text-muted-foreground">{s.maxScrollPct}% read</span>
+            ) : (
+              <span className="text-muted-foreground/50">—</span>
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
@@ -83,6 +138,7 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
   const [visitors, setVisitors] = useState<BuyerVisitorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   async function load(r: Range) {
     setLoading(true);
@@ -199,27 +255,42 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {visitors.map((v) => (
-                <tr key={v.visitorId} className="hover:bg-muted/30 transition-colors">
+              {visitors.map((v) => {
+                const isExpanded = expandedId === v.visitorId;
+                return (
+                <Fragment key={v.visitorId}>
+                <tr
+                  className="hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : v.visitorId)}
+                  aria-expanded={isExpanded}
+                >
                   <td className="px-4 py-3 text-xs">
-                    {v.contactName || v.contactEmail ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar
-                          name={v.contactName || v.contactEmail || v.visitorHash || "?"}
-                          size="xs"
-                        />
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {v.contactName || v.contactEmail}
-                          </p>
-                          {v.contactName && v.contactEmail && (
-                            <p className="text-3xs text-muted-foreground truncate">{v.contactEmail}</p>
-                          )}
+                    <div className="flex items-center gap-2">
+                      <ChevronRight
+                        className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                          isExpanded ? "rotate-90" : ""
+                        }`}
+                        aria-hidden="true"
+                      />
+                      {v.contactName || v.contactEmail ? (
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Avatar
+                            name={v.contactName || v.contactEmail || v.visitorHash || "?"}
+                            size="xs"
+                          />
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground truncate">
+                              {v.contactName || v.contactEmail}
+                            </p>
+                            {v.contactName && v.contactEmail && (
+                              <p className="text-3xs text-muted-foreground truncate">{v.contactEmail}</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <span className="font-mono text-muted-foreground">#{v.visitorHash}</span>
-                    )}
+                      ) : (
+                        <span className="font-mono text-muted-foreground">#{v.visitorHash}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-xs font-semibold tabular-nums">{v.sessions}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
@@ -254,7 +325,16 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                     <IntentBadge intent={v.intent} />
                   </td>
                 </tr>
-              ))}
+                {isExpanded && (
+                  <tr className="bg-muted/20">
+                    <td colSpan={8} className="px-6 py-4">
+                      <SectionBreakdown sections={v.sections} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

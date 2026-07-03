@@ -15,6 +15,8 @@
  */
 
 import { useEffect, useRef } from "react";
+import { createVisibleTimeTracker, type VisibleTimeTracker } from "@/lib/visible-time";
+import { isPricingTabName } from "@/lib/engagement-score";
 
 const SESSION_API = "/api/buyer/session";
 const EVENTS_API  = "/api/buyer/events";
@@ -57,7 +59,11 @@ interface Props {
 export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, refToken }: Props) {
   // Refs are stable across renders — no re-renders needed for tracker state
   const sessionIdRef   = useRef<string | null>(null);
-  const pageStartRef   = useRef<number>(Date.now());
+  // Visible-time only — hidden/background time doesn't count as engagement
+  const visibleTimeRef = useRef<VisibleTimeTracker | null>(null);
+  // Seconds already accumulated by a resumed session (seeded from the server)
+  const baseDurationRef = useRef(0);
+  const hiddenRef      = useRef(false);
   const tabViewsRef    = useRef<Map<string, TabViewState>>(new Map());
   const activeTabRef   = useRef<{ id: string; name: string } | null>(
     initialTabId ? { id: initialTabId, name: initialTabName ?? "" } : null
@@ -80,23 +86,40 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
     },
 
     currentDurationSeconds(): number {
-      return Math.round((Date.now() - pageStartRef.current) / 1000);
+      return baseDurationRef.current + (visibleTimeRef.current?.getSeconds() ?? 0);
+    },
+
+    /** Close out the active tab's running stretch (no-op while hidden). */
+    accrueActiveTab() {
+      const now = Date.now();
+      const active = activeTabRef.current;
+      if (!active || hiddenRef.current) return;
+      const entry = tabViewsRef.current.get(active.id);
+      if (entry) {
+        entry.duration += now - entry.startedAt;
+        entry.startedAt = now;
+      }
+    },
+
+    /** Pause/resume tab-time accrual on visibility changes. */
+    setPageVisible(visible: boolean) {
+      if (visible === !hiddenRef.current) return;
+      const h = helpersRef.current;
+      if (!visible) {
+        h.accrueActiveTab(); // capture the stretch before pausing
+        hiddenRef.current = true;
+      } else {
+        hiddenRef.current = false;
+        const active = activeTabRef.current;
+        const entry = active ? tabViewsRef.current.get(active.id) : undefined;
+        if (entry) entry.startedAt = Date.now();
+      }
+      visibleTimeRef.current?.setVisible(visible);
     },
 
     buildTabViewsPayload() {
-      const now = Date.now();
-      const map = tabViewsRef.current;
-      const active = activeTabRef.current;
-
-      if (active) {
-        const entry = map.get(active.id);
-        if (entry) {
-          entry.duration += now - entry.startedAt;
-          entry.startedAt = now;
-        }
-      }
-
-      return [...map.values()].map((tv) => ({
+      helpersRef.current.accrueActiveTab();
+      return [...tabViewsRef.current.values()].map((tv) => ({
         tabId:     tv.tabId,
         tabName:   tv.tabName,
         duration:  Math.round(tv.duration / 1000),
@@ -107,15 +130,8 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
     startOrSwitchTab(tabId: string, tabName: string) {
       const now = Date.now();
       const map = tabViewsRef.current;
-      const prev = activeTabRef.current;
 
-      if (prev) {
-        const prevEntry = map.get(prev.id);
-        if (prevEntry) {
-          prevEntry.duration += now - prevEntry.startedAt;
-          prevEntry.startedAt = now;
-        }
-      }
+      helpersRef.current.accrueActiveTab();
 
       const existing = map.get(tabId);
       if (existing) {
@@ -125,11 +141,14 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
         map.set(tabId, { tabId, tabName, startedAt: now, duration: 0, viewCount: 1 });
       }
 
-      if (tabName.toLowerCase().includes("pric")) {
+      if (isPricingTabName(tabName)) {
         pricingTabRef.current = true;
       }
 
       activeTabRef.current = { id: tabId, name: tabName };
+      // Scroll depth is per-section: reset milestones so the new tab tracks its
+      // own scroll independently of the previous one.
+      scrollDepth.current = 0;
     },
 
     async flushEvents() {
@@ -173,6 +192,13 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
     // Guard against StrictMode double-invoke
     let aborted = false;
 
+    if (!visibleTimeRef.current) {
+      visibleTimeRef.current = createVisibleTimeTracker({
+        initiallyVisible: document.visibilityState !== "hidden",
+      });
+      hiddenRef.current = document.visibilityState === "hidden";
+    }
+
     async function init() {
       const visitorId = getOrCreateVisitorId();
       if (!visitorId || aborted) return;
@@ -188,8 +214,30 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
         if (aborted) return;
         sessionIdRef.current = data.sessionId;
 
-        // Record initial tab view
         const h = helpersRef.current;
+
+        // Resumed session: seed accumulated state so heartbeats keep sending
+        // absolute totals instead of restarting from zero (which used to
+        // clobber the earlier data server-side).
+        if (data.resumed) {
+          baseDurationRef.current = Number(data.duration) || 0;
+          const seeded: Array<{ tabId: string; tabName: string; duration: number; viewCount: number }> =
+            Array.isArray(data.tabViews) ? data.tabViews : [];
+          const now = Date.now();
+          for (const tv of seeded) {
+            if (tabViewsRef.current.has(tv.tabId)) continue;
+            tabViewsRef.current.set(tv.tabId, {
+              tabId:     tv.tabId,
+              tabName:   tv.tabName,
+              startedAt: now,
+              duration:  (Number(tv.duration) || 0) * 1000,
+              viewCount: Number(tv.viewCount) || 1,
+            });
+            if (isPricingTabName(tv.tabName)) pricingTabRef.current = true;
+          }
+        }
+
+        // Record initial tab view
         if (initialTabId) {
           h.startOrSwitchTab(initialTabId, initialTabName ?? "");
         }
@@ -224,10 +272,15 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
         const el  = document.documentElement;
         const pct = Math.round(((el.scrollTop + el.clientHeight) / el.scrollHeight) * 100);
         const milestones = [25, 50, 75, 100] as const;
+        const active = activeTabRef.current;
         for (const m of milestones) {
           if (pct >= m && scrollDepth.current < m) {
             scrollDepth.current = m;
-            helpersRef.current.queueEvent(`SCROLL_${m}`, { depth: m });
+            helpersRef.current.queueEvent(`SCROLL_${m}`, {
+              depth: m,
+              tabId: active?.id ?? null,
+              tabName: active?.name ?? null,
+            });
           }
         }
       }, 300);
@@ -258,8 +311,16 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
         ctaClickedRef.current = true;
         h.queueEvent("CTA_CLICK", { text: text.trim().slice(0, 80) });
       } else if (target.tagName === "A") {
-        const href = (target as HTMLAnchorElement).href ?? "";
-        const isFile = /\.(pdf|docx?|xlsx?|pptx?|zip|csv)(\?|$)/i.test(href);
+        const rawHref = (target as HTMLAnchorElement).href ?? "";
+        const isFile = /\.(pdf|docx?|xlsx?|pptx?|zip|csv)(\?|$)/i.test(rawHref);
+        // Strip query/fragment — they can carry tokens, emails, and other PII
+        let href = rawHref;
+        try {
+          const u = new URL(rawHref);
+          u.search = "";
+          u.hash = "";
+          href = u.toString();
+        } catch {}
         if (isFile) {
           fileDownloaded.current = true;
           h.queueEvent("FILE_DOWNLOAD", { href: href.slice(0, 200) });
@@ -283,17 +344,29 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
     }, HEARTBEAT_INTERVAL_MS);
 
     function onVisibilityChange() {
-      if (document.visibilityState === "hidden") {
+      const visible = document.visibilityState !== "hidden";
+      helpersRef.current.setPageVisible(visible);
+      if (!visible) {
         helpersRef.current.flushEvents();
         helpersRef.current.sendHeartbeat();
       }
     }
 
+    // pagehide catches navigations/closures that never fire visibilitychange
+    // (and beforeunload doesn't exist on mobile Safari)
+    function onPageHide() {
+      helpersRef.current.setPageVisible(false);
+      helpersRef.current.flushEvents();
+      helpersRef.current.sendHeartbeat();
+    }
+
     document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
 
     return () => {
       clearInterval(heartbeatTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
       // Final flush on unmount
       helpersRef.current.flushEvents();
       helpersRef.current.sendHeartbeat();

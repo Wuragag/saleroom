@@ -2,10 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
+import { isBotUserAgent } from "@/lib/bot-detect";
 
 const limiter = rateLimit({ limit: 30, window: "60s" });
 
 export const POST = withErrorHandler(async (req: Request) => {
+  // Keep crawlers/preview fetchers out of analytics (200 so clients stay silent)
+  if (isBotUserAgent(req.headers.get("user-agent"))) {
+    return NextResponse.json({ skipped: true });
+  }
+
   // Rate limit: 30 events per minute per IP
   const ip = getClientIp(req);
   const { success } = await limiter.limit(ip);
@@ -21,12 +27,12 @@ export const POST = withErrorHandler(async (req: Request) => {
     );
   }
 
-  // Validate that the page actually exists (prevent phantom data)
+  // Validate that the page exists AND is published (prevent phantom data)
   const page = await prisma.page.findUnique({
     where: { id: pageId },
-    select: { id: true },
+    select: { published: true },
   });
-  if (!page) {
+  if (!page?.published) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
   }
 
@@ -37,7 +43,20 @@ export const POST = withErrorHandler(async (req: Request) => {
   }
 
   // Cap meta length to prevent oversized payloads
-  const safeMeta = typeof meta === "string" ? meta.slice(0, 2048) : "";
+  let safeMeta = typeof meta === "string" ? meta.slice(0, 2048) : "";
+
+  // Defense-in-depth: never store query strings/fragments of clicked links —
+  // they can carry tokens, emails, and other PII
+  if (type === "link_click") {
+    try {
+      const u = new URL(safeMeta);
+      u.search = "";
+      u.hash = "";
+      safeMeta = u.toString();
+    } catch {
+      // not a URL — keep as-is
+    }
+  }
 
   await prisma.pageEvent.create({
     data: { pageId, type, meta: safeMeta },

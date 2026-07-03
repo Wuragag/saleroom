@@ -10,10 +10,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
+import { isBotUserAgent } from "@/lib/bot-detect";
+import { sendViewNotificationEmail } from "@/lib/email";
+
+const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
 // 30-minute inactivity window (ms)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -21,12 +26,20 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 // Rate limit: 20 session creations per minute per IP
 const limiter = rateLimit({ limit: 20, window: "60s" });
 
+// Throttle view-notification emails: max 5 per hour per page
+const notifyLimiter = rateLimit({ limit: 5, window: "1h", prefix: "notify" });
+
 function hashVisitorId(raw: string, pageId: string): string {
   return createHash("sha256").update(`${raw}:${pageId}`).digest("hex");
 }
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
   try {
+    // Keep crawlers/preview fetchers out of analytics (200 so clients stay silent)
+    if (isBotUserAgent(req.headers.get("user-agent"))) {
+      return NextResponse.json({ skipped: true });
+    }
+
     // Rate limit check
     const ip = getClientIp(req);
     const { success } = await limiter.limit(ip);
@@ -45,7 +58,19 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ error: "Missing visitorId or pageId" }, { status: 400 });
     }
 
-    // Page existence is validated by FK constraints in the transaction below
+    // Only published pages accumulate analytics
+    const page = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: {
+        published: true,
+        notifyOnView: true,
+        title: true,
+        user: { select: { email: true } },
+      },
+    });
+    if (!page?.published) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
 
     // Resolve refToken to a contactId (if valid)
     let contactId: string | null = null;
@@ -98,12 +123,17 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       });
 
       if (recentSession) {
-        // Resume
+        // Resume — return accumulated state so the client can keep sending
+        // absolute totals instead of restarting from zero
         await tx.buyerSession.update({
           where: { id: recentSession.id },
           data: { lastActiveAt: now },
         });
-        return { session: recentSession, visitor, isNew: false };
+        const tabViews = await tx.buyerTabView.findMany({
+          where: { sessionId: recentSession.id },
+          select: { tabId: true, tabName: true, duration: true, viewCount: true },
+        });
+        return { session: recentSession, visitor, isNew: false, tabViews };
       }
 
       // New session
@@ -128,11 +158,39 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return { session, visitor, isNew: true };
     });
 
+    // Notify the page owner of a genuinely new session (opt-in, throttled,
+    // sent after the response so visitor latency is unaffected)
+    if (result.isNew && page.notifyOnView && page.user.email) {
+      const ownerEmail = page.user.email;
+      const isReturn = result.session.isReturn;
+      after(async () => {
+        try {
+          const { success } = await notifyLimiter.limit(pageId);
+          if (!success) return;
+          await sendViewNotificationEmail(
+            ownerEmail,
+            page.title,
+            `${APP_URL}/analytics`,
+            isReturn
+          );
+        } catch (err) {
+          console.error("[buyer/session notify]", err);
+        }
+      });
+    }
+
     return NextResponse.json({
       sessionId: result.session.id,
       visitorDbId: result.visitor.id,
       isReturn: result.session.isReturn,
       isNew: result.isNew,
+      ...(result.isNew
+        ? {}
+        : {
+            resumed: true,
+            duration: result.session.duration,
+            tabViews: result.tabViews ?? [],
+          }),
     });
   } catch (err: unknown) {
     // FK violation on pageId means the page doesn't exist

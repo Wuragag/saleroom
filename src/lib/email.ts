@@ -143,3 +143,50 @@ export async function sendTeamInviteEmail(
 </html>`,
   });
 }
+
+export async function sendViewNotificationEmail(
+  email: string,
+  pageTitle: string,
+  analyticsUrl: string,
+  isReturn: boolean
+): Promise<void> {
+  const visitorLabel = isReturn ? "A returning visitor" : "A new visitor";
+
+  if (!process.env.RESEND_API_KEY) {
+    console.log(
+      `\n[View Notification — dev mode]\nEmail: ${email}\nPage: ${pageTitle}\nVisitor: ${visitorLabel}\nAnalytics: ${analyticsUrl}\n`
+    );
+    return;
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `${visitorLabel} is viewing "${pageTitle}"`,
+    html: `
+<!DOCTYPE html>
+<html>
+  <body style="font-family:sans-serif;background:#f4f4f5;margin:0;padding:40px 16px;">
+    <div style="max-width:420px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
+      <h1 style="font-size:20px;font-weight:700;margin:0 0 8px;color:#09090b;">
+        ${visitorLabel} is on your page
+      </h1>
+      <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
+        Someone just opened <strong>&ldquo;${pageTitle}&rdquo;</strong>.
+        Head to your analytics to see what they engage with.
+      </p>
+      <a href="${analyticsUrl}"
+         style="display:inline-block;background:#09090b;color:#fff;font-size:14px;font-weight:600;padding:10px 24px;border-radius:8px;text-decoration:none;">
+        View analytics
+      </a>
+      <p style="font-size:12px;color:#a1a1aa;margin:24px 0 0;line-height:1.5;">
+        You&apos;re receiving this because view notifications are enabled for this
+        page. Turn them off in the page&apos;s share settings.
+      </p>
+    </div>
+  </body>
+</html>`,
+  });
+}

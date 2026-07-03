@@ -7,7 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getIntentLabel, aggregateVisitorScore } from "@/lib/engagement-score";
+import { getIntentLabel, aggregateVisitorScore, isPricingTabName } from "@/lib/engagement-score";
+import { aggregateSections, type SectionScrollInput } from "@/lib/section-engagement";
 import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler } from "@/lib/api-error";
 
@@ -74,7 +75,19 @@ export const GET = withErrorHandler(async (
             include: {
               tabViews: true,
               events: {
-                where: { type: { in: ["CTA_CLICK", "FILE_DOWNLOAD", "TAB_VIEW"] } },
+                where: {
+                  type: {
+                    in: [
+                      "CTA_CLICK",
+                      "FILE_DOWNLOAD",
+                      "TAB_VIEW",
+                      "SCROLL_25",
+                      "SCROLL_50",
+                      "SCROLL_75",
+                      "SCROLL_100",
+                    ],
+                  },
+                },
                 select: { type: true, metadata: true },
               },
             },
@@ -110,8 +123,28 @@ export const GET = withErrorHandler(async (
         [...tabDurationMap.values()].sort((a, b) => b.duration - a.duration)[0]?.name ?? "—";
 
       // Check if pricing tab was ever viewed
-      const pricingTabViewed = allTabViews.some((tv) =>
-        tv.tabName.toLowerCase().includes("pric")
+      const pricingTabViewed = allTabViews.some((tv) => isPricingTabName(tv.tabName));
+
+      // Per-section engagement: dwell + views + scroll depth per tab
+      const sections = aggregateSections(
+        v.sessions.map((s) => ({
+          tabViews: s.tabViews.map((tv) => ({
+            tabId: tv.tabId,
+            tabName: tv.tabName,
+            duration: tv.duration,
+            viewCount: tv.viewCount,
+          })),
+          scrollEvents: s.events
+            .filter((e) => e.type.startsWith("SCROLL_"))
+            .map((e): SectionScrollInput => {
+              try {
+                const meta = JSON.parse(e.metadata) as { tabId?: string | null; depth?: number };
+                return { tabId: meta.tabId ?? null, depth: Number(meta.depth) || 0 };
+              } catch {
+                return { tabId: null, depth: 0 };
+              }
+            }),
+        }))
       );
 
       // Compute visitor score from session scores at read time
@@ -133,6 +166,7 @@ export const GET = withErrorHandler(async (
         intent,
         contactName: v.contact?.name ?? null,
         contactEmail: v.contact?.email ?? null,
+        sections,
       };
     });
 
