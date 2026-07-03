@@ -140,6 +140,9 @@ export const GET = withErrorHandler(async (
   const eventCount = chunks.reduce((n, c) => n + c.eventCount, 0);
 
   return new NextResponse(`{"events":[${inner}],"eventCount":${eventCount}}`, {
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
   });
 });

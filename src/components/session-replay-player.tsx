@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Video } from "lucide-react";
+import { Loader2, RefreshCw, Video, WifiOff } from "lucide-react";
 // Static import so Next.js's CSS pipeline bundles it — this component only
 // ever loads inside the (dashboard-only) buyer analytics panel.
 import "rrweb-player/dist/style.css";
@@ -19,20 +19,28 @@ interface Props {
   sessionId: string;
 }
 
-type LoadState = "loading" | "empty" | "ready" | "error";
+type LoadState = "loading" | "empty" | "ready" | "offline" | "error";
 
 export function SessionReplayPlayer({ sessionId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<{ $destroy?: () => void } | null>(null);
   const [state, setState] = useState<LoadState>("loading");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     setState("loading");
+    playerRef.current?.$destroy?.();
+    playerRef.current = null;
+    if (containerRef.current) containerRef.current.innerHTML = "";
 
     async function load() {
       try {
-        const res = await fetch(`/api/buyer/session/${sessionId}/recording`);
+        const res = await fetch(`/api/buyer/session/${sessionId}/recording`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error("Failed to load recording");
         const data = await res.json();
         const events = Array.isArray(data.events) ? data.events : [];
@@ -60,19 +68,34 @@ export function SessionReplayPlayer({ sessionId }: Props) {
         playerRef.current = player as unknown as { $destroy?: () => void };
         setState("ready");
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error("[SessionReplayPlayer]", err);
-        if (!cancelled) setState("error");
+        if (!cancelled) setState(navigator.onLine === false ? "offline" : "error");
       }
     }
 
     load();
     return () => {
       cancelled = true;
+      controller.abort();
       // Svelte teardown — releases the Replayer, its iframe, listeners, timers
       playerRef.current?.$destroy?.();
       playerRef.current = null;
     };
-  }, [sessionId]);
+  }, [sessionId, retryKey]);
+
+  useEffect(() => {
+    if (state !== "offline") return;
+    function retryWhenOnline() {
+      setRetryKey((key) => key + 1);
+    }
+    window.addEventListener("online", retryWhenOnline);
+    return () => window.removeEventListener("online", retryWhenOnline);
+  }, [state]);
+
+  function retry() {
+    setRetryKey((key) => key + 1);
+  }
 
   return (
     <div className="relative min-h-[400px]">
@@ -91,10 +114,42 @@ export function SessionReplayPlayer({ sessionId }: Props) {
             <>
               <Video className="h-6 w-6" />
               <p className="text-sm">No replay recorded for this session yet.</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Try again
+              </button>
+            </>
+          )}
+          {state === "offline" && (
+            <>
+              <WifiOff className="h-6 w-6" />
+              <p className="text-sm">Your connection is offline. Reconnect to load this replay.</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </button>
             </>
           )}
           {state === "error" && (
-            <p className="text-sm text-destructive">Couldn&apos;t load this replay.</p>
+            <>
+              <p className="text-sm text-destructive">Couldn&apos;t load this replay.</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </button>
+            </>
           )}
         </div>
       )}
