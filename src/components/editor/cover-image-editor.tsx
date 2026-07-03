@@ -8,12 +8,15 @@ interface CoverImageEditorProps {
   pageId: string;
   coverImage: string;
   onCoverImageChange: (url: string) => void;
+  /** Content-column width — aligns the empty-state button with the page column */
+  maxWidth?: string;
 }
 
 export function CoverImageEditor({
   pageId,
   coverImage,
   onCoverImageChange,
+  maxWidth,
 }: CoverImageEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,22 +101,22 @@ export function CoverImageEditor({
     />
   );
 
-  /* ── Empty state ── */
+  /* ── Empty state: slim ghost affordance aligned with the content column ── */
   if (!coverImage) {
     return (
-      <div className="flex flex-col gap-1 mb-3">
+      <div className="relative z-20 mx-auto px-6 pt-4" style={{ maxWidth }}>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-xs font-medium w-fit focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-border/80 bg-background/60 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-border transition-colors text-xs font-medium w-fit focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ImageIcon className="h-3.5 w-3.5" />
           {uploading ? "Uploading…" : "Add cover image"}
           {fileInput}
         </button>
         {error && (
-          <div className="flex items-center gap-1.5 text-xs text-destructive px-3">
+          <div className="flex items-center gap-1.5 text-xs text-destructive px-3 pt-1">
             <AlertCircle className="h-3 w-3 shrink-0" />
             {error}
           </div>
@@ -122,50 +125,50 @@ export function CoverImageEditor({
     );
   }
 
-  /* ── Cover image set ── */
+  /* ── Cover image set: full-bleed, same 300px height as the published page ── */
   return (
-    <div className="mb-4">
-      <div className="group relative w-full rounded-xl overflow-hidden" style={{ height: "220px" }}>
-        <Image
-          src={coverImage}
-          alt="Cover"
-          fill
-          sizes="(max-width: 768px) 100vw, 720px"
-          className="object-cover"
-        />
+    <div className="group relative z-10 w-full" style={{ height: "300px" }}>
+      <Image
+        src={coverImage}
+        alt=""
+        fill
+        sizes="100vw"
+        priority
+        style={{ objectFit: "cover" }}
+      />
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
 
-        {/* Action buttons */}
-        <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <Upload className="h-3 w-3" />
-            {uploading ? "Uploading…" : "Change"}
-          </button>
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <X className="h-3 w-3" />
-            Remove
-          </button>
-        </div>
-
-        {fileInput}
+      {/* Action buttons */}
+      <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <Upload className="h-3 w-3" />
+          {uploading ? "Uploading…" : "Change"}
+        </button>
+        <button
+          type="button"
+          onClick={handleRemove}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <X className="h-3 w-3" />
+          Remove
+        </button>
       </div>
+
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-destructive mt-1.5 px-1">
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-xs text-white bg-destructive/90 px-2.5 py-1.5 rounded-lg">
           <AlertCircle className="h-3 w-3 shrink-0" />
           {error}
         </div>
       )}
+
+      {fileInput}
     </div>
   );
 }

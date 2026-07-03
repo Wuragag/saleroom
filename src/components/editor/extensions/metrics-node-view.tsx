@@ -84,28 +84,45 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
           </Button>
         </div>
       ) : (
-        <div className="group relative my-2">
+        <div className="group relative">
+          {/* Mirrors the published metrics markup (page-renderer.tsx) */}
           <div
-            className="rounded-xl border border-border bg-card/60 p-2"
             style={{
               display: "grid",
               gridTemplateColumns: `repeat(${(node.attrs.metrics as Metric[]).length}, 1fr)`,
-              gap: "2px",
+              gap: "8px",
+              padding: "12px 0",
             }}
           >
             {(node.attrs.metrics as Metric[]).map((metric, i) => (
               <div
                 key={i}
-                className="text-center py-5 px-3 rounded-lg"
-                style={{ background: "color-mix(in srgb, var(--page-accent, #003B22) 8%, transparent)" }}
+                style={{
+                  textAlign: "center",
+                  padding: "24px 16px",
+                  borderRadius: "10px",
+                  background:
+                    "var(--metric-cell-bg, color-mix(in srgb, var(--page-accent, #003B22) 8%, transparent))",
+                }}
               >
                 <div
-                  className="text-2xl font-bold tracking-tight leading-none mb-1.5"
-                  style={{ color: "var(--page-accent, #003B22)" }}
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: 800,
+                    letterSpacing: "-0.02em",
+                    color: "var(--page-accent, #003B22)",
+                    marginBottom: "6px",
+                  }}
                 >
                   {metric.value}
                 </div>
-                <div className="text-xs text-muted-foreground font-medium">
+                <div
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: "var(--node-muted, #64748b)",
+                  }}
+                >
                   {metric.label}
                 </div>
               </div>

@@ -22,8 +22,16 @@ import {
   Trash2,
   Share2,
   Mail,
+  Palette,
 } from "lucide-react";
 import { ShareModal } from "@/components/share-modal";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { StylePanel } from "./style-panel";
+import type { PageStyle } from "@/lib/page-styles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +69,6 @@ const TEMPLATE_CATEGORIES = [
 
 interface EditorHeaderProps {
   title: string;
-  onTitleChange: (title: string) => void;
   slug: string;
   pageId: string;
   published: boolean;
@@ -77,11 +84,16 @@ interface EditorHeaderProps {
   isCreator?: boolean;
   requireEmail?: boolean;
   onRequireEmailChange?: (requireEmail: boolean) => void;
+  /** Design popover — page style controls shown on the WYSIWYG canvas */
+  pageStyle?: PageStyle;
+  onStyleChange?: (patch: Partial<PageStyle>) => void;
+  password?: string;
+  onPasswordChange?: (value: string) => void;
+  passwordProtection?: boolean;
 }
 
 export function EditorHeader({
   title,
-  onTitleChange,
   slug,
   pageId,
   published,
@@ -97,6 +109,11 @@ export function EditorHeader({
   isCreator,
   requireEmail,
   onRequireEmailChange,
+  pageStyle,
+  onStyleChange,
+  password,
+  onPasswordChange,
+  passwordProtection,
 }: EditorHeaderProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -316,6 +333,34 @@ export function EditorHeader({
 
             {/* Right: actions */}
             <div className="flex flex-wrap items-center gap-2">
+              {/* Design popover — page style controls */}
+              {!readOnly && pageStyle && onStyleChange && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-lg gap-1.5"
+                      aria-label="Design"
+                    >
+                      <Palette className="h-3 w-3" />
+                      <span className="hidden sm:inline">Design</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-72 p-0 max-h-[75vh] overflow-y-auto"
+                  >
+                    <StylePanel
+                      style={pageStyle}
+                      onChange={onStyleChange}
+                      password={password ?? ""}
+                      onPasswordChange={onPasswordChange ?? (() => {})}
+                      passwordProtection={passwordProtection}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -479,16 +524,6 @@ export function EditorHeader({
               </DropdownMenu>
             </div>
           </div>
-
-          {/* Title input */}
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Untitled Page"
-            readOnly={readOnly}
-            className="mt-3 w-full text-2xl font-bold bg-transparent border-none outline-none placeholder:text-muted-foreground text-foreground"
-          />
         </div>
       </header>
 

@@ -841,3 +841,54 @@ div[data-type="cta-button"] a:focus-visible {
     --cat-6: 190 55% 54%;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   WYSIWYG EDITING SURFACE
+   The editor canvas carries `tiptap ProseMirror pub-content
+   pub-editing` so the published .pub-content rules style live
+   content. Rules below neutralize editor-only leftovers and
+   editing artifacts. Scoped to .tiptap.pub-content /
+   .pub-editing — never touch .tiptap alone (synced-block
+   editor uses it too).
+   ═══════════════════════════════════════════════════════ */
+
+.tiptap.pub-content {
+  padding: 0;
+  min-height: 360px;
+  max-width: none;
+}
+
+/* Entrance animations replay whenever ProseMirror recreates DOM
+   nodes during editing — disable them entirely on the canvas. */
+.pub-editing > *,
+.pub-editing .react-renderer {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Placeholder readable on any page background */
+.tiptap.pub-content p.is-editor-empty:first-child::before {
+  color: var(--pub-body-color, #475569);
+  opacity: 0.55;
+}
+
+/* Residual .tiptap rules that the .pub-content rules don't shadow */
+.tiptap.pub-content tr:hover td {
+  background: transparent;
+}
+.tiptap.pub-content blockquote {
+  font-style: normal;
+}
+
+/* Node selection ring visible on any page background */
+.pub-editing .ProseMirror-selectednode {
+  outline: 2px solid var(--pub-accent, #64748b);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Gap cursor / caret readable on dark backgrounds */
+.pub-editing .ProseMirror-gapcursor:after {
+  border-top: 1px solid var(--pub-heading-color, #0f172a);
+}

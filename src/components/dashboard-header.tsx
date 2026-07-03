@@ -2,19 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Sparkles, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { TemplatePicker } from "@/components/template-picker";
 import { ImportDocumentModal } from "@/components/import-document-modal";
-import { AiWriteModal } from "@/components/ai-write-modal";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 
 export function DashboardHeader() {
   const router = useRouter();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const [isAiWriteOpen, setIsAiWriteOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
 
@@ -75,13 +74,15 @@ export function DashboardHeader() {
             AI Import
           </Button>
           <Button
+            asChild
             size="sm"
             className="gradient-ai text-white border-0 rounded-lg gap-1.5 shrink-0"
-            onClick={() => setIsAiWriteOpen(true)}
             data-tour="ai-write"
           >
-            <PenLine className="h-3.5 w-3.5" />
-            AI Write
+            <Link href="/ai">
+              <PenLine className="h-3.5 w-3.5" />
+              AI Write
+            </Link>
           </Button>
         </div>
       </div>
@@ -99,11 +100,6 @@ export function DashboardHeader() {
       <ImportDocumentModal
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
-      />
-
-      <AiWriteModal
-        isOpen={isAiWriteOpen}
-        onClose={() => setIsAiWriteOpen(false)}
       />
     </>
   );

@@ -5,14 +5,15 @@ import { Plus, Trash2, ChevronDown, ChevronUp, CheckCircle2, Circle, ClipboardLi
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { useMap } from "@/hooks/use-map";
+import type { UseMapReturn } from "@/hooks/use-map";
 import type { MapItemData } from "@/types";
 
 interface MapPanelProps {
-  pageId: string;
+  /** Owned by the editor so the AI composer and this panel share one state. */
+  mapState: UseMapReturn;
 }
 
-export function MapPanel({ pageId }: MapPanelProps) {
+export function MapPanel({ mapState }: MapPanelProps) {
   const {
     map,
     loading,
@@ -22,7 +23,7 @@ export function MapPanel({ pageId }: MapPanelProps) {
     addItem,
     updateItem,
     deleteItem,
-  } = useMap(pageId);
+  } = mapState;
 
   const [collapsed, setCollapsed] = useState(false);
 
