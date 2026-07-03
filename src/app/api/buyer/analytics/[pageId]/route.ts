@@ -90,6 +90,7 @@ export const GET = withErrorHandler(async (
                 },
                 select: { type: true, metadata: true },
               },
+              _count: { select: { recordings: true } },
             },
             orderBy: { startedAt: "desc" },
           },
@@ -167,6 +168,12 @@ export const GET = withErrorHandler(async (
         contactName: v.contact?.name ?? null,
         contactEmail: v.contact?.email ?? null,
         sections,
+        sessionsList: v.sessions.map((s) => ({
+          sessionId: s.id,
+          startedAt: s.startedAt.toISOString(),
+          durationSeconds: s.duration,
+          hasRecording: s._count.recordings > 0,
+        })),
       };
     });
 

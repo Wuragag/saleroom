@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { X, Send, Copy, Check, Loader2, Trash2, ExternalLink, Bell } from "lucide-react";
+import { X, Send, Copy, Check, Loader2, Trash2, ExternalLink, Bell, Video } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
 import type { PageContactRow } from "@/types";
@@ -22,6 +22,31 @@ interface ShareModalProps {
   pageId: string;
   slug: string;
   pageTitle: string;
+}
+
+function SettingToggle({
+  checked,
+  onToggle,
+  icon: Icon,
+  label,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <label className="flex items-center gap-2 pt-3 border-t border-border shrink-0 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        className="h-3.5 w-3.5 rounded border-border accent-primary"
+      />
+      <Icon className="h-3 w-3 text-muted-foreground" />
+      <span className="text-xs text-foreground">{label}</span>
+    </label>
+  );
 }
 
 interface ContactChip {
@@ -38,6 +63,7 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   const [contacts, setContacts] = useState<PageContactRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [notifyOnView, setNotifyOnView] = useState<boolean | null>(null);
+  const [recordingEnabled, setRecordingEnabled] = useState<boolean | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -63,24 +89,34 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
       setChips([]);
       setEmailInput("");
       setNameInput("");
-      // Load the current notification setting
+      // Load the current notification + recording settings
       apiClient
-        .get<{ notifyOnView?: boolean }>(`/api/pages/${pageId}`)
-        .then((p) => setNotifyOnView(!!p.notifyOnView))
-        .catch(() => setNotifyOnView(null));
+        .get<{ notifyOnView?: boolean; recordingEnabled?: boolean }>(`/api/pages/${pageId}`)
+        .then((p) => {
+          setNotifyOnView(!!p.notifyOnView);
+          setRecordingEnabled(!!p.recordingEnabled);
+        })
+        .catch(() => {
+          setNotifyOnView(null);
+          setRecordingEnabled(null);
+        });
     }
   }, [open, fetchContacts, pageId]);
 
-  const handleNotifyToggle = async () => {
-    if (notifyOnView === null) return;
-    const next = !notifyOnView;
-    setNotifyOnView(next); // optimistic
+  // Optimistic per-page boolean setting update with rollback on failure.
+  const updateSetting = async (
+    field: "notifyOnView" | "recordingEnabled",
+    next: boolean,
+    setter: (v: boolean) => void,
+    labels: { on: string; off: string; error: string }
+  ) => {
+    setter(next); // optimistic
     try {
-      await apiClient.put(`/api/pages/${pageId}`, { notifyOnView: next });
-      toast.success(next ? "View notifications on" : "View notifications off");
+      await apiClient.put(`/api/pages/${pageId}`, { [field]: next });
+      toast.success(next ? labels.on : labels.off);
     } catch {
-      setNotifyOnView(!next);
-      toast.error("Failed to update notification setting");
+      setter(!next); // rollback
+      toast.error(labels.error);
     }
   };
 
@@ -307,18 +343,34 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
 
         {/* View notification toggle */}
         {notifyOnView !== null && (
-          <label className="flex items-center gap-2 pt-3 border-t border-border shrink-0 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={notifyOnView}
-              onChange={handleNotifyToggle}
-              className="h-3.5 w-3.5 rounded border-border accent-primary"
-            />
-            <Bell className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs text-foreground">
-              Email me when someone views this page
-            </span>
-          </label>
+          <SettingToggle
+            checked={notifyOnView}
+            icon={Bell}
+            label="Email me when someone views this page"
+            onToggle={() =>
+              updateSetting("notifyOnView", !notifyOnView, setNotifyOnView, {
+                on: "View notifications on",
+                off: "View notifications off",
+                error: "Failed to update notification setting",
+              })
+            }
+          />
+        )}
+
+        {/* Session replay toggle */}
+        {recordingEnabled !== null && (
+          <SettingToggle
+            checked={recordingEnabled}
+            icon={Video}
+            label="Record visitor sessions for replay"
+            onToggle={() =>
+              updateSetting("recordingEnabled", !recordingEnabled, setRecordingEnabled, {
+                on: "Session replay on",
+                off: "Session replay off",
+                error: "Failed to update session replay setting",
+              })
+            }
+          />
         )}
 
         {/* Action buttons — always visible at bottom */}

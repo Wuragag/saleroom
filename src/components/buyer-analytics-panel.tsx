@@ -14,12 +14,15 @@ import {
   Minus,
   ChevronRight,
   Layers,
+  Video,
   type LucideIcon,
 } from "lucide-react";
-import type { BuyerVisitorRow, BuyerAnalyticsSummary, SectionEngagement } from "@/types";
+import type { BuyerVisitorRow, BuyerAnalyticsSummary, SectionEngagement, BuyerSessionSummary } from "@/types";
 import { formatDuration } from "@/lib/format-utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SessionReplayPlayer } from "@/components/session-replay-player";
 
 interface BuyerAnalyticsPanelProps {
   pageId: string;
@@ -123,6 +126,45 @@ function SectionBreakdown({ sections }: { sections: SectionEngagement[] }) {
   );
 }
 
+/** List of a visitor's sessions with a "Watch replay" affordance where a recording exists. */
+function SessionsList({
+  sessions,
+  onWatch,
+}: {
+  sessions: BuyerSessionSummary[];
+  onWatch: (sessionId: string) => void;
+}) {
+  if (!sessions || sessions.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 mt-4 pt-4 border-t border-border">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-0.5">
+        <Video className="h-3.5 w-3.5" />
+        Sessions
+      </div>
+      {sessions.map((s) => (
+        <div key={s.sessionId} className="flex items-center gap-3 text-xs">
+          <span className="w-36 shrink-0 text-muted-foreground">{formatDate(s.startedAt)}</span>
+          <span className="w-16 shrink-0 font-mono text-muted-foreground tabular-nums">
+            {formatDuration(s.durationSeconds)}
+          </span>
+          {s.hasRecording ? (
+            <button
+              onClick={() => onWatch(s.sessionId)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              <Video className="h-3 w-3" />
+              Watch replay
+            </button>
+          ) : (
+            <span className="text-3xs text-muted-foreground/50">No replay</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
@@ -139,6 +181,7 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [replaySessionId, setReplaySessionId] = useState<string | null>(null);
 
   async function load(r: Range) {
     setLoading(true);
@@ -329,6 +372,7 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                   <tr className="bg-muted/20">
                     <td colSpan={8} className="px-6 py-4">
                       <SectionBreakdown sections={v.sections} />
+                      <SessionsList sessions={v.sessionsList} onWatch={setReplaySessionId} />
                     </td>
                   </tr>
                 )}
@@ -339,6 +383,18 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
           </table>
         </div>
       )}
+
+      <Dialog open={!!replaySessionId} onOpenChange={(open) => !open && setReplaySessionId(null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-4 w-4" />
+              Session replay
+            </DialogTitle>
+          </DialogHeader>
+          {replaySessionId && <SessionReplayPlayer sessionId={replaySessionId} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -133,7 +133,12 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
           where: { sessionId: recentSession.id },
           select: { tabId: true, tabName: true, duration: true, viewCount: true },
         });
-        return { session: recentSession, visitor, isNew: false, tabViews };
+        // Existing recording chunk count so a resumed session appends its
+        // replay instead of overwriting the earlier visit's chunks.
+        const recordingChunkCount = await tx.sessionRecording.count({
+          where: { sessionId: recentSession.id },
+        });
+        return { session: recentSession, visitor, isNew: false, tabViews, recordingChunkCount };
       }
 
       // New session
@@ -190,6 +195,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
             resumed: true,
             duration: result.session.duration,
             tabViews: result.tabViews ?? [],
+            recordingChunkCount: result.recordingChunkCount ?? 0,
           }),
     });
   } catch (err: unknown) {

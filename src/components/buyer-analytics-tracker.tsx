@@ -14,9 +14,18 @@
  *  - Send heartbeat PATCH every 30s + on visibilitychange (hidden)
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { createVisibleTimeTracker, type VisibleTimeTracker } from "@/lib/visible-time";
 import { isPricingTabName } from "@/lib/engagement-score";
+
+// rrweb is a meaningful chunk (~60KB) — code-split it out of every published
+// page's bundle. It only loads for the small minority of pages that opt into
+// session replay.
+const SessionRecorder = dynamic(
+  () => import("@/components/session-recorder").then((m) => m.SessionRecorder),
+  { ssr: false }
+);
 
 const SESSION_API = "/api/buyer/session";
 const EVENTS_API  = "/api/buyer/events";
@@ -54,11 +63,18 @@ interface Props {
   initialTabId?: string;
   initialTabName?: string;
   refToken?: string;
+  recordingEnabled?: boolean;
 }
 
-export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, refToken }: Props) {
+export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, refToken, recordingEnabled }: Props) {
   // Refs are stable across renders — no re-renders needed for tracker state
   const sessionIdRef   = useRef<string | null>(null);
+  // Mirrors sessionIdRef as state purely to trigger mounting SessionRecorder
+  // once a session id is available (recording is opt-in, most pages never need this)
+  const [recorderSessionId, setRecorderSessionId] = useState<string | null>(null);
+  // On a resumed session, start recording chunks after the existing ones so
+  // the earlier visit's replay is appended to, not overwritten.
+  const [recorderChunkStart, setRecorderChunkStart] = useState(0);
   // Visible-time only — hidden/background time doesn't count as engagement
   const visibleTimeRef = useRef<VisibleTimeTracker | null>(null);
   // Seconds already accumulated by a resumed session (seeded from the server)
@@ -213,6 +229,10 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
         const data = await res.json();
         if (aborted) return;
         sessionIdRef.current = data.sessionId;
+        if (recordingEnabled) {
+          setRecorderChunkStart(Number(data.recordingChunkCount) || 0);
+          setRecorderSessionId(data.sessionId);
+        }
 
         const h = helpersRef.current;
 
@@ -373,5 +393,8 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
     };
   }, []);
 
+  if (recordingEnabled && recorderSessionId) {
+    return <SessionRecorder sessionId={recorderSessionId} startChunkIndex={recorderChunkStart} />;
+  }
   return null; // purely behavioral, no UI
 }

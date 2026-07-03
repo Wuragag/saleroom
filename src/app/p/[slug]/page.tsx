@@ -291,6 +291,7 @@ export default async function PublishedPage({
         initialTabId={tabs[0]?.id}
         initialTabName={tabs[0]?.name}
         refToken={refToken ?? undefined}
+        recordingEnabled={page.recordingEnabled}
       />
       <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
     </main>

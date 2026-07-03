@@ -312,6 +312,16 @@ Deep, identity-aware engagement on published pages:
 - **Activity timeline** — a reverse-chronological feed of buyer activity for a page
   ([`/api/buyer/timeline/[pageId]`](../src/app/api/buyer/timeline/[pageId]/route.ts)),
   plus a per-buyer analytics panel.
+- **Session replay** — opt-in per page (`Page.recordingEnabled`, toggle in the
+  share modal): records DOM + mouse/scroll activity via
+  [rrweb](https://github.com/rrweb-io/rrweb)
+  ([`session-recorder`](../src/components/session-recorder.tsx), lazy-loaded so
+  non-recording pages never download it), all text inputs masked. Chunks flush
+  every ~20s to `SessionRecording` rows in Postgres (not Blob — keeps the same
+  authenticated-read-only privacy model as the rest of buyer analytics; this
+  project's Blob store is public-only). Capped at 120 chunks (~40 min) per
+  session. Watch a replay from a visitor's session list in the buyer panel
+  ([`session-replay-player`](../src/components/session-replay-player.tsx)).
 
 > Access control: analytics and buyer data follow the page's visibility — team
 > members see TEAM pages; PRIVATE-page intelligence is creator-only.

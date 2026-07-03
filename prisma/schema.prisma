@@ -136,6 +136,7 @@ model Page {
   content       String         @default("{}")
   published     Boolean        @default(false)
   notifyOnView  Boolean        @default(false)
+  recordingEnabled Boolean     @default(false)
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId        String?
@@ -322,10 +323,24 @@ model BuyerSession {
   isReturn        Boolean        @default(false)
   tabViews        BuyerTabView[]
   events          BuyerEvent[]
+  recordings      SessionRecording[]
 
   @@index([visitorId])
   @@index([pageId])
   @@index([lastActiveAt])
+}
+
+model SessionRecording {
+  id         String       @id @default(cuid())
+  sessionId  String
+  session    BuyerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  chunkIndex Int
+  data       String       // JSON-encoded rrweb events for this chunk
+  eventCount Int          @default(0)
+  createdAt  DateTime     @default(now())
+
+  @@unique([sessionId, chunkIndex])
+  @@index([sessionId])
 }
 
 model BuyerTabView {

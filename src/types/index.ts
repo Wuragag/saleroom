@@ -102,6 +102,13 @@ export interface SectionEngagement {
   maxScrollPct: number; // deepest scroll within this section (0 if unknown)
 }
 
+export interface BuyerSessionSummary {
+  sessionId: string;
+  startedAt: string;
+  durationSeconds: number;
+  hasRecording: boolean;
+}
+
 export interface BuyerVisitorRow {
   visitorId: string;
   visitorHash: string; // first 8 chars of hash
@@ -117,6 +124,7 @@ export interface BuyerVisitorRow {
   contactName?: string | null;
   contactEmail?: string | null;
   sections: SectionEngagement[];
+  sessionsList: BuyerSessionSummary[];
 }
 
 export interface PageContactRow {
