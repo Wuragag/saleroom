@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { PLAN_LIMITS, getTeamPlan } from "@/lib/plan-limits";
+import { getRemainingCredits } from "@/lib/ai-credits";
 import { withErrorHandler } from "@/lib/api-error";
 
 export const GET = withErrorHandler(async () => {
@@ -16,7 +17,7 @@ export const GET = withErrorHandler(async () => {
     return NextResponse.json({ error: "No team found" }, { status: 404 });
   }
 
-  const [subscription, pageCount, memberCount, pendingInviteCount] =
+  const [subscription, pageCount, memberCount, pendingInviteCount, credits] =
     await Promise.all([
       prisma.subscription.findUnique({ where: { teamId } }),
       prisma.page.count({ where: { teamId } }),
@@ -24,6 +25,7 @@ export const GET = withErrorHandler(async () => {
       prisma.teamInvite.count({
         where: { teamId, status: "PENDING", expiresAt: { gt: new Date() } },
       }),
+      getRemainingCredits(teamId, session.user.id),
     ]);
 
   const plan = await getTeamPlan(teamId);
@@ -37,6 +39,10 @@ export const GET = withErrorHandler(async () => {
     usage: {
       pages: { current: pageCount, limit: limits.maxPages },
       members: { current: memberCount + pendingInviteCount, limit: limits.maxTeamMembers },
+      aiCredits: {
+        current: credits.limit === -1 ? 0 : credits.limit - credits.remaining,
+        limit: credits.limit,
+      },
     },
     features: {
       passwordProtection: limits.passwordProtection,

@@ -10,6 +10,11 @@ export interface PlanLimits {
   maxSyncedBlocks: number; // -1 = unlimited
   passwordProtection: boolean;
   canInvite: boolean;
+  // Flat monthly pool for AI actions (composer plan/build-tab/edit + document
+  // import) — -1 = unlimited. See src/lib/ai-credits.ts for enforcement and
+  // src/lib/ai-composer.ts / ai-page-generation.ts for the per-action costs.
+  // Starting points to tune — not derived from real Anthropic per-token cost.
+  aiCreditsPerMonth: number;
 }
 
 export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
@@ -20,6 +25,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxSyncedBlocks: 0,
     passwordProtection: false,
     canInvite: false,
+    aiCreditsPerMonth: 20,
   },
   PRO: {
     maxPages: -1,
@@ -28,6 +34,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxSyncedBlocks: 20,
     passwordProtection: true,
     canInvite: true,
+    aiCreditsPerMonth: 300,
   },
   TEAM: {
     maxPages: -1,
@@ -36,6 +43,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxSyncedBlocks: -1,
     passwordProtection: true,
     canInvite: true,
+    aiCreditsPerMonth: 1000,
   },
 };
 

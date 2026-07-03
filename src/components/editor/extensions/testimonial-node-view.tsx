@@ -58,10 +58,17 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
           </Button>
         </div>
       ) : (
-        <div className="group relative my-2">
+        <div className="group relative">
+          {/* Mirrors the published testimonial card (page-renderer.tsx) */}
           <div
-            className="rounded-xl border border-border bg-card/60 p-6"
-            style={{ borderLeft: "4px solid var(--page-accent, #003B22)" }}
+            style={{
+              background: "var(--node-card-bg, #ffffff)",
+              border: "1px solid var(--node-card-border, rgba(0,0,0,0.06))",
+              borderLeft: "4px solid var(--page-accent, #003B22)",
+              borderRadius: "12px",
+              padding: "24px",
+              margin: "12px 0",
+            }}
           >
             {/* Quote mark */}
             <svg
@@ -81,7 +88,10 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
               />
             </svg>
 
-            <p className="text-base leading-relaxed text-foreground/90 mb-4 italic">
+            <p
+              className="text-base mb-4 italic"
+              style={{ color: "var(--node-text, #1e293b)", lineHeight: 1.7 }}
+            >
               &ldquo;{node.attrs.quote}&rdquo;
             </p>
 
@@ -109,12 +119,18 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
               ) : null}
               <div>
                 {node.attrs.author && (
-                  <p className="text-sm font-semibold text-foreground leading-tight">
+                  <p
+                    className="text-sm font-bold leading-tight"
+                    style={{ color: "var(--node-text, #1e293b)" }}
+                  >
                     {node.attrs.author}
                   </p>
                 )}
                 {node.attrs.role && (
-                  <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                  <p
+                    className="text-xs leading-tight mt-0.5"
+                    style={{ color: "var(--node-muted, #64748b)" }}
+                  >
                     {node.attrs.role}
                   </p>
                 )}

@@ -26,7 +26,9 @@ export function CTAButtonNodeView({
       data-type="cta-button"
       className={selected ? "ring-2 ring-primary rounded-lg" : ""}
     >
-      <div className="text-center my-6">
+      {/* Published CTA is left-aligned; margins come from the global
+          div[data-type="cta-button"] rule that also styles the canvas */}
+      <div>
         {editing ? (
           <div className="inline-flex flex-col gap-2 p-4 border rounded-lg bg-muted/30 min-w-[300px]">
             <Input

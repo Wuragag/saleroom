@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import type { MutualActionPlanData, MapItemData } from "@/types";
 
+export type UseMapReturn = ReturnType<typeof useMap>;
+
 export function useMap(pageId: string) {
   const [map, setMap] = useState<MutualActionPlanData | null>(null);
   const [loading, setLoading] = useState(true);

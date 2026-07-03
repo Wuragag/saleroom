@@ -54,7 +54,14 @@ function ContactCard({
   const [c1, c2] = getGradient(contact.name || "A");
 
   return (
-    <div className="relative group bg-card border border-border rounded-2xl p-4 flex flex-col gap-3 transition-shadow hover:shadow-md">
+    <div
+      className="relative group rounded-2xl p-4 flex flex-col gap-3 transition-shadow hover:shadow-md"
+      style={{
+        background: "var(--node-card-bg, #ffffff)",
+        border: "1px solid var(--node-card-border, rgba(0,0,0,0.06))",
+        color: "var(--node-text, #1e293b)",
+      }}
+    >
       {/* Remove button */}
       <button
         type="button"
@@ -102,13 +109,14 @@ function ContactCard({
             value={contact.title}
             onChange={(e) => onChange({ title: e.target.value })}
             placeholder="Job Title"
-            className={`${inputCls} text-xs text-muted-foreground mt-1.5`}
+            className={`${inputCls} text-xs mt-1.5`}
+            style={{ color: "var(--node-muted, #64748b)" }}
           />
         </div>
       </div>
 
       {/* Divider */}
-      <div className="border-t border-border/50" />
+      <div style={{ borderTop: "1px solid var(--node-card-border, rgba(0,0,0,0.06))" }} />
 
       {/* Contact details */}
       <div className="space-y-2">
