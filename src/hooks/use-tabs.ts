@@ -10,7 +10,7 @@ interface UseTabsReturn {
   activeTab: TabData | null;
   activeTabId: string;
   setActiveTabId: (id: string) => void;
-  addTab: () => Promise<void>;
+  addTab: (name?: string) => Promise<TabData | null>;
   renameTab: (tabId: string, name: string) => Promise<void>;
   deleteTab: (tabId: string) => Promise<void>;
   reorderTabs: (tabIds: string[]) => Promise<void>;
@@ -31,22 +31,27 @@ export function useTabs(pageId: string, initialTabs: TabData[]): UseTabsReturn {
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || null;
 
-  const addTab = useCallback(async () => {
-    setTabLimitError(null);
-    try {
-      const tab = await apiClient.post<TabData>(`/api/pages/${pageId}/tabs`, {
-        name: `Tab ${tabs.length + 1}`,
-      });
-      setTabs((prev) => [...prev, tab]);
-      setActiveTabId(tab.id);
-    } catch (err) {
-      if (err instanceof ApiError && err.code === "PLAN_LIMIT") {
-        setTabLimitError(err.message);
-      } else {
-        toast.error(err instanceof ApiError ? err.message : "Failed to add tab");
+  const addTab = useCallback(
+    async (name?: string): Promise<TabData | null> => {
+      setTabLimitError(null);
+      try {
+        const tab = await apiClient.post<TabData>(`/api/pages/${pageId}/tabs`, {
+          name: name?.trim() || `Tab ${tabs.length + 1}`,
+        });
+        setTabs((prev) => [...prev, tab]);
+        setActiveTabId(tab.id);
+        return tab;
+      } catch (err) {
+        if (err instanceof ApiError && err.code === "PLAN_LIMIT") {
+          setTabLimitError(err.message);
+        } else {
+          toast.error(err instanceof ApiError ? err.message : "Failed to add tab");
+        }
+        return null;
       }
-    }
-  }, [pageId, tabs.length]);
+    },
+    [pageId, tabs.length]
+  );
 
   const renameTab = useCallback(async (tabId: string, name: string) => {
     // Optimistic update — capture previous name for rollback

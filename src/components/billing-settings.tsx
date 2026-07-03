@@ -25,6 +25,7 @@ interface BillingData {
   usage: {
     pages: { current: number; limit: number };
     members: { current: number; limit: number };
+    aiCredits: { current: number; limit: number };
   };
   features: {
     passwordProtection: boolean;
@@ -247,6 +248,11 @@ export function BillingSettings() {
             label="Team members"
             current={billing.usage.members.current}
             limit={billing.usage.members.limit}
+          />
+          <UsageMeter
+            label="AI credits"
+            current={billing.usage.aiCredits.current}
+            limit={billing.usage.aiCredits.limit}
           />
         </div>
       </Card>

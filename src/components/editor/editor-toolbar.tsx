@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { Editor } from "@tiptap/react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -273,7 +274,7 @@ const BLOCKS: BlockDef[] = [
 // ColorPicker — uses fixed positioning so it escapes the sticky z-index
 // stacking context and is never clipped by any overflow on parent elements.
 // ---------------------------------------------------------------------------
-function ColorPicker({ editor }: { editor: Editor }) {
+export function ColorPicker({ editor }: { editor: Editor }) {
   const [open, setOpen] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<{
     top: number;
@@ -700,9 +701,10 @@ function BlockInserter({ editor }: { editor: Editor }) {
 // ---------------------------------------------------------------------------
 interface EditorToolbarProps {
   editor: Editor | null;
+  className?: string;
 }
 
-export function EditorToolbar({ editor }: EditorToolbarProps) {
+export function EditorToolbar({ editor, className }: EditorToolbarProps) {
   const [imageUrl, setImageUrl] = useState("");
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
@@ -717,7 +719,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-background border border-border rounded-xl p-1 flex flex-wrap items-center gap-0.5">
+    <div className={cn("sticky top-0 z-10 bg-background border border-border rounded-xl p-1 flex flex-wrap items-center gap-0.5", className)}>
       {/* ── Text style ── */}
       <Button
         variant="ghost"

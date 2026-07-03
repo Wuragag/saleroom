@@ -17,9 +17,9 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     targetSelector: '[data-tour="ai-write"]',
-    title: "AI Page Generator",
+    title: "Create with AI",
     description:
-      "Describe what you need and AI creates a full page for you — complete with sections, copy, and layout.",
+      "Chat with AI to build your page — describe what you need, watch it take shape live, and refine it together.",
     position: "bottom",
   },
   {

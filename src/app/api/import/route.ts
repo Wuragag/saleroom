@@ -9,6 +9,7 @@ import {
   PlanLimitError,
 } from "@/lib/plan-limits";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { AI_CREDIT_COSTS, InsufficientCreditsError, assertHasCredits } from "@/lib/ai-credits";
 import { extractText, isSupportedType } from "@/lib/document-parser";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
 import slugify from "slugify";
@@ -47,6 +48,20 @@ export async function POST(request: Request) {
   }
 
   const teamId = await getUserTeamId(session.user.id);
+
+  // Read-only fast-fail before spending CPU on parsing — the actual charge
+  // happens in the process step, right before the real Claude call.
+  try {
+    await assertHasCredits(teamId, session.user.id, AI_CREDIT_COSTS.import);
+  } catch (err) {
+    if (err instanceof InsufficientCreditsError) {
+      return NextResponse.json(
+        { error: err.message, code: err.code, required: err.required, available: err.available },
+        { status: 403 }
+      );
+    }
+    throw err;
+  }
 
   try {
     const formData = await request.formData();
