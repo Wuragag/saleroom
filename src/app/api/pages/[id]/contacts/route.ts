@@ -6,8 +6,6 @@ import { sendSharePageEmail } from "@/lib/email";
 import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
 import { withErrorHandler } from "@/lib/api-error";
 
-const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-
 /**
  * GET /api/pages/[id]/contacts
  * List contacts for a page with engagement summary.
@@ -108,6 +106,10 @@ export const POST = withErrorHandler(async (
   }
 
   const senderName = access.session?.user?.name ?? "Someone";
+  // Derive origin from the actual incoming request rather than a possibly
+  // unset/misconfigured NEXTAUTH_URL — that fallback previously meant share
+  // links sent to real prospects could contain http://localhost:3000.
+  const appUrl = req.nextUrl.origin;
   const created: Array<{ id: string; email: string; name: string | null; refToken: string; link: string }> = [];
 
   for (const input of contactInputs) {
@@ -129,7 +131,7 @@ export const POST = withErrorHandler(async (
       },
     });
 
-    const link = `${APP_URL}/p/${page.slug}?ref=${contact.refToken}`;
+    const link = `${appUrl}/p/${page.slug}?ref=${contact.refToken}`;
     created.push({
       id: contact.id,
       email: contact.email,

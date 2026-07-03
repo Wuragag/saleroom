@@ -18,8 +18,6 @@ import { withErrorHandler } from "@/lib/api-error";
 import { isBotUserAgent } from "@/lib/bot-detect";
 import { sendViewNotificationEmail } from "@/lib/email";
 
-const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-
 // 30-minute inactivity window (ms)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -168,6 +166,10 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     if (result.isNew && page.notifyOnView && page.user.email) {
       const ownerEmail = page.user.email;
       const isReturn = result.session.isReturn;
+      // Derive origin from the incoming request rather than a possibly
+      // unset/misconfigured NEXTAUTH_URL (that fallback previously meant
+      // notification emails could link to http://localhost:3000).
+      const appUrl = req.nextUrl.origin;
       after(async () => {
         try {
           const { success } = await notifyLimiter.limit(pageId);
@@ -175,7 +177,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
           await sendViewNotificationEmail(
             ownerEmail,
             page.title,
-            `${APP_URL}/analytics`,
+            `${appUrl}/analytics`,
             isReturn
           );
         } catch (err) {

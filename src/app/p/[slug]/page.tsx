@@ -34,17 +34,12 @@ export default async function PublishedPage({
   if (!page) notFound();
 
   // ── Ref token tracking ──
-  // If ?ref= is present, redirect through /api/ref to set the cookie
-  // (Server Components cannot set cookies — only Route Handlers can).
-  const rawRef = resolvedSearchParams.ref ?? null;
-  if (rawRef) {
-    const target = new URL("/api/ref", process.env.NEXTAUTH_URL ?? "http://localhost:3000");
-    target.searchParams.set("token", rawRef);
-    target.searchParams.set("slug", slug);
-    if (resolvedSearchParams.name) target.searchParams.set("name", resolvedSearchParams.name);
-    if (resolvedSearchParams.company) target.searchParams.set("company", resolvedSearchParams.company);
-    redirect(target.toString());
-  }
+  // A `?ref=` request never reaches this component: middleware redirects it
+  // to /api/ref first (see src/middleware.ts), which validates the token,
+  // sets the tracking cookie, and redirects back here without the query
+  // param. That's more reliable than redirecting from inside this ISR-cached
+  // page — a searchParams-conditional redirect() here didn't consistently
+  // take effect once `revalidate` was in play.
 
   // Read existing ref cookie (set by /api/ref on a prior visit)
   const cookieStore = await cookies();
