@@ -10,11 +10,13 @@ interface UseAutoSaveOptions {
   activeTabId: string;
   title: string;
   saveTabContent: (tabId: string, content: string) => Promise<void>;
+  onPageSaved?: (page: { slug?: string; title?: string }) => void;
 }
 
 interface UseAutoSaveReturn {
   saveStatus: "saved" | "saving" | "unsaved";
   forceSave: () => Promise<void>;
+  forceSaveTitle: (titleOverride?: string) => Promise<void>;
 }
 
 export function useAutoSave({
@@ -23,6 +25,7 @@ export function useAutoSave({
   activeTabId,
   title,
   saveTabContent,
+  onPageSaved,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved"
@@ -31,15 +34,41 @@ export function useAutoSave({
   const titleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeTabIdRef = useRef(activeTabId);
   const isFirstTitleRender = useRef(true);
+  const lastSavedTitleRef = useRef(title);
 
   // Keep refs in sync so callbacks always access the latest values
   const editorRef = useRef(editor);
   editorRef.current = editor;
   const saveTabContentRef = useRef(saveTabContent);
   saveTabContentRef.current = saveTabContent;
+  const onPageSavedRef = useRef(onPageSaved);
+  onPageSavedRef.current = onPageSaved;
 
   // Keep tab ID ref in sync
   activeTabIdRef.current = activeTabId;
+
+  // Keep pageId in a ref so callbacks and unmount handlers access the latest value.
+  const pageIdRef = useRef(pageId);
+  pageIdRef.current = pageId;
+
+  // Keep title in a ref for immediate saves and the unmount flush.
+  const titleRef = useRef(title);
+  titleRef.current = title;
+
+  const saveTitle = useCallback(async (value: string) => {
+    const res = await fetch(`/api/pages/${pageIdRef.current}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: value }),
+    });
+    if (!res.ok) throw new Error("Failed to save title");
+
+    lastSavedTitleRef.current = value;
+    const data = (await res.json().catch(() => null)) as
+      | { slug?: string; title?: string }
+      | null;
+    if (data) onPageSavedRef.current?.(data);
+  }, []);
 
   const saveContent = useCallback(async () => {
     const ed = editorRef.current;
@@ -66,8 +95,29 @@ export function useAutoSave({
       clearTimeout(contentTimerRef.current);
       contentTimerRef.current = null;
     }
-    await saveContent();
-  }, [saveContent]);
+    if (titleTimerRef.current) {
+      clearTimeout(titleTimerRef.current);
+      titleTimerRef.current = null;
+    }
+
+    await Promise.all([
+      saveContent(),
+      titleRef.current !== lastSavedTitleRef.current
+        ? saveTitle(titleRef.current)
+        : Promise.resolve(),
+    ]);
+  }, [saveContent, saveTitle]);
+
+  const forceSaveTitle = useCallback(
+    async (titleOverride?: string) => {
+      if (titleTimerRef.current) {
+        clearTimeout(titleTimerRef.current);
+        titleTimerRef.current = null;
+      }
+      await saveTitle(titleOverride ?? titleRef.current);
+    },
+    [saveTitle]
+  );
 
   // Auto-save on editor content changes
   useEffect(() => {
@@ -95,7 +145,6 @@ export function useAutoSave({
   const prevTabIdRef = useRef(activeTabId);
   useEffect(() => {
     if (prevTabIdRef.current === activeTabId) return;
-    const oldTabId = prevTabIdRef.current;
     prevTabIdRef.current = activeTabId;
 
     // If there was a pending debounce timer, we need to save the old tab's
@@ -109,17 +158,9 @@ export function useAutoSave({
       // handleSelectTab ran synchronously before setActiveTabId, so the local
       // tabs state has the correct content. We trigger a server persist for the
       // old tab using the locally stored content via saveTabContent.
-      const ed = editorRef.current;
-      if (ed) {
-        // We cannot rely on editor.getJSON() here because the editor content
-        // may have already switched. Instead, we trust that handleSelectTab
-        // called updateTabContentLocally with the correct content before
-        // calling setActiveTabId. The saveTabContent for the old tab will be
-        // handled by the component if it stored the content. For safety, we
-        // persist the content that was in the editor *before* the switch.
-        // Since we can't access it anymore, we do a no-op here and let the
-        // handleSelectTab persist mechanism handle it. We only clear the timer.
-      }
+      // We cannot rely on editor.getJSON() here because the editor content may
+      // have already switched. handleSelectTab snapshots and persists the old
+      // tab before changing activeTabId, so this effect only clears the timer.
     }
   }, [activeTabId]);
 
@@ -130,14 +171,12 @@ export function useAutoSave({
       return;
     }
 
+    if (title === lastSavedTitleRef.current) return;
+
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
     titleTimerRef.current = setTimeout(async () => {
       try {
-        await fetch(`/api/pages/${pageId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title }),
-        });
+        await saveTitle(title);
       } catch {
         // Silent failure for title save — user can retry via forceSave
       }
@@ -146,15 +185,7 @@ export function useAutoSave({
     return () => {
       if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
     };
-  }, [title, pageId]);
-
-  // Keep pageId in a ref so the unmount handler can access the latest value.
-  const pageIdRef = useRef(pageId);
-  pageIdRef.current = pageId;
-
-  // Keep title in a ref for the unmount flush.
-  const titleRef = useRef(title);
-  titleRef.current = title;
+  }, [title, saveTitle]);
 
   // Save on unmount — uses refs so it always accesses the latest values,
   // avoiding the stale-closure bug from `[]` deps.  Uses `keepalive` so the
@@ -162,7 +193,8 @@ export function useAutoSave({
   useEffect(() => {
     return () => {
       const hasPendingContent = !!contentTimerRef.current;
-      const hasPendingTitle = !!titleTimerRef.current;
+      const hasPendingTitle =
+        !!titleTimerRef.current || titleRef.current !== lastSavedTitleRef.current;
 
       // Clear any pending timers
       if (contentTimerRef.current) {
@@ -204,6 +236,5 @@ export function useAutoSave({
       }
     };
   }, []);
-
-  return { saveStatus, forceSave };
+  return { saveStatus, forceSave, forceSaveTitle };
 }

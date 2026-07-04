@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
@@ -55,7 +55,7 @@ export interface AiComposerContext {
 export interface AiEditorBridge {
   isReady: boolean;
   getContext(): AiComposerContext;
-  setTitle(title: string): void;
+  setTitle(title: string): Promise<void>;
   setStyle(style: Partial<PageStyle>): void;
   renameTab(tabId: string, name: string): Promise<void>;
   createTab(name: string): Promise<TabData | null>;
@@ -89,6 +89,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const passwordProtection = (session?.user as any)?.planLimits?.passwordProtection ?? true;
   const [title, setTitle] = useState(page.title);
+  const [slug, setSlug] = useState(page.slug);
   const [published, setPublished] = useState(page.published);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [isLocked, setIsLocked] = useState(!!(page as any).lockedById);
@@ -194,12 +195,17 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
     content: initialContent,
   });
 
-  const { saveStatus, forceSave } = useAutoSave({
+  const handlePageSaved = useCallback((saved: { slug?: string }) => {
+    if (typeof saved.slug === "string" && saved.slug) setSlug(saved.slug);
+  }, []);
+
+  const { saveStatus, forceSave, forceSaveTitle } = useAutoSave({
     pageId: page.id,
     editor,
     activeTabId,
     title,
     saveTabContent,
+    onPageSaved: handlePageSaved,
   });
 
   // Track the tab ID the editor was initialised with so we can detect
@@ -421,7 +427,10 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         }),
         map: mapState.map,
       }),
-      setTitle: (value: string) => setTitle(value),
+      setTitle: async (value: string) => {
+        setTitle(value);
+        await forceSaveTitle(value);
+      },
       setStyle: (style: Partial<PageStyle>) => {
         if (Object.keys(style).length > 0) handleStyleChange(style);
       },
@@ -439,6 +448,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
             switch (op.op) {
               case "setTitle":
                 setTitle(op.title);
+                await forceSaveTitle(op.title);
                 applied++;
                 break;
               case "setStyle":
@@ -552,7 +562,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
     <div className="sticky top-0 z-50">
       <EditorHeader
         title={title}
-        slug={page.slug}
+        slug={slug}
         pageId={page.id}
         published={published}
         onPublishedChange={setPublished}

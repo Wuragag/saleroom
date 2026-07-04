@@ -23,6 +23,7 @@ import {
   Share2,
   Mail,
   Palette,
+  Sparkles,
 } from "lucide-react";
 import { ShareModal } from "@/components/share-modal";
 import {
@@ -58,7 +59,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { apiClient, ApiError } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client";
 
 const TEMPLATE_CATEGORIES = [
   { value: "post-call", label: "Post-Call" },
@@ -356,6 +357,20 @@ export function EditorHeader({
                     />
                   </PopoverContent>
                 </Popover>
+              )}
+              {!readOnly && (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg gap-1.5"
+                  aria-label="Edit with AI"
+                >
+                  <Link href={`/ai/${pageId}`}>
+                    <Sparkles className="h-3 w-3" />
+                    <span className="hidden sm:inline">AI Edit</span>
+                  </Link>
+                </Button>
               )}
               <Button
                 variant="outline"

@@ -62,6 +62,8 @@ export interface BuildTabRequest {
   phase: "build-tab";
   /** The original user prompt that started the build. */
   userRequest: string;
+  /** Existing tab to persist the generated content into, when available. */
+  tabId?: string;
   /** Echo of the sanitized plan — the server re-sanitizes, never trusts it. */
   plan: ComposerPlan;
   tabSpec: PlanTabSpec;

@@ -202,20 +202,23 @@ API: [`/api/synced-blocks`](../src/app/api/synced-blocks/route.ts). UI:
 
 ## 9. AI Writing & Document Import
 
-Two AI-powered ways to create a page, both using Claude (Haiku) and a two-step,
-asynchronous pipeline (create immediately → background generation → poll status).
+Two AI-powered ways to create a page, both using Claude (Haiku).
 
-- **AI Write** ([`/api/ai-write`](../src/app/api/ai-write/route.ts)) — describe the
-  page you want in plain language; Claude drafts a complete Tiptap page.
+- **AI Write** ([`/ai`](../src/app/ai/[[...pageId]]/page.tsx),
+  [`/api/ai-chat/[pageId]`](../src/app/api/ai-chat/[pageId]/route.ts)) —
+  describe the sales page you want in chat. The workspace creates a draft page,
+  plans the buyer journey, builds tabs one at a time, persists generated tab
+  content server-side for reload durability, and applies the result through the
+  live editor. Existing pages can be edited with the same chat via `/ai/{pageId}`.
 - **Document Import** ([`/api/import`](../src/app/api/import/route.ts)) — upload a
   **PDF, DOCX, or PPTX** (≤10 MB); text is extracted server-side
   ([`src/lib/document-parser.ts`](../src/lib/document-parser.ts)) and Claude
   converts it into a structured page.
-- Both paths are **rate-limited per user** and **plan-limited**, and processing is
-  **idempotent** (a job is atomically claimed so duplicate triggers can't fire
-  duplicate paid generations). Uploads are guarded against decompression bombs.
+- Both paths are **rate-limited per user**, **plan-limited**, and governed by
+  monthly AI credits. Uploads are guarded against decompression bombs.
 
-UI: [`ai-write-modal`](../src/components/ai-write-modal.tsx),
+UI: [`ai-workspace`](../src/components/ai/ai-workspace.tsx),
+[`ai-chat-panel`](../src/components/ai/ai-chat-panel.tsx),
 [`import-document-modal`](../src/components/import-document-modal.tsx).
 
 ---

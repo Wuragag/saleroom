@@ -196,6 +196,22 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
   const runCreateFlow = useCallback(
     async (history: ChatMessage[], userText: string) => {
       setFlow("planning");
+      let createdPageId: string | null = null;
+
+      const cleanupCreatedPage = async () => {
+        if (!createdPageId) return;
+        try {
+          await fetch(`/api/pages/${createdPageId}`, { method: "DELETE" });
+        } catch {
+          // Best effort: the important part is that existing pages are never deleted.
+        }
+        if (pageRef.current?.id === createdPageId) {
+          pageRef.current = null;
+          setPage(null);
+          setHasBuilt(false);
+          window.history.replaceState(null, "", "/ai");
+        }
+      };
 
       // Ensure the page exists so the editor mounts beside the chat
       let currentPage = pageRef.current;
@@ -219,6 +235,7 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
           return;
         }
         currentPage = data as PageData;
+        createdPageId = currentPage.id;
         pageRef.current = currentPage;
         setPage(currentPage);
         // Shallow URL update — router.replace would remount and wipe chat state
@@ -227,9 +244,16 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
       const pageId = currentPage.id;
 
       const bridge = await waitForBridge(bridgeRef);
-      const baseContext = bridge?.isReady
-        ? bridge.getContext()
-        : null;
+      if (!bridge?.isReady) {
+        await cleanupCreatedPage();
+        appendMessage({
+          role: "assistant",
+          content: "The editor didn't finish loading, so I didn't start the AI build. Please try again.",
+          isError: true,
+        });
+        return;
+      }
+      const baseContext = bridge.getContext();
 
       // 1. Plan
       let planRes: PlanResponse;
@@ -245,8 +269,10 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
       } catch (err) {
         if (err instanceof ComposerError && err.code === "INSUFFICIENT_CREDITS") {
           setLimitError(err.message);
+          await cleanupCreatedPage();
           return;
         }
+        await cleanupCreatedPage();
         appendMessage({
           role: "assistant",
           content: err instanceof Error ? err.message : "Planning failed.",
@@ -268,6 +294,7 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
         setLimitError(
           "You've run out of AI credits to build this page. Upgrade for more credits."
         );
+        await cleanupCreatedPage();
         return;
       }
 
@@ -297,8 +324,20 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
       // 3. Structure: title, style, rename the existing first tab
       patchStep(progressId, "structure", { status: "active" });
       const liveBridge = bridgeRef.current;
-      if (!liveBridge) return;
-      liveBridge.setTitle(plan.title);
+      if (!liveBridge?.isReady) {
+        await cleanupCreatedPage();
+        appendMessage({
+          role: "assistant",
+          content: "The editor disconnected before I could build the page. Please try again.",
+          isError: true,
+        });
+        return;
+      }
+      try {
+        await liveBridge.setTitle(plan.title);
+      } catch {
+        // Keep building; content persistence will still surface any auth/save failures.
+      }
       if (plan.style && Object.keys(plan.style).length > 0) {
         liveBridge.setStyle(plan.style);
       }
@@ -350,6 +389,7 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
               phase: "build-tab",
               userRequest: userText,
               plan,
+              tabId,
               tabSpec: spec,
               builtTabs,
               context: { style: bridgeRef.current?.getContext().style ?? {} },
@@ -405,6 +445,16 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
         builtTabs.push({ name: spec.name, summary: built.summary || spec.purpose });
         builtDocs.push(built.content);
         patchStep(progressId, stepId, { status: "done" });
+      }
+
+      if (createdPageId && builtTabs.length === 0) {
+        await cleanupCreatedPage();
+        appendMessage({
+          role: "assistant",
+          content: "I couldn't produce usable page content, so I removed the empty draft. Please try again with a little more detail.",
+          isError: true,
+        });
+        return;
       }
 
       // 5. Mutual Action Plan
@@ -574,7 +624,7 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
         });
       } finally {
         setFlow("idle");
-        setHasBuilt(true);
+        setHasBuilt(!!pageRef.current);
       }
     },
     [appendMessage, runCreateFlow, runEditFlow]
@@ -597,6 +647,7 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
           generating={generating}
           generatingLabel={generatingLabel}
           limitError={limitError}
+          onClearLimitError={() => setLimitError(null)}
           hasPage={!!page}
         />
       </aside>
