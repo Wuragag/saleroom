@@ -147,10 +147,17 @@ ESLint `no-restricted-syntax` rule:
   primitives (`Dialog`, `DropdownMenu`, etc.).
 - To reskin, edit **tokens + primitives only**, not feature files. If you're
   editing many screens for a visual change, you're doing it wrong.
-- Out of scope for the token linter (allowed to use raw hex): `globals.css`,
+- The linter exempts an **enumerated** ALLOW/EXCLUDE list at the top of
+  `scripts/check-design-tokens.mjs` (the source of truth): `globals.css`,
   `tailwind.config.ts`, `page-styles.ts`, `email.ts` (mail clients lack CSS vars),
-  `color-palettes.ts` (user color choices), `ui/` primitives, the marketing site,
-  and the buyer-facing published page.
+  `color-palettes.ts` (user color choices), `ui/` primitives, the marketing dirs,
+  and specific published-page files (`page-renderer.tsx`, `published-form.tsx`,
+  `tabbed-page-view.tsx`, `page-thumbnail.tsx`, `p/`, `preview/`,
+  `editor/extensions/`). Note it is exemption-by-path, not by concept: some
+  buyer-facing files (e.g. `pub-theme.ts`, `page-shell.tsx`) are **not** listed and
+  will trip the linter — `lint:design` currently reports a handful of such
+  pre-existing hex values. When touching those, either add the path to the script's
+  list or convert to a token; don't assume "it's buyer-facing" means it's exempt.
 
 ## Security & platform notes
 
@@ -169,4 +176,5 @@ ESLint `no-restricted-syntax` rule:
 
 Vitest, unit-focused, under `src/lib/__tests__/` (`*.test.ts`). The suite covers
 the pure business-logic functions in `lib/`. New pure utilities/scoring/parsing
-logic should get a colocated test.
+logic should get a test in `src/lib/__tests__/` (vitest picks up any
+`src/**/*.test.ts`).
