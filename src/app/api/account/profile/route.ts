@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { withErrorHandler } from "@/lib/api-error";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -39,6 +41,18 @@ export const PUT = withErrorHandler(async (request: Request) => {
 
   if (email !== undefined) {
     const trimmed = email.trim().toLowerCase();
+    if (!trimmed) {
+      return NextResponse.json(
+        { error: "Email is required" },
+        { status: 400 }
+      );
+    }
+    if (!EMAIL_REGEX.test(trimmed)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address" },
+        { status: 400 }
+      );
+    }
     if (trimmed !== session.user.email) {
       const existing = await prisma.user.findUnique({
         where: { email: trimmed },
