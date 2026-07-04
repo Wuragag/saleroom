@@ -90,3 +90,36 @@ function clampPct(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.round(n)));
 }
+
+/**
+ * Align aggregated section engagement with a page's live tab list.
+ *
+ * Returns one row per page tab in deck order, zero-filled for tabs no buyer
+ * has opened yet — "Not viewed" is a deliberate signal, so unopened tabs must
+ * appear rather than vanish. Engagement rows whose tabId no longer matches a
+ * live tab (the tab was deleted) are appended after the live ones under their
+ * stored name, so recorded time is never silently dropped.
+ */
+export function mergeWithPageTabs(
+  sections: SectionEngagement[],
+  tabs: { id: string; name: string }[]
+): SectionEngagement[] {
+  const byTabId = new Map(sections.map((s) => [s.tabId, s]));
+
+  const liveRows = tabs.map((tab) => {
+    const hit = byTabId.get(tab.id);
+    byTabId.delete(tab.id);
+    return hit
+      ? { ...hit, tabName: tab.name || hit.tabName }
+      : {
+          tabId: tab.id,
+          tabName: tab.name || "Untitled",
+          durationSeconds: 0,
+          viewCount: 0,
+          sharePct: 0,
+          maxScrollPct: 0,
+        };
+  });
+
+  return [...liveRows, ...byTabId.values()];
+}

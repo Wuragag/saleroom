@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { HIGH_INTENT_VISITOR_WHERE } from "@/lib/engagement-score";
 import { getUserTeamId } from "@/lib/team-auth";
 import { AppNav } from "@/components/app-nav";
 import { AnalyticsTable } from "@/components/analytics-table";
@@ -92,10 +93,7 @@ export default async function AnalyticsPage({
     }),
     // Fix: was sequential, now parallel
     prisma.buyerVisitor.count({
-      where: {
-        pageId: { in: pageIds },
-        OR: [{ ctaClicked: true }, { engagementScore: { gte: 70 } }],
-      },
+      where: { pageId: { in: pageIds }, ...HIGH_INTENT_VISITOR_WHERE },
     }),
 
     // Fix #1: Batched per-page stats (4 queries total instead of 4*N)
@@ -117,10 +115,7 @@ export default async function AnalyticsPage({
     }),
     prisma.buyerVisitor.groupBy({
       by: ["pageId"],
-      where: {
-        pageId: { in: pageIds },
-        OR: [{ ctaClicked: true }, { engagementScore: { gte: 70 } }],
-      },
+      where: { pageId: { in: pageIds }, ...HIGH_INTENT_VISITOR_WHERE },
       _count: { id: true },
     }),
   ]);
@@ -196,7 +191,7 @@ export default async function AnalyticsPage({
     { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    accent: MUTED_ACCENT,  description: "Number of times visitors clicked links in your pages" },
     { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", accent: MUTED_ACCENT,  description: "Total form responses submitted by visitors" },
     { label: "Unique Visitors",   value: totalBuyers.toLocaleString(),     icon: "Users",    accent: BUYER_ACCENT,  description: "Distinct visitors (per device) across all pages" },
-    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   accent: INTENT_ACCENT, description: "Buyers who clicked a CTA or have a high engagement score" },
+    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   accent: INTENT_ACCENT, description: "Buyers who clicked a CTA, viewed pricing, or have a high engagement score" },
   ];
 
   return (
@@ -211,7 +206,9 @@ export default async function AnalyticsPage({
 
         <AnalyticsStatCards cards={statCards} />
 
-        <ViewsChart days={days} />
+        <div className="mb-8">
+          <ViewsChart days={days} />
+        </div>
 
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">

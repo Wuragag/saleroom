@@ -16,7 +16,7 @@ export function ViewsChart({ days }: ViewsChartProps) {
   const isEmpty = days.every((d) => d.count === 0);
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 mb-8">
+    <div className="bg-card border border-border rounded-xl p-6 h-full flex flex-col">
       <div className="flex items-center gap-2 mb-5">
         <TrendingUp className="h-4 w-4 text-muted-foreground" />
         <h3 className="text-sm font-semibold text-foreground">
@@ -24,30 +24,37 @@ export function ViewsChart({ days }: ViewsChartProps) {
         </h3>
       </div>
       {isEmpty ? (
-        <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+        <div className="flex flex-1 min-h-32 items-center justify-center text-sm text-muted-foreground">
           No views yet
         </div>
       ) : (
-      <div className="flex items-end gap-2 h-24">
+      <div className="flex items-stretch gap-2 flex-1 min-h-36">
         {days.map(({ label, count }) => (
           <Tooltip key={label}>
             <TooltipTrigger asChild>
               <div
-                className="flex-1 flex flex-col items-center gap-1.5 cursor-default"
+                className="flex-1 flex flex-col cursor-default"
                 aria-label={`${count} ${count === 1 ? "view" : "views"} on ${label}`}
               >
-                {/* Faint baseline track so an empty day reads as distinct from a low day */}
-                <div className="w-full h-20 flex items-end rounded-t-sm bg-muted/50">
-                  {count > 0 && (
-                    <div
-                      className="w-full rounded-t-sm bg-primary/80 transition-all hover:bg-primary"
-                      style={{
-                        height: `${Math.max(8, (count / maxDay) * 80)}px`,
-                      }}
-                    />
+                <div className="flex-1 flex flex-col items-stretch justify-end gap-1">
+                  {count > 0 ? (
+                    <>
+                      <span className="text-2xs font-medium text-muted-foreground text-center tabular-nums">
+                        {count}
+                      </span>
+                      <div
+                        className="w-full rounded-t-sm bg-primary/80 transition-all hover:bg-primary"
+                        style={{
+                          height: `${Math.max(4, (count / maxDay) * 88)}%`,
+                        }}
+                      />
+                    </>
+                  ) : (
+                    // Empty day: a faint baseline stub so the day still registers
+                    <div className="w-full h-1 rounded-full bg-muted" />
                   )}
                 </div>
-                <span className="text-2xs text-muted-foreground">
+                <span className="mt-1.5 text-2xs text-muted-foreground text-center">
                   {label}
                 </span>
               </div>
