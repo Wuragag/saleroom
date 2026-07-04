@@ -261,6 +261,7 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
                   name: field.id,
                   placeholder: field.label,
                   "aria-label": field.label,
+                  required: field.required || undefined,
                   style: `${inputStyle}min-height:88px;resize:vertical;`,
                 },
               ]
@@ -271,6 +272,7 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
                   name: field.id,
                   placeholder: field.label,
                   "aria-label": field.label,
+                  required: field.required || undefined,
                   style: inputStyle,
                 },
               ],

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
@@ -12,9 +12,11 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { AI_CREDIT_COSTS, InsufficientCreditsError, assertHasCredits } from "@/lib/ai-credits";
 import { extractText, isSupportedType } from "@/lib/document-parser";
 import { DEFAULT_TAB_NAME } from "@/lib/constants";
+import { processImportedPage } from "@/lib/import-processor";
 import slugify from "slugify";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+export const maxDuration = 60;
 
 // Each import parses a document server-side and triggers a paid LLM call —
 // cap per user to stop CPU/cost abuse.
@@ -150,7 +152,15 @@ export async function POST(request: Request) {
       }
     );
 
-    // Return immediately — frontend will trigger processing separately
+    after(async () => {
+      try {
+        await processImportedPage(page.id, session.user.id);
+      } catch (err) {
+        console.error("[import background processing]", err);
+      }
+    });
+
+    // Return immediately — server-side processing continues after the response.
     return NextResponse.json(
       { id: page.id, status: "processing" },
       { status: 202 }
