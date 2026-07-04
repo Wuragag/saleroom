@@ -36,6 +36,7 @@ interface AiChatPanelProps {
   /** Contextual label for the working indicator (e.g. "Building your page…"). */
   generatingLabel: string;
   limitError: string | null;
+  onClearLimitError: () => void;
   hasPage: boolean;
 }
 
@@ -60,6 +61,7 @@ export function AiChatPanel({
   generating,
   generatingLabel,
   limitError,
+  onClearLimitError,
   hasPage,
 }: AiChatPanelProps) {
   const [input, setInput] = useState("");
@@ -209,7 +211,18 @@ export function AiChatPanel({
           </div>
         )}
 
-        {limitError && <UpgradePrompt message={limitError} />}
+        {limitError && (
+          <div className="space-y-2">
+            <UpgradePrompt message={limitError} />
+            <button
+              type="button"
+              onClick={onClearLimitError}
+              className="text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Dismiss and try again
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Input */}

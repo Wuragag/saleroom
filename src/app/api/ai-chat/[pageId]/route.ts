@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess, getUserTeamId } from "@/lib/team-auth";
@@ -93,8 +94,9 @@ async function getSyncedBlockWhitelist(teamId: string | null | undefined) {
  *   "edit"      → { reply, ops, suggestions } (scoped changes, never full regen)
  * A missing phase falls back to the legacy single-shot behavior.
  *
- * The server never writes page data — the client applies results through
- * the live editor (single-writer, so autosave can't clobber them).
+ * Tab builds are persisted server-side before returning for reload durability;
+ * the client still applies results through the live editor for immediate UX.
+ * Edit ops are returned to the client and applied through the editor bridge.
  */
 export async function POST(
   request: Request,
@@ -160,7 +162,7 @@ export async function POST(
       case "plan":
         return await handlePlan(body, teamId, userId);
       case "build-tab":
-        return await handleBuildTab(body, teamId, userId);
+        return await handleBuildTab(body, pageId, teamId, userId);
       case "edit":
         return await handleEdit(body, teamId, userId);
     }
@@ -237,7 +239,12 @@ async function handlePlan(body: any, teamId: string | null, userId: string) {
 
 // ── build-tab ───────────────────────────────────────────────────────────────
 
-async function handleBuildTab(body: any, teamId: string | null, userId: string) {
+async function handleBuildTab(
+  body: any,
+  pageId: string,
+  teamId: string | null,
+  userId: string
+) {
   // Never trust the client-echoed plan — re-sanitize with the hard cap.
   const plan = sanitizePlan(body.plan, MAX_PLAN_TABS_FALLBACK);
   const tabName = typeof body.tabSpec?.name === "string" ? body.tabSpec.name.slice(0, 40) : "";
@@ -247,6 +254,17 @@ async function handleBuildTab(body: any, teamId: string | null, userId: string) 
     typeof body.userRequest === "string" ? body.userRequest.slice(0, MAX_MESSAGE_CHARS) : "";
   if (!plan || !tabName || !userRequest) {
     return NextResponse.json({ error: "Invalid build request" }, { status: 400 });
+  }
+
+  const tabId = typeof body.tabId === "string" ? body.tabId.slice(0, 64) : "";
+  const tabForWrite = tabId
+    ? await prisma.tab.findFirst({
+        where: { id: tabId, pageId },
+        select: { id: true, page: { select: { slug: true } } },
+      })
+    : null;
+  if (tabId && !tabForWrite) {
+    return NextResponse.json({ error: "Tab not found for this page" }, { status: 404 });
   }
 
   // Charge after cheap validation but before the (paid) Claude call.
@@ -292,6 +310,17 @@ async function handleBuildTab(body: any, teamId: string | null, userId: string) 
       { error: "AI couldn't write this tab. Please try again." },
       { status: 422 }
     );
+  }
+
+  // Persist the generated tab before returning it. The browser still applies the
+  // content through the live editor for immediate UX, but this makes a long build
+  // resilient to reloads or tab closes after the request has reached the server.
+  if (tabForWrite) {
+    await prisma.tab.update({
+      where: { id: tabForWrite.id },
+      data: { content: JSON.stringify(content) },
+    });
+    if (tabForWrite.page.slug) revalidatePath(`/p/${tabForWrite.page.slug}`);
   }
 
   return NextResponse.json({
