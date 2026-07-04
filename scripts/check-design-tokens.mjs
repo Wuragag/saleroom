@@ -24,8 +24,10 @@ const ALLOW = [
   "src/app/globals.css",
   "tailwind.config.ts",
   "src/lib/page-styles.ts", // per-page brand preset data (buyer-facing branding)
+  "src/lib/pub-theme.ts", // published-page theme CSS vars (buyer-facing, like page-styles.ts)
   "src/lib/email.ts", // email HTML: CSS vars/Tailwind don't work in mail clients
   "src/lib/color-palettes.ts", // the swatch options a user picks page colors from
+  "src/lib/ai-page-generation.ts", // LLM prompt vocab: hex is an example value shown to the model, not UI
   "src/components/ui/", // primitives legitimately map tokens → values
 ];
 
@@ -42,12 +44,14 @@ const EXCLUDE = [
   "src/app/p/",
   "src/app/preview/",
   "src/components/page-renderer.tsx",
+  "src/components/page-shell.tsx",
   "src/components/published-form.tsx",
   "src/components/tabbed-page-view.tsx",
   "src/components/page-thumbnail.tsx",
-  // Editor content blocks render seller-branded output (like the published page);
-  // their colors are brand content driven by --page-accent, not app chrome.
+  // Editor renders the seller-branded page; the editor-only node tokens here
+  // mirror the published renderer's light/dark values, not app chrome.
   "src/components/editor/extensions/",
+  "src/components/editor/tiptap-editor.tsx",
 ];
 
 const HEX = /#[0-9a-fA-F]{6}\b/;

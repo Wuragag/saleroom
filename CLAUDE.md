@@ -147,17 +147,13 @@ ESLint `no-restricted-syntax` rule:
   primitives (`Dialog`, `DropdownMenu`, etc.).
 - To reskin, edit **tokens + primitives only**, not feature files. If you're
   editing many screens for a visual change, you're doing it wrong.
-- The linter exempts an **enumerated** ALLOW/EXCLUDE list at the top of
-  `scripts/check-design-tokens.mjs` (the source of truth): `globals.css`,
-  `tailwind.config.ts`, `page-styles.ts`, `email.ts` (mail clients lack CSS vars),
-  `color-palettes.ts` (user color choices), `ui/` primitives, the marketing dirs,
-  and specific published-page files (`page-renderer.tsx`, `published-form.tsx`,
-  `tabbed-page-view.tsx`, `page-thumbnail.tsx`, `p/`, `preview/`,
-  `editor/extensions/`). Note it is exemption-by-path, not by concept: some
-  buyer-facing files (e.g. `pub-theme.ts`, `page-shell.tsx`) are **not** listed and
-  will trip the linter — `lint:design` currently reports a handful of such
-  pre-existing hex values. When touching those, either add the path to the script's
-  list or convert to a token; don't assume "it's buyer-facing" means it's exempt.
+- Exemptions are **path-based**, not concept-based: the `ALLOW` (source-of-truth /
+  brand-data / prompt files) and `EXCLUDE` (marketing site + buyer-facing
+  published-page files) arrays at the top of `scripts/check-design-tokens.mjs` are
+  the source of truth. If you add a new buyer-facing / published-page file that
+  legitimately needs raw hex (e.g. another `pub-*`/`page-*` renderer), add its path
+  there — don't assume "it's buyer-facing" makes it auto-exempt. Everything else is
+  chrome and must use a token.
 
 ## Security & platform notes
 
