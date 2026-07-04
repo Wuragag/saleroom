@@ -118,6 +118,8 @@ function createInMemoryLimiter(config: RateLimitConfig): RateLimiter {
 
 // ── Factory ──
 
+let warnedNoRedis = false;
+
 export function rateLimit(config: RateLimitConfig): RateLimiter {
   const r = getRedis();
   if (r) {
@@ -134,7 +136,19 @@ export function rateLimit(config: RateLimitConfig): RateLimiter {
     };
   }
 
-  // Fallback for local development
+  // Fallback for local development. In production this is unreliable — each
+  // serverless instance keeps its own counter (multiplying the effective
+  // limit) and the bounded LRU can evict and thus reset counters under many
+  // distinct IPs. Surface it once so a missing Upstash config in prod is
+  // noticed rather than silently degrading rate limiting.
+  if (!warnedNoRedis && process.env.NODE_ENV === "production") {
+    warnedNoRedis = true;
+    console.warn(
+      "[rate-limit] UPSTASH_REDIS_REST_URL/TOKEN not set — falling back to " +
+        "per-instance in-memory rate limiting, which is not reliable across " +
+        "serverless instances. Configure Upstash Redis for production."
+    );
+  }
   return createInMemoryLimiter(config);
 }
 

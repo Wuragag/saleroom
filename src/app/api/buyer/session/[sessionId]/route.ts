@@ -115,12 +115,15 @@ export const PATCH = withErrorHandler(async (
 
       // Keep the visitor's stored engagement score fresh (monotonic max) —
       // it was previously never written after creation, which silently broke
-      // every score-based High Intent count.
+      // every score-based High Intent count. ctaClicked and pricingTabViewed
+      // accumulate (OR) so both the dashboard and the per-page panel can derive
+      // the same intent label from these stored columns.
       await tx.$executeRaw`
         UPDATE "BuyerVisitor"
         SET "engagementScore" = GREATEST("engagementScore", ${visitorScore}),
             "lastSeenAt" = ${now},
-            "ctaClicked" = "ctaClicked" OR ${ctaClicked === true}
+            "ctaClicked" = "ctaClicked" OR ${ctaClicked === true},
+            "pricingTabViewed" = "pricingTabViewed" OR ${pricingTabViewed === true}
         WHERE "id" = ${session.visitorId}
       `;
     });

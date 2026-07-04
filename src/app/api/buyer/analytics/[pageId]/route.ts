@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getIntentLabel, aggregateVisitorScore, isPricingTabName } from "@/lib/engagement-score";
+import { getIntentLabel } from "@/lib/engagement-score";
 import { aggregateSections, type SectionScrollInput } from "@/lib/section-engagement";
 import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler } from "@/lib/api-error";
@@ -62,8 +62,18 @@ export const GET = withErrorHandler(async (
       ...(sinceDate ? { lastSeenAt: { gte: sinceDate } } : {}),
     };
 
-    // Fetch paginated visitors + global summary stats in parallel
-    const [visitors, totalVisitorCount, globalReturning] = await Promise.all([
+    // High Intent = clicked a CTA, viewed pricing, or scored >= 70. Same
+    // definition getIntentLabel() applies per-row and the dashboard uses, now
+    // all reading the same stored BuyerVisitor columns.
+    const highIntentWhere = {
+      ...visitorWhere,
+      OR: [{ ctaClicked: true }, { pricingTabViewed: true }, { engagementScore: { gte: 70 } }],
+    };
+
+    // Fetch paginated visitors + GLOBAL summary stats in parallel. Summary
+    // tiles (High Intent, Avg Score) are computed across every visitor, not
+    // just the current page of rows, so they line up with the global total.
+    const [visitors, totalVisitorCount, globalReturning, globalHighIntent, scoreAgg] = await Promise.all([
       prisma.buyerVisitor.findMany({
         where: visitorWhere,
         take: limit,
@@ -71,7 +81,7 @@ export const GET = withErrorHandler(async (
         include: {
           contact: { select: { name: true, email: true } },
           sessions: {
-            take: 10, // limit nested sessions to most recent 10
+            take: 10, // nested sessions capped for the drill-down detail (see below)
             include: {
               tabViews: true,
               events: {
@@ -102,12 +112,32 @@ export const GET = withErrorHandler(async (
       prisma.buyerVisitor.count({
         where: { ...visitorWhere, totalSessions: { gt: 1 } },
       }),
+      // Global: High Intent visitors
+      prisma.buyerVisitor.count({ where: highIntentWhere }),
+      // Global: average engagement score
+      prisma.buyerVisitor.aggregate({ where: visitorWhere, _avg: { engagementScore: true } }),
     ]);
 
-    // Build response rows — compute visitor engagement score at read time
-    // from session scores (deferred from heartbeat writes to reduce DB ops)
+    // True total session duration per loaded visitor — summed across ALL their
+    // sessions, not just the ≤10 most-recent ones loaded above. Without this the
+    // headline "time on page" would truncate for heavy returning buyers while
+    // their session count showed the full number.
+    const visitorIds = visitors.map((v) => v.id);
+    const durationByVisitor = visitorIds.length
+      ? await prisma.buyerSession.groupBy({
+          by: ["visitorId"],
+          where: { visitorId: { in: visitorIds } },
+          _sum: { duration: true },
+        })
+      : [];
+    const durationMap = new Map(durationByVisitor.map((d) => [d.visitorId, d._sum.duration ?? 0]));
+
+    // Build response rows. Headline numbers (score, intent, pricing, duration)
+    // come from the stored visitor columns / global duration sum so they match
+    // the dashboard exactly; the ≤10 loaded sessions only drive the drill-down
+    // detail (most-viewed tab, per-section engagement, recent session list).
     const rows = visitors.map((v) => {
-      const totalDuration = v.sessions.reduce((sum, s) => sum + s.duration, 0);
+      const totalDuration = durationMap.get(v.id) ?? 0;
       const allTabViews = v.sessions.flatMap((s) => s.tabViews);
 
       // Find most viewed tab by accumulated duration across sessions
@@ -122,9 +152,6 @@ export const GET = withErrorHandler(async (
       }
       const mostViewedTab =
         [...tabDurationMap.values()].sort((a, b) => b.duration - a.duration)[0]?.name ?? "—";
-
-      // Check if pricing tab was ever viewed
-      const pricingTabViewed = allTabViews.some((tv) => isPricingTabName(tv.tabName));
 
       // Per-section engagement: dwell + views + scroll depth per tab
       const sections = aggregateSections(
@@ -148,10 +175,9 @@ export const GET = withErrorHandler(async (
         }))
       );
 
-      // Compute visitor score from session scores at read time
-      const sessionScores = v.sessions.map((s) => s.engagementScore);
-      const computedScore = aggregateVisitorScore(sessionScores);
-      const intent = getIntentLabel(computedScore, v.ctaClicked, pricingTabViewed);
+      // Score/intent from the stored, heartbeat-maintained visitor columns —
+      // the same values the main dashboard reads, so the two never disagree.
+      const intent = getIntentLabel(v.engagementScore, v.ctaClicked, v.pricingTabViewed);
 
       return {
         visitorId: v.id,
@@ -160,10 +186,10 @@ export const GET = withErrorHandler(async (
         firstSeenAt: v.firstSeenAt.toISOString(),
         lastSeenAt: v.lastSeenAt.toISOString(),
         totalDurationSeconds: totalDuration,
-        engagementScore: computedScore,
+        engagementScore: v.engagementScore,
         mostViewedTab,
         ctaClicked: v.ctaClicked,
-        pricingTabViewed,
+        pricingTabViewed: v.pricingTabViewed,
         intent,
         contactName: v.contact?.name ?? null,
         contactEmail: v.contact?.email ?? null,
@@ -177,12 +203,10 @@ export const GET = withErrorHandler(async (
       };
     });
 
-    // Compute summary stats from the current page of visitors
-    // (approximation scoped to loaded rows — good enough for dashboard UX)
-    const highIntentCount = rows.filter((r) => r.intent === "High Intent").length;
-    const avgScore = rows.length > 0
-      ? Math.round(rows.reduce((sum, r) => sum + r.engagementScore, 0) / rows.length)
-      : 0;
+    // Summary stats are global (computed across all visitors above), not just
+    // the loaded page of rows, so they line up with the global total.
+    const highIntentCount = globalHighIntent;
+    const avgScore = Math.round(scoreAgg._avg.engagementScore ?? 0);
 
     return NextResponse.json({
       summary: {

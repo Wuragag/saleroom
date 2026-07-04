@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { sendSharePageEmail } from "@/lib/email";
-import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
+import { getIntentLabel } from "@/lib/engagement-score";
 import { withErrorHandler } from "@/lib/api-error";
 
 /**
@@ -30,11 +30,7 @@ export const GET = withErrorHandler(async (
           totalSessions: true,
           lastSeenAt: true,
           ctaClicked: true,
-          sessions: {
-            select: {
-              tabViews: { select: { tabName: true } },
-            },
-          },
+          pricingTabViewed: true,
         },
       },
     },
@@ -43,9 +39,6 @@ export const GET = withErrorHandler(async (
 
   const rows = contacts.map((c) => {
     const v = c.visitors[0]; // a contact maps to at most one visitor per page
-    const pricingTabViewed = v?.sessions.some((s) =>
-      s.tabViews.some((tv) => isPricingTabName(tv.tabName))
-    ) ?? false;
 
     return {
       id: c.id,
@@ -58,7 +51,7 @@ export const GET = withErrorHandler(async (
       totalSessions: v?.totalSessions ?? 0,
       lastSeenAt: v?.lastSeenAt?.toISOString() ?? null,
       intent: v
-        ? getIntentLabel(v.engagementScore, v.ctaClicked, pricingTabViewed)
+        ? getIntentLabel(v.engagementScore, v.ctaClicked, v.pricingTabViewed)
         : null,
     };
   });

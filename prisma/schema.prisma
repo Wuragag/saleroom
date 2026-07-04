@@ -323,6 +323,7 @@ model BuyerVisitor {
   totalSessions   Int            @default(0)
   engagementScore Int            @default(0)
   ctaClicked      Boolean        @default(false)
+  pricingTabViewed Boolean       @default(false)
 
   @@unique([visitorHash, pageId])
   @@index([pageId])

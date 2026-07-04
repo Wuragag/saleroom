@@ -91,10 +91,12 @@ export default async function AnalyticsPage({
       _count: { id: true },
     }),
     // Fix: was sequential, now parallel
+    // High Intent = clicked a CTA, viewed pricing, or scored >= 70. Same
+    // definition as getIntentLabel() and the per-page buyer panel.
     prisma.buyerVisitor.count({
       where: {
         pageId: { in: pageIds },
-        OR: [{ ctaClicked: true }, { engagementScore: { gte: 70 } }],
+        OR: [{ ctaClicked: true }, { pricingTabViewed: true }, { engagementScore: { gte: 70 } }],
       },
     }),
 
@@ -119,7 +121,7 @@ export default async function AnalyticsPage({
       by: ["pageId"],
       where: {
         pageId: { in: pageIds },
-        OR: [{ ctaClicked: true }, { engagementScore: { gte: 70 } }],
+        OR: [{ ctaClicked: true }, { pricingTabViewed: true }, { engagementScore: { gte: 70 } }],
       },
       _count: { id: true },
     }),
@@ -196,7 +198,7 @@ export default async function AnalyticsPage({
     { label: "Link Clicks",       value: totalLinkClicks.toLocaleString(), icon: "Link2",    accent: MUTED_ACCENT,  description: "Number of times visitors clicked links in your pages" },
     { label: "Form Submissions",  value: submissionCount.toLocaleString(), icon: "FileText", accent: MUTED_ACCENT,  description: "Total form responses submitted by visitors" },
     { label: "Unique Visitors",   value: totalBuyers.toLocaleString(),     icon: "Users",    accent: BUYER_ACCENT,  description: "Distinct visitors (per device) across all pages" },
-    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   accent: INTENT_ACCENT, description: "Buyers who clicked a CTA or have a high engagement score" },
+    { label: "High Intent",       value: highIntentCount.toLocaleString(), icon: "Target",   accent: INTENT_ACCENT, description: "Buyers who clicked a CTA, viewed pricing, or have a high engagement score" },
   ];
 
   return (
