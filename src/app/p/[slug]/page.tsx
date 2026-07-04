@@ -12,6 +12,7 @@ import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
+import { SESSION_REPLAY_ENABLED } from "@/lib/feature-flags";
 
 // ISR: serve cached pages, revalidate in background every 60s.
 // Analytics tracking moved client-side so this page can be cached.
@@ -210,7 +211,7 @@ export default async function PublishedPage({
             initialTabId={tabs[0]?.id}
             initialTabName={tabs[0]?.name}
             refToken={refToken ?? undefined}
-            recordingEnabled={page.recordingEnabled}
+            recordingEnabled={SESSION_REPLAY_ENABLED && page.recordingEnabled}
           />
           <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
         </>

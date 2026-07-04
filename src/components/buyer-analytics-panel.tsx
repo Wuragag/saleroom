@@ -23,6 +23,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SessionReplayPlayer } from "@/components/session-replay-player";
+import { SESSION_REPLAY_ENABLED } from "@/lib/feature-flags";
 
 interface BuyerAnalyticsPanelProps {
   pageId: string;
@@ -372,7 +373,9 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                   <tr className="bg-muted/20">
                     <td colSpan={8} className="px-6 py-4">
                       <SectionBreakdown sections={v.sections} />
-                      <SessionsList sessions={v.sessionsList} onWatch={setReplaySessionId} />
+                      {SESSION_REPLAY_ENABLED && (
+                        <SessionsList sessions={v.sessionsList} onWatch={setReplaySessionId} />
+                      )}
                     </td>
                   </tr>
                 )}
