@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, Clock, Link2, Globe, FileX, ChevronDown, ChevronUp, Users } from "lucide-react";
-import { BuyerAnalyticsPanel } from "@/components/buyer-analytics-panel";
-import { ActivityTimeline } from "@/components/activity-timeline";
+import Link from "next/link";
+import { Eye, Clock, Link2, Globe, FileX, ChevronRight, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/format-utils";
 
@@ -31,8 +29,6 @@ function timeAgo(dateStr: string | Date) {
 }
 
 export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxViews: number }) {
-  const [expanded, setExpanded] = useState<string | null>(null);
-
   if (pages.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
@@ -45,38 +41,27 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
   return (
     <div className="divide-y divide-border">
       {pages.map((p) => {
-        const isExpanded = expanded === p.id;
         return (
-        <div key={p.id}>
-          <div className="relative px-6 py-4 flex items-center gap-4 hover:bg-muted/40 transition-colors">
-            {/* Full-row toggle: an actual button layered behind the content for
-                keyboard + screen-reader support (Enter/Space, aria-expanded). */}
-            <button
-              type="button"
-              onClick={() => setExpanded(isExpanded ? null : p.id)}
-              aria-expanded={isExpanded}
-              aria-controls={`buyer-panel-${p.id}`}
-              aria-label={`${isExpanded ? "Collapse" : "Expand"} buyer analytics for ${p.title}`}
+          <div key={p.id} className="relative px-6 py-4 flex items-center gap-4 hover:bg-muted/40 transition-colors">
+            <Link
+              href={`/analytics/${p.id}`}
+              aria-label={`Open analytics for ${p.title}`}
               className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-none"
-            />
+            >
+              <span className="sr-only">Open analytics for {p.title}</span>
+            </Link>
 
             {/* Title + status */}
-            <div className="relative z-10 flex-1 min-w-0 pointer-events-none [&_a]:pointer-events-auto">
+            <div className="relative z-10 flex-1 min-w-0 pointer-events-none">
               <div className="flex items-center gap-2 min-w-0">
                 {p.published ? (
                   <Globe className="h-3.5 w-3.5 text-success shrink-0" />
                 ) : (
                   <FileX className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 )}
-                <a
-                  href={p.published ? `/p/${p.slug}` : `/editor/${p.id}`}
-                  target={p.published ? "_blank" : undefined}
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-foreground truncate hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <span className="text-sm font-medium text-foreground truncate">
                   {p.title}
-                </a>
+                </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5 pl-5">
                 Updated {timeAgo(p.updatedAt)}
@@ -118,35 +103,8 @@ export function AnalyticsTable({ pages, maxViews }: { pages: PageStat[]; maxView
               </span>
             </div>
 
-            {/* Expand indicator — the full-row button above handles the
-                accessible toggle, so this stays a redundant mouse affordance
-                (kept out of the tab order and hidden from assistive tech). */}
-            <button
-              type="button"
-              tabIndex={-1}
-              aria-hidden="true"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(isExpanded ? null : p.id);
-              }}
-              className="relative z-10 ml-2 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-            >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
+            <ChevronRight className="relative z-10 h-4 w-4 text-muted-foreground shrink-0 pointer-events-none" />
           </div>
-
-          {/* Expandable buyer panel + activity timeline */}
-          {isExpanded && (
-            <div id={`buyer-panel-${p.id}`} className="px-6 pb-6 bg-muted/20 space-y-4">
-              <BuyerAnalyticsPanel pageId={p.id} />
-              <ActivityTimeline pageId={p.id} />
-            </div>
-          )}
-        </div>
         );
       })}
     </div>

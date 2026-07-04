@@ -154,7 +154,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
       <div className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-primary/20 transition-all duration-300 ease-out flex flex-col">
 
         {/* Thumbnail */}
-        <Link href={`/editor/${page.id}`} className="block">
+        <Link href={`/analytics/${page.id}`} className="block" aria-label={`Open analytics for ${page.title}`}>
           <PageThumbnail title={page.title} background={page.background} accentColor={page.accentColor} />
         </Link>
 
@@ -162,7 +162,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
         <div className="flex flex-col gap-2.5 p-4 flex-1">
           {/* Title + menu */}
           <div className="flex items-start justify-between gap-2">
-            <Link href={`/editor/${page.id}`} className="flex-1 min-w-0">
+            <Link href={`/analytics/${page.id}`} className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground text-sm leading-snug truncate hover:text-primary transition-colors">
                 {page.title}
               </h3>

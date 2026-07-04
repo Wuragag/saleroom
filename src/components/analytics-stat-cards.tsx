@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Clock, Link2, FileText, Users, Target, type LucideIcon } from "lucide-react";
+import { Eye, Clock, Link2, FileText, Users, Target, Share2, type LucideIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const iconMap: Record<string, LucideIcon> = {
-  Eye, Clock, Link2, FileText, Users, Target,
+  Eye, Clock, Link2, FileText, Users, Target, Share2,
 };
 
 interface StatCard {

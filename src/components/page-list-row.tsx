@@ -68,33 +68,42 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
   return (
     <>
       <div
-        className={`group flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/40 transition-colors ${selected ? "bg-primary/5" : ""}`}
+        className={`group relative flex cursor-pointer items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/40 transition-colors ${selected ? "bg-primary/5" : ""}`}
       >
+        <Link
+          href={`/analytics/${page.id}`}
+          aria-label={`Open analytics for ${page.title}`}
+          className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        >
+          <span className="sr-only">Open analytics for {page.title}</span>
+        </Link>
+
         {/* Checkbox */}
         <input
           type="checkbox"
           checked={selected}
           onChange={onToggleSelect}
-          className="h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
+          className="relative z-10 h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         />
 
         {/* Accent dot */}
         <div
-          className="h-2 w-2 rounded-full shrink-0 hidden sm:block"
+          className="relative z-10 h-2 w-2 rounded-full shrink-0 hidden sm:block pointer-events-none"
           style={{ backgroundColor: accent }}
         />
 
         {/* Title */}
-        <div className="flex-1 min-w-0">
-          <Link href={`/editor/${page.id}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block">
+        <div className="relative z-10 flex-1 min-w-0 pointer-events-none">
+          <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate block">
             {page.title}
-          </Link>
+          </span>
           <p className="text-2xs text-muted-foreground mt-0.5">{timeAgo(page.updatedAt)}</p>
         </div>
 
         {/* Tags column */}
-        <div className="hidden lg:flex items-center gap-1 shrink-0 w-40">
+        <div className="relative z-10 hidden lg:flex items-center gap-1 shrink-0 w-40 pointer-events-none">
           {tags.length > 0 ? (
             <>
               {tags.slice(0, 3).map((t) => (
@@ -110,7 +119,7 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
         </div>
 
         {/* Analytics */}
-        <div className="hidden md:flex items-center gap-4 text-xs text-muted-foreground shrink-0">
+        <div className="relative z-10 hidden md:flex items-center gap-4 text-xs text-muted-foreground shrink-0 pointer-events-none">
           <span className="flex items-center gap-1 w-14 justify-end">
             <Eye className="h-3 w-3" />
             <span className="font-medium text-foreground">{analytics?.views ?? 0}</span>
@@ -132,23 +141,27 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
         {/* Status badge */}
         {page.published ? (
           <span
-            className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex"
+            className="relative z-10 text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex pointer-events-none"
             style={{ backgroundColor: `${accent}18`, color: accent }}
           >
             Published
           </span>
         ) : (
-          <Badge variant="neutral" className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex">Draft</Badge>
+          <Badge variant="neutral" className="relative z-10 text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex pointer-events-none">Draft</Badge>
         )}
 
         {/* User avatar */}
-        <span title={page.user.name} className="shrink-0">
+        <span title={page.user.name} className="relative z-10 shrink-0 pointer-events-none">
           <Avatar name={page.user.name} size="sm" className="h-6 w-6 text-3xs" />
         </span>
 
 
         {/* Actions */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div
+          className="relative z-10 flex items-center gap-1 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           <Link href={`/editor/${page.id}`}>
             <Button variant="ghost" size="sm" aria-label="Edit" className="h-8 w-8 p-0 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity" title="Edit">
               <Pencil className="h-3.5 w-3.5" />
