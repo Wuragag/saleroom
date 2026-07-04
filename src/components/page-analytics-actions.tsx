@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import { Check, Copy, ExternalLink, Pencil, Share2 } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, Pencil, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareModal } from "@/components/share-modal";
 
@@ -23,38 +22,8 @@ export function PageAnalyticsActions({
   canShare,
 }: PageAnalyticsActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    };
-  }, []);
 
   const viewPath = published ? `/p/${slug}` : `/preview/${pageId}`;
-
-  const copyLink = async () => {
-    if (!published) {
-      toast.info("Publish this page before copying a public link");
-      return;
-    }
-    if (!canShare) {
-      toast.info("You do not have permission to share this page");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/p/${slug}`);
-      setCopied(true);
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
-
-      fetch(`/api/pages/${pageId}/share`, { method: "POST" });
-    } catch {
-      toast.error("Failed to copy link");
-    }
-  };
 
   return (
     <>
@@ -70,35 +39,6 @@ export function PageAnalyticsActions({
           <ExternalLink className="h-3.5 w-3.5" />
           {published ? "View" : "Preview"}
         </Link>
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className={`rounded-lg gap-1.5 ${
-          copied ? "bg-success-subtle border-success/30 text-success-subtle-foreground" : ""
-        }`}
-        onClick={copyLink}
-        disabled={!published || !canShare}
-        title={
-          !published
-            ? "Publish this page to copy a public link"
-            : canShare
-            ? "Copy public link"
-            : "You do not have permission to share this page"
-        }
-      >
-        {copied ? (
-          <>
-            <Check className="h-3.5 w-3.5" />
-            Copied
-          </>
-        ) : (
-          <>
-            <Copy className="h-3.5 w-3.5" />
-            Copy
-          </>
-        )}
       </Button>
 
       <Button

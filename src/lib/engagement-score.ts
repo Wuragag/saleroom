@@ -74,3 +74,26 @@ export function getIntentLabel(score: number, ctaClicked: boolean, pricingTabVie
   if (score >= 30) return "Warm";
   return "Cold";
 }
+
+/**
+ * Prisma `where` fragment selecting high-intent BuyerVisitor rows — the
+ * DB-side mirror of getIntentLabel (CTA click, pricing-tab view, or 70+
+ * score). The "pric" substring must match isPricingTabName. Every surface
+ * that counts high-intent visitors should spread this in so the numbers
+ * agree across the analytics overview, page detail, and buyer panel.
+ */
+export const HIGH_INTENT_VISITOR_WHERE = {
+  OR: [
+    { ctaClicked: true },
+    { engagementScore: { gte: 70 } },
+    {
+      sessions: {
+        some: {
+          tabViews: {
+            some: { tabName: { contains: "pric", mode: "insensitive" as const } },
+          },
+        },
+      },
+    },
+  ],
+};

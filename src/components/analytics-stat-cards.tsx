@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Clock, Link2, FileText, Users, Target, Share2, type LucideIcon } from "lucide-react";
+import { Activity, Eye, Clock, Link2, FileText, Users, Target, Share2, type LucideIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const iconMap: Record<string, LucideIcon> = {
-  Eye, Clock, Link2, FileText, Users, Target, Share2,
+  Activity, Eye, Clock, Link2, FileText, Users, Target, Share2,
 };
 
 interface StatCard {
@@ -21,14 +21,22 @@ interface StatCard {
 }
 
 export function AnalyticsStatCards({ cards }: { cards: StatCard[] }) {
+  // Static class lookup — Tailwind can't resolve interpolated class names.
+  const lgCols =
+    cards.length === 4 ? "lg:grid-cols-4" :
+    cards.length === 5 ? "lg:grid-cols-5" :
+    "lg:grid-cols-6";
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+    <div className={`grid grid-cols-2 sm:grid-cols-3 ${lgCols} gap-4 mb-8`}>
       {cards.map(({ label, value, icon, accent, description }) => {
         const Icon = iconMap[icon] ?? Eye;
         return (
         <Tooltip key={label}>
           <TooltipTrigger asChild>
-            <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 cursor-default">
+            <div
+              tabIndex={0}
+              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }}

@@ -3,8 +3,6 @@
 import { Fragment, useState, useEffect } from "react";
 import {
   Users,
-  TrendingUp,
-  Target,
   Clock,
   RefreshCw,
   Flame,
@@ -17,7 +15,7 @@ import {
   Video,
   type LucideIcon,
 } from "lucide-react";
-import type { BuyerVisitorRow, BuyerAnalyticsSummary, SectionEngagement, BuyerSessionSummary } from "@/types";
+import type { BuyerVisitorRow, SectionEngagement, BuyerSessionSummary } from "@/types";
 import { formatDuration } from "@/lib/format-utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -50,13 +48,14 @@ function IntentBadge({ intent }: { intent: BuyerVisitorRow["intent"] }) {
 
 function ScoreBar({ score }: { score: number }) {
   // Tier color comes from a token var (not a hex); the bar width/fill is
-  // data-driven so the color stays an inline style.
+  // data-driven so the color stays an inline style. The tier is conveyed by
+  // color + the Intent column — no separate text label needed.
   const tier =
-    score >= 70 ? { color: "hsl(var(--success))", label: "High" } :
-    score >= 40 ? { color: "hsl(var(--warning))", label: "Medium" } :
-    { color: "hsl(var(--muted-foreground))", label: "Low" };
+    score >= 70 ? { color: "hsl(var(--success))", label: "high" } :
+    score >= 40 ? { color: "hsl(var(--warning))", label: "medium" } :
+    { color: "hsl(var(--muted-foreground))", label: "low" };
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" title={`Engagement score ${score} of 100 (${tier.label})`}>
       <div className="flex-1 bg-muted rounded-full overflow-hidden h-1.5" style={{ maxWidth: "72px" }}>
         <div
           className="h-full rounded-full transition-all"
@@ -66,7 +65,6 @@ function ScoreBar({ score }: { score: number }) {
       <span className="text-xs font-semibold tabular-nums" style={{ color: tier.color }}>
         {score}
       </span>
-      <span className="text-3xs font-medium text-muted-foreground">{tier.label}</span>
     </div>
   );
 }
@@ -176,7 +174,6 @@ function formatDate(iso: string): string {
 
 export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
   const [range, setRange] = useState<Range>("30d");
-  const [summary, setSummary] = useState<BuyerAnalyticsSummary | null>(null);
   const [visitors, setVisitors] = useState<BuyerVisitorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -190,7 +187,6 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
       const res = await fetch(`/api/buyer/analytics/${pageId}?range=${r}`);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setSummary(data.summary);
       setVisitors(data.visitors);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -238,26 +234,6 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
           </button>
         </div>
       </div>
-
-      {/* Summary stats */}
-      {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border border-b border-border">
-          {[
-            { label: "Unique visitors", value: summary.totalVisitors, icon: Users },
-            { label: "Return visitors", value: summary.uniqueReturning, icon: RefreshCw },
-            { label: "High intent",     value: summary.highIntentCount, icon: Target },
-            { label: "Avg. score",      value: summary.avgScore,        icon: TrendingUp },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="px-5 py-4 flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Icon className="h-3.5 w-3.5" />
-                <span className="text-xs">{label}</span>
-              </div>
-              <span className="text-2xl font-bold tabular-nums text-foreground">{value}</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Table */}
       {loading ? (
