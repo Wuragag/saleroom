@@ -1,0 +1,72 @@
+name: CI
+
+# Runs the checks we already have (typecheck, lint, design tokens, tests, build)
+# on every PR and every push to a long-lived branch. Jobs run in parallel so a
+# red result comes back fast. Prisma client must be generated before typecheck,
+# tests, or build — see CLAUDE.md ("cannot find module '@/generated/prisma'").
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same ref so we don't queue stale work.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Build/typecheck must never reach a real database. A syntactically valid
+  # placeholder keeps Prisma happy without connecting.
+  DATABASE_URL: "postgresql://user:pass@localhost:5432/db?connection_limit=5"
+  DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
+  # NextAuth and other libs read these at import time in some paths.
+  NEXTAUTH_SECRET: "ci-placeholder-secret-not-used-for-anything-real"
+  AUTH_SECRET: "ci-placeholder-secret-not-used-for-anything-real"
+  NEXTAUTH_URL: "http://localhost:3000"
+
+jobs:
+  quality:
+    name: ${{ matrix.task.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        task:
+          - { name: Typecheck, run: "npx tsc --noEmit" }
+          - { name: Lint, run: "npm run lint" }
+          - { name: Design tokens, run: "npm run lint:design" }
+          - { name: Tests, run: "npm test" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: ${{ matrix.task.name }}
+        run: ${{ matrix.task.run }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      # `npm run build` runs `prisma migrate deploy` first, which needs a live
+      # DB we don't have in CI. Build Next directly against the generated client
+      # instead — migrations are validated separately at deploy time.
+      - name: Build
+        run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

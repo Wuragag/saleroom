@@ -1,0 +1,3 @@
+# Fast, staged-only checks so committing stays quick.
+# lint-staged runs the design-token linter + ESLint on just the changed files.
+npx lint-staged
