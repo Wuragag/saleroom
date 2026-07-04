@@ -1,0 +1,5 @@
+# Heavier checks before code leaves your machine — mirrors CI so a red pipeline
+# is caught locally first. Prisma client must exist for tsc/tests (see CLAUDE.md).
+npx prisma generate
+npx tsc --noEmit
+npm test
