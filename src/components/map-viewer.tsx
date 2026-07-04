@@ -223,6 +223,15 @@ function MapViewerItem({
 }) {
   const isOverdue =
     item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
+  // The public toggle endpoint only accepts buyer-owned items, so seller items
+  // get a read-only indicator instead of a button whose change would be
+  // silently reverted.
+  const canToggle = item.ownerType === "buyer";
+
+  const checkboxStyle = {
+    borderColor: item.completed ? accentColor : isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+    background: item.completed ? accentColor : "transparent",
+  };
 
   return (
     <div
@@ -232,17 +241,30 @@ function MapViewerItem({
       }}
     >
       {/* Checkbox */}
-      <button
-        onClick={() => onToggle(!item.completed)}
-        className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center"
-        style={{
-          borderColor: item.completed ? accentColor : isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
-          background: item.completed ? accentColor : "transparent",
-        }}
-        aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
-      >
-        {item.completed && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-      </button>
+      {canToggle ? (
+        <button
+          onClick={() => onToggle(!item.completed)}
+          className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center"
+          style={checkboxStyle}
+          aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
+        >
+          {item.completed && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+        </button>
+      ) : (
+        <span
+          className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 flex items-center justify-center cursor-default opacity-80"
+          style={checkboxStyle}
+          title="This step is checked off by the seller"
+          role="img"
+          aria-label={
+            item.completed
+              ? "Completed (seller step)"
+              : "Not completed (seller step)"
+          }
+        >
+          {item.completed && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+        </span>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">

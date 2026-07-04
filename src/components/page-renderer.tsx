@@ -696,8 +696,6 @@ function createMetricsNode(isDark: boolean, accentColor: string) {
       const valueColor = accentColor;
       const labelColor = isDark ? "#94a3b8" : "#64748b";
 
-      const cols = metrics.length || 3;
-
       const cells = metrics.map(
         (m: { value: string; label: string }) => [
           "div",
@@ -713,7 +711,9 @@ function createMetricsNode(isDark: boolean, accentColor: string) {
           { "data-type": "metrics" },
           {
             "data-metrics": JSON.stringify(metrics),
-            style: `display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;padding:12px 0;`,
+            // auto-fit + minmax so the row wraps on narrow (mobile) viewports —
+            // inline styles are the only styling channel here, so no media queries
+            style: `display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:12px 0;`,
           }
         ),
         ...cells,
