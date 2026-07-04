@@ -162,7 +162,7 @@ export default async function AnalyticsPage({
   const totalBuyers = buyerAggregate._count.id;
 
   const sorted = [...perPageStats].sort((a, b) => b.views - a.views);
-  const maxViews = sorted[0]?.views ?? 1;
+  const maxViews = Math.max(sorted[0]?.views ?? 0, 1);
 
   // ── Daily views chart (from raw SQL results) ────────────────────────────
   const dailyMap = new Map<string, number>();
@@ -205,7 +205,7 @@ export default async function AnalyticsPage({
       <PageContainer size="md">
         <PageHeader
           title="Analytics"
-          description="Performance overview — click any page row to see buyer-level insights"
+          description="Performance overview — click any page row to open detailed analytics"
           className="mb-6"
         />
 
@@ -216,7 +216,7 @@ export default async function AnalyticsPage({
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-foreground">Pages</h3>
-            <p className="text-xs text-muted-foreground">Click a row to expand buyer analytics</p>
+            <p className="text-xs text-muted-foreground">Click a row for page-level analytics</p>
           </div>
           <AnalyticsTable pages={sorted} maxViews={maxViews} />
 

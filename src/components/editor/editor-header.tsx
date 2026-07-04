@@ -155,11 +155,7 @@ export function EditorHeader({
     setCopied(true);
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
-    fetch("/api/analytics/event", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pageId, type: "share" }),
-    });
+    fetch(`/api/pages/${pageId}/share`, { method: "POST" });
   };
 
   const handlePreview = async () => {
