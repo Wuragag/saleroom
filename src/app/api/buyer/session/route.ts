@@ -38,13 +38,6 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ skipped: true });
     }
 
-    // Rate limit check
-    const ip = getClientIp(req);
-    const { success } = await limiter.limit(ip);
-    if (!success) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
-
     const body = await req.json();
     const { visitorId, pageId, refToken } = body as {
       visitorId?: string;
@@ -54,6 +47,16 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
     if (!visitorId || !pageId) {
       return NextResponse.json({ error: "Missing visitorId or pageId" }, { status: 400 });
+    }
+
+    // Rate limit per (IP, visitor) — not IP alone. A whole buying committee at
+    // one company shares a corporate NAT egress IP; keying on IP alone would
+    // start 429-ing (and thus silently untracking) legitimate buyers 21+ within
+    // a minute — exactly the multi-stakeholder scenario these pages target.
+    const ip = getClientIp(req);
+    const { success } = await limiter.limit(`${ip}:${visitorId}`);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     // Only published pages accumulate analytics

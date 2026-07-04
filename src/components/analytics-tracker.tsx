@@ -9,9 +9,14 @@ interface AnalyticsTrackerProps {
 
 export function AnalyticsTracker({ pageId }: AnalyticsTrackerProps) {
   const [viewId, setViewId] = useState<string | null>(null);
+  // Persists across StrictMode's setup→cleanup→setup on the same instance, so
+  // the view POST fires exactly once per mount instead of creating two rows.
+  const registered = useRef(false);
 
   // Create the pageView client-side on mount (moved from server component to enable ISR caching)
   useEffect(() => {
+    if (registered.current) return;
+    registered.current = true;
     fetch("/api/analytics/view", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -13,7 +13,9 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-// Rate limit: 30 event batches per minute per IP
+// Rate limit: 30 event batches per minute per session (not per IP — multiple
+// buyers at one company share a corporate NAT egress IP, and an IP-keyed limit
+// would drop their events; see buyer/session route for the same reasoning).
 const limiter = rateLimit({ limit: 30, window: "60s" });
 
 const ALLOWED_TYPES = new Set([
@@ -33,13 +35,6 @@ const MAX_EVENTS_PER_BATCH = 50;
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
   try {
-    // Rate limit check
-    const ip = getClientIp(req);
-    const { success } = await limiter.limit(ip);
-    if (!success) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
-
     const body = await req.json();
     const { sessionId, events } = body as {
       sessionId?: string;
@@ -48,6 +43,14 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
     if (!sessionId || !Array.isArray(events) || events.length === 0) {
       return NextResponse.json({ error: "Missing sessionId or events" }, { status: 400 });
+    }
+
+    // Rate limit per (IP, session) so buyers sharing a corporate NAT don't
+    // exhaust each other's budget and lose events.
+    const ip = getClientIp(req);
+    const { success } = await limiter.limit(`${ip}:${sessionId}`);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     if (events.length > MAX_EVENTS_PER_BATCH) {

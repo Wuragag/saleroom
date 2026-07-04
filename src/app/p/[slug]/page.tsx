@@ -135,11 +135,11 @@ export default async function PublishedPage({
             }}
           >
             <div
-              className="mx-auto px-6 h-11 flex items-center justify-end"
+              className="mx-auto px-6 h-11 flex items-center justify-end min-w-0"
               style={{ maxWidth }}
             >
               <span
-                className="text-xs font-semibold px-3 py-1 rounded-full"
+                className="text-xs font-semibold px-3 py-1 rounded-full truncate max-w-full"
                 style={{
                   fontFamily: "var(--font-syne, var(--font-montserrat), sans-serif)",
                   background: `${accentColor}1a`,

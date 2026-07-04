@@ -172,13 +172,21 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
       const batch = pendingEvents.current.splice(0);
       if (batch.length === 0) return;
       try {
-        await fetch(EVENTS_API, {
+        const res = await fetch(EVENTS_API, {
           method:    "POST",
           keepalive: true,
           headers:   { "Content-Type": "application/json" },
           body:      JSON.stringify({ sessionId: sessionIdRef.current, events: batch }),
         });
-      } catch {/* non-critical */}
+        // A transient failure (429 from a shared NAT, network blip) shouldn't
+        // permanently drop the batch — requeue so the next flush retries. Cap
+        // the queue so a persistently-failing endpoint can't grow it unbounded.
+        if (!res.ok) throw new Error(`events ${res.status}`);
+      } catch {
+        if (pendingEvents.current.length < 200) {
+          pendingEvents.current.unshift(...batch);
+        }
+      }
     },
 
     async sendHeartbeat() {

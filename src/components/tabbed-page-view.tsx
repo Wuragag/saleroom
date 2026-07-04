@@ -108,17 +108,20 @@ export function TabbedPageView({
   /* ── Left placement ── */
   if (tabPlacement === "left") {
     return (
-      <div className="flex gap-10">
-        {/* Sticky left sidebar */}
-        <nav className="flex-shrink-0 w-44 pt-0.5">
-          <div className="pub-tab-bar sticky top-10 flex flex-col gap-0.5">
+      // Stack on phones: a fixed w-44 sidebar next to content leaves only ~110px
+      // for the content column on a 375px screen. Below `sm` the nav becomes a
+      // full-width horizontal scroller above the content.
+      <div className="flex flex-col sm:flex-row gap-5 sm:gap-10">
+        {/* Left sidebar (horizontal scroll bar on mobile, sticky column on desktop) */}
+        <nav className="flex-shrink-0 w-full sm:w-44 pt-0.5">
+          <div className="pub-tab-bar flex flex-row sm:flex-col gap-1 sm:gap-0.5 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 sm:sticky sm:top-10">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab?.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all flex-shrink-0 whitespace-nowrap sm:w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{
                     fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
                     color: isActive ? accentColor : "var(--pub-body-color)",
@@ -132,8 +135,8 @@ export function TabbedPageView({
 
             {hasLinks && (
               <div
-                className="mt-4 pt-4 flex flex-col gap-0.5"
-                style={{ borderTop: "1px solid var(--pub-divider)" }}
+                className="flex flex-row sm:flex-col gap-1 sm:gap-0.5 flex-shrink-0 pl-3 sm:pl-0 sm:mt-4 sm:pt-4 border-l sm:border-l-0 sm:border-t"
+                style={{ borderColor: "var(--pub-divider)" }}
               >
                 {links.map((link) => (
                   <a
@@ -141,7 +144,7 @@ export function TabbedPageView({
                     href={sanitizeUrl(link.url)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors flex-shrink-0 whitespace-nowrap"
                     style={{
                       color: accentColor,
                       fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",

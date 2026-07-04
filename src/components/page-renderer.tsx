@@ -833,9 +833,18 @@ export function PageRenderer({
     extensions
   );
 
+  // Wrap tables in a horizontal-scroll container so wide tables (e.g. multi-
+  // column pricing/comparison tables) scroll on narrow screens instead of
+  // overflowing the page. A table can't shrink below its min-content width, so
+  // pairing this wrapper with the table's `width:100%` yields fit-or-scroll.
+  // tiptap tables are never nested, so a flat string wrap is safe here.
+  const wrappedHtml = rawHtml
+    .replace(/<table/g, '<div class="pub-table-wrap"><table')
+    .replace(/<\/table>/g, "</table></div>");
+
   // Sanitise the generated HTML to strip any injected scripts, event handlers,
   // or dangerous URI schemes that may have been stored in content JSON.
-  const html = DOMPurify.sanitize(rawHtml, {
+  const html = DOMPurify.sanitize(wrappedHtml, {
     ADD_TAGS: ["iframe"],
     ADD_ATTR: [
       "allow",

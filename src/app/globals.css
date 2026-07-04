@@ -572,10 +572,19 @@ div[data-type="form-block"] button[type="submit"]:disabled {
 .pub-content img:hover { transform: scale(1.015); }
 
 /* ── Tables ── */
+/* Wide tables (multi-column pricing/comparison) scroll horizontally instead of
+   overflowing the page. A table can't shrink below its min-content width, so a
+   width:100% table inside an overflow-x:auto wrapper fits-or-scrolls cleanly. */
+.pub-content .pub-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  margin: 2rem 0;
+}
 .pub-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 2rem 0;
+  margin: 0;
   font-size: 0.9375rem;
   border-radius: 12px;
   overflow: hidden;
@@ -708,6 +717,12 @@ div[data-type="cta-button"] a:focus-visible {
     display: block !important;
     text-align: center !important;
     width: 100% !important;
+  }
+  /* Metrics grids are emitted with an inline repeat(N,1fr); collapse to 2
+     columns on phones so 4–5 metrics don't crush to ~70px each and overflow.
+     !important is required to beat the inline grid-template-columns. */
+  .pub-content div[data-type="metrics"] {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 

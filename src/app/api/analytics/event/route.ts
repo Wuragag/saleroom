@@ -36,8 +36,10 @@ export const POST = withErrorHandler(async (req: Request) => {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
   }
 
-  // Restrict allowed event types
-  const allowedTypes = ["link_click", "form_submission", "cta_click"];
+  // Restrict allowed event types. "share" is fired client-side when a page's
+  // link is copied to the clipboard (see editor-header); without it here that
+  // share signal was silently 400'd and never reached the dashboard.
+  const allowedTypes = ["link_click", "form_submission", "cta_click", "share"];
   if (!allowedTypes.includes(type)) {
     return NextResponse.json({ error: "Invalid event type" }, { status: 400 });
   }

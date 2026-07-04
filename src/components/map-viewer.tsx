@@ -231,10 +231,11 @@ function MapViewerItem({
         borderBottom: isLast ? "none" : "1px solid var(--pub-divider)",
       }}
     >
-      {/* Checkbox */}
+      {/* Checkbox — the visible box stays 20px but an invisible ::before pad
+          expands the tap target to ~44px so it's comfortably tappable on touch. */}
       <button
         onClick={() => onToggle(!item.completed)}
-        className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center"
+        className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center before:absolute before:-inset-3 before:content-['']"
         style={{
           borderColor: item.completed ? accentColor : isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
           background: item.completed ? accentColor : "transparent",
