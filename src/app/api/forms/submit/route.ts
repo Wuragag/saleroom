@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
+import {
+  findFormBlockSchema,
+  missingRequiredFields,
+} from "@/lib/form-submission-validation";
 
 const limiter = rateLimit({ limit: 5, window: "60s" });
 
@@ -19,7 +23,15 @@ export const POST = withErrorHandler(async (req: Request) => {
   const body = await req.json();
   const { pageId, formId, data } = body;
 
-  if (!pageId || !formId || !data) {
+  if (
+    typeof pageId !== "string" ||
+    !pageId ||
+    typeof formId !== "string" ||
+    !formId ||
+    typeof data !== "object" ||
+    data === null ||
+    Array.isArray(data)
+  ) {
     return NextResponse.json(
       { error: "pageId, formId, and data are required" },
       { status: 400 }
@@ -29,10 +41,31 @@ export const POST = withErrorHandler(async (req: Request) => {
   // Validate that the page actually exists
   const page = await prisma.page.findUnique({
     where: { id: pageId },
-    select: { id: true },
+    select: {
+      id: true,
+      content: true,
+      tabs: { select: { content: true } },
+    },
   });
   if (!page) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  }
+
+  const formSchema = findFormBlockSchema(
+    [page.content, ...page.tabs.map((tab) => tab.content)],
+    formId
+  );
+  if (formSchema) {
+    const missingFields = missingRequiredFields(formSchema.fields, data);
+    if (missingFields.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Missing required fields",
+          fields: missingFields,
+        },
+        { status: 400 }
+      );
+    }
   }
 
   // Cap data size to prevent oversized payloads
