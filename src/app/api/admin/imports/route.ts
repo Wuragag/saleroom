@@ -22,7 +22,7 @@ export const GET = withErrorHandler(async (request: Request) => {
   };
 
   // Filter by specific status
-  if (status && ["processing", "complete", "error"].includes(status)) {
+  if (status && ["processing", "generating", "complete", "error"].includes(status)) {
     baseWhere.importStatus = status;
   }
 

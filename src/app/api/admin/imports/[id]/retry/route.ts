@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 import { withErrorHandler } from "@/lib/api-error";
+import { processImportedPage } from "@/lib/import-processor";
+
+export const maxDuration = 60;
 
 export const POST = withErrorHandler(async (
   _request: Request,
@@ -16,7 +19,7 @@ export const POST = withErrorHandler(async (
 
   const page = await prisma.page.findUnique({
     where: { id },
-    select: { id: true, importStatus: true, importText: true },
+    select: { id: true, userId: true, importStatus: true, importText: true },
   });
 
   if (!page) {
@@ -30,13 +33,28 @@ export const POST = withErrorHandler(async (
     );
   }
 
-  // Reset to processing so the user can re-trigger
+  if (!page.importText) {
+    return NextResponse.json(
+      { error: "This import no longer has extracted text. Please re-upload the document." },
+      { status: 400 }
+    );
+  }
+
+  // Reset to processing and schedule server-side conversion immediately.
   await prisma.page.update({
     where: { id },
     data: {
       importStatus: "processing",
       importError: null,
     },
+  });
+
+  after(async () => {
+    try {
+      await processImportedPage(page.id, page.userId);
+    } catch (err) {
+      console.error("[admin import retry background processing]", err);
+    }
   });
 
   return NextResponse.json({ success: true });

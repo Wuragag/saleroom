@@ -39,6 +39,11 @@ const STATUS_CONFIG: Record<
     variant: "info",
     icon: Clock,
   },
+  generating: {
+    label: "Generating",
+    variant: "info",
+    icon: Clock,
+  },
   complete: {
     label: "Complete",
     variant: "success",
@@ -54,6 +59,7 @@ const STATUS_CONFIG: Record<
 const FILTER_OPTIONS = [
   { value: "", label: "All" },
   { value: "processing", label: "Processing" },
+  { value: "generating", label: "Generating" },
   { value: "complete", label: "Complete" },
   { value: "error", label: "Error" },
 ];
@@ -202,7 +208,7 @@ export function ImportsPanel() {
                 const config = STATUS_CONFIG[item.importStatus] ?? STATUS_CONFIG.processing;
                 const StatusIcon = config.icon;
                 const isStuck =
-                  item.importStatus === "processing" &&
+                  (item.importStatus === "processing" || item.importStatus === "generating") &&
                   Date.now() - new Date(item.updatedAt).getTime() > 5 * 60 * 1000;
 
                 return (
@@ -231,7 +237,7 @@ export function ImportsPanel() {
                         variant={config.variant}
                         className="gap-1 rounded-full text-2xs"
                       >
-                        {item.importStatus === "processing" ? (
+                        {item.importStatus === "processing" || item.importStatus === "generating" ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
                           <StatusIcon className="h-3 w-3" />

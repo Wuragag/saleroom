@@ -153,7 +153,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Step 1: Upload file — creates page, extracts text, returns immediately
+      // Step 1: Upload file — creates page, extracts text, and schedules processing
       const res = await fetch("/api/import", {
         method: "POST",
         body: formData,
@@ -179,15 +179,7 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
       // Step 3: Show a loading toast
       const toastId = toast.loading("AI is converting your document…");
 
-      // Step 4: Trigger AI processing (fire-and-forget)
-      fetch(`/api/import/process/${data.id}`, {
-        method: "POST",
-        keepalive: true,
-      }).catch(() => {
-        // Silently ignore — polling will detect errors
-      });
-
-      // Step 5: Poll in background (cancel any previous poll first)
+      // Step 4: Poll in background (cancel any previous poll first)
       cancelPollRef.current?.();
       cancelPollRef.current = pollAndToast(data.id, toastId, router);
     } catch (err) {
