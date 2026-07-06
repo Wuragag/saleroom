@@ -57,7 +57,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply the persisted app theme before paint to avoid a flash.
+            The buyer surface (/p) themes independently via the seller's page
+            settings, so the seller's chrome theme must NOT apply there —
+            otherwise gates (email/password) render dark for the seller but
+            light for real buyers. Keep in sync with src/hooks/use-app-theme.ts. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(!location.pathname.startsWith('/p/')){var t=localStorage.getItem('sr-ds-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.setAttribute('data-theme','light');}}}catch(e){}`,
+          }}
+        />
+      </head>
       <body className={`${montserrat.variable} ${playfairDisplay.variable} ${lora.variable} ${dmSans.variable} ${syne.variable} ${inter.variable} ${instrumentSerif.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>

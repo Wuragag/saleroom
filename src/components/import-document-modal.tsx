@@ -218,9 +218,6 @@ export function ImportDocumentModal({ isOpen, onClose }: Props) {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md overflow-hidden">
-        {/* Gradient accent bar */}
-        <div className="gradient-ai absolute top-0 left-0 right-0 h-1" />
-
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="gradient-ai flex items-center justify-center w-7 h-7 rounded-lg">

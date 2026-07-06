@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,11 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   const [nameInput, setNameInput] = useState("");
   const [sending, setSending] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Sentinel id for the page-link row so it shares the contact-row copy state.
+  const PAGE_LINK_ID = "page-link";
+  // Resolved after mount from the real origin — the displayed URL and the
+  // copied URL must never disagree (no hardcoded domain).
+  const [publicLink, setPublicLink] = useState(`/p/${slug}`);
   const [contacts, setContacts] = useState<PageContactRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [notifyOnView, setNotifyOnView] = useState<boolean | null>(null);
@@ -73,6 +79,25 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    setPublicLink(`${window.location.origin}/p/${slug}`);
+  }, [slug]);
+
+  const flashCopied = (id: string) => {
+    setCopiedId(id);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const copyPageLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicLink);
+      flashCopied(PAGE_LINK_ID);
+    } catch {
+      toast.error("Failed to copy link to clipboard");
+    }
+  };
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -182,12 +207,9 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   };
 
   const copyContactLink = async (contactId: string, refToken: string) => {
-    const link = `${window.location.origin}/p/${slug}?ref=${refToken}`;
     try {
-      await navigator.clipboard.writeText(link);
-      setCopiedId(contactId);
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopiedId(null), 1500);
+      await navigator.clipboard.writeText(`${publicLink}?ref=${refToken}`);
+      flashCopied(contactId);
     } catch {
       toast.error("Failed to copy link to clipboard");
     }
@@ -197,15 +219,41 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Share &ldquo;{pageTitle}&rdquo;</DialogTitle>
+          <DialogTitle className="font-display text-title">
+            Share this page
+          </DialogTitle>
+          <p className="text-small text-muted-foreground">
+            Send a private, trackable link to each buyer of &ldquo;{pageTitle}
+            &rdquo;.
+          </p>
         </DialogHeader>
+
+        {/* Public link row — shows exactly what Copy puts on the clipboard */}
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
+          <span className="truncate text-small text-muted-foreground">
+            {publicLink.replace(/^https?:\/\//, "")}
+          </span>
+          <Button
+            size="sm"
+            variant={copiedId === PAGE_LINK_ID ? "secondary" : "outline"}
+            className="ml-auto shrink-0"
+            onClick={copyPageLink}
+          >
+            {copiedId === PAGE_LINK_ID ? (
+              <Check className="h-3.5 w-3.5 text-success" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copiedId === PAGE_LINK_ID ? "Copied" : "Copy"}
+          </Button>
+        </div>
 
         <div className="flex flex-col gap-4 py-2 overflow-y-auto flex-1 min-h-0">
           {/* Email + Name inputs */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Email</label>
-              <div className="flex flex-wrap gap-1.5 px-3 py-2 rounded-md border border-border bg-white shadow-sm min-h-[38px] transition-colors focus-within:border-ring">
+              <label className="text-small font-medium text-foreground">Invite by email</label>
+              <div className="flex flex-wrap gap-1.5 px-3 py-2 rounded-lg border-[1.5px] border-border-strong bg-card min-h-[40px] transition-colors focus-within:border-foreground focus-within:shadow-ring-soft">
                 {chips.map((c) => (
                   <span
                     key={c.email}
@@ -243,7 +291,6 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                 onChange={(e) => setNameInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Contact name"
-                className="text-sm bg-white border-border"
               />
             </div>
           </div>
@@ -261,18 +308,9 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                     className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50 group"
                   >
                     {/* Avatar */}
-                    <div
-                      className="h-6 w-6 rounded-full flex items-center justify-center text-white shrink-0"
-                      style={{
-                        backgroundColor: `hsl(${c.email.length * 37 % 360}, 60%, 50%)`,
-                        fontSize: "9px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {(c.name || c.email)[0].toUpperCase()}
-                    </div>
+                    <Avatar name={c.name || c.email} size="sm" className="h-6 w-6 text-3xs" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">
+                      <p className="text-small font-medium text-foreground truncate">
                         {c.name || c.email}
                       </p>
                       {c.name && (

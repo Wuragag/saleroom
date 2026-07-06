@@ -7,7 +7,10 @@
   body {
     width: 100%;
     min-height: 100vh;
-    font-family: var(--font-montserrat), sans-serif;
+    font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  }
+  body {
+    font-variant-numeric: normal;
   }
 }
 
@@ -152,13 +155,55 @@
   .animate-glow-pulse {
     animation: glow-pulse 2s ease-in-out infinite;
   }
-  /* Brand AI accent gradient — single source of truth for AI-feature buttons */
+  /* Brand AI accent gradient — single source of truth for AI-feature surfaces.
+     Editorial system: AI is always the purple family. */
   .gradient-ai {
-    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(152 50% 28%));
+    background-image: linear-gradient(to right, hsl(var(--ai)), hsl(260 55% 46%));
   }
   .gradient-ai:hover {
-    background-image: linear-gradient(to right, hsl(152 100% 16%), hsl(152 52% 34%));
+    background-image: linear-gradient(to right, hsl(260 60% 60%), hsl(260 55% 50%));
   }
+
+  /* Tabular figures for stats, tables, and metrics (editorial numerals) */
+  .tabular-figures {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Serif display voice — page titles, hero stats, section headers.
+     Never used for UI chrome or data labels. */
+  .font-display {
+    font-family: var(--font-serif), "Instrument Serif", Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.08;
+  }
+
+  /* Monochrome engraving art. Dark-native source (white line on black):
+     invert in light mode, show as-is in dark mode. */
+  .hero-neg {
+    filter: grayscale(1) invert(1) contrast(1.04);
+  }
+  .dark .hero-neg {
+    filter: grayscale(1) contrast(1.04);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   EDITORIAL — realtime pulse signals (expanding rings)
+   ═══════════════════════════════════════════════════════ */
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 hsl(var(--success) / 0.5); }
+  70%  { box-shadow: 0 0 0 6px hsl(var(--success) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--success) / 0); }
+}
+@keyframes pulseInfo {
+  0%   { box-shadow: 0 0 0 0 hsl(var(--info) / 0.5); }
+  70%  { box-shadow: 0 0 0 6px hsl(var(--info) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--info) / 0); }
+}
+@layer utilities {
+  .animate-pulse-ring { animation: pulseRing 2s ease-out infinite; }
+  .animate-pulse-info { animation: pulseInfo 2s ease-out infinite; }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -181,7 +226,9 @@
   .animate-shimmer,
   .animate-ai-sparkle,
   .animate-confetti-fall,
-  .animate-celebrate-ring {
+  .animate-celebrate-ring,
+  .animate-pulse-ring,
+  .animate-pulse-info {
     animation: none !important;
   }
   /* Entrance/stagger must not leave content hidden when motion is cut */
@@ -385,49 +432,41 @@ div[data-type="form-block"] button[type="submit"]:disabled {
 
 /* ── Headings ── */
 .pub-content h1 {
+  /* Follows the seller's selected page font (Design → Font) */
   font-family: var(--pub-font-body, inherit);
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1.1;
   margin: 0 0 1.75rem;
-  color: var(--pub-heading-color, #0f172a);
+  color: var(--pub-heading-color, #17171a);
 }
 .pub-content h2 {
   font-family: var(--pub-font-body, inherit);
-  font-size: clamp(1.375rem, 3vw, 1.875rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  margin: 3.5rem 0 1rem;
-  color: var(--pub-heading-color, #0f172a);
-  position: relative;
-  padding-left: 1rem;
-}
-.pub-content h2::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.12em;
-  width: 3px;
-  height: 1.15em;
-  background: var(--pub-accent, #64748b);
-  border-radius: 2px;
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin: 3.25rem 0 1rem;
+  color: var(--pub-heading-color, #17171a);
 }
 .pub-content h3 {
   font-family: var(--pub-font-body, inherit);
-  font-size: 1.25rem;
+  font-size: 1.3125rem;
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.35;
+  line-height: 1.3;
   margin: 2.25rem 0 0.75rem;
-  color: var(--pub-subheading-color, #334155);
+  color: var(--pub-subheading-color, #3a3a42);
 }
 .pub-content h4, .pub-content h5, .pub-content h6 {
   font-family: var(--pub-font-body, inherit);
   font-weight: 600;
-  margin: 1.5rem 0 0.5rem;
-  color: var(--pub-heading-color, #0f172a);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 1.75rem 0 0.5rem;
+  color: var(--pub-muted-color, #97979f);
 }
 
 /* ── Paragraph ── */
@@ -713,71 +752,80 @@ div[data-type="cta-button"] a:focus-visible {
 
 @layer base {
   :root {
-    /* BG: #EDEAE6 → hsl(36, 14%, 91%)  */
-    /* Primary: #003B22 → hsl(152, 100%, 12%) */
-    /* Text: #181A1F → hsl(225, 8%, 11%) */
+    /* ═══════════════════════════════════════════════════════════════
+       EDITORIAL SYSTEM — restrained black-and-white (light)
+       Neutral ramp: bg #F6F6F7 · surface #FFF · surface-2 #F1F1F2 ·
+       border #E7E7E9 · border-strong #D8D8DC · text #17171A ·
+       text-2 #5F5F66 · text-3 #97979F · accent = text (black).
+       ═══════════════════════════════════════════════════════════════ */
+    --background: 240 6% 97%; /* #F6F6F7 page canvas */
+    --foreground: 240 6% 10%; /* #17171A primary text */
 
-    --background: 36 14% 91%;
-    --foreground: 225 8% 11%;
+    --card: 0 0% 100%; /* #FFFFFF surface */
+    --card-foreground: 240 6% 10%;
 
-    --card: 36 20% 97%;
-    --card-foreground: 225 8% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
 
-    --popover: 36 20% 97%;
-    --popover-foreground: 225 8% 11%;
+    /* Accent === text (black is the only interactive color) */
+    --primary: 240 6% 10%; /* #17171A */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --primary: 152 100% 12%;
-    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 95%; /* #F1F1F2 surface-2 */
+    --secondary-foreground: 240 6% 10%;
 
-    --secondary: 36 10% 84%;
-    --secondary-foreground: 225 8% 11%;
+    --muted: 240 5% 95%; /* surface-2 wells/hover */
+    --muted-foreground: 240 4% 39%; /* #5F5F66 text-2 */
 
-    --muted: 36 10% 84%;
-    --muted-foreground: 225 5% 42%;
+    --accent: 240 5% 95%; /* subtle hover fill */
+    --accent-foreground: 240 6% 10%;
 
-    --accent: 36 12% 86%;
-    --accent-foreground: 225 8% 11%;
+    --border: 240 5% 91%; /* #E7E7E9 hairline */
+    --border-strong: 240 6% 85%; /* #D8D8DC input borders */
+    --input: 240 6% 85%; /* input hairline = border-strong */
+    --ring: 240 6% 10%; /* focus ring color */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --text-3: 240 5% 61%; /* #97979F tertiary / metadata */
 
-    --border: 36 10% 78%;
-    --input: 0 0% 100%;
-    --ring: 152 100% 12%;
-
-    /* Brand-aligned chart palette — forest-green family, not the default rainbow */
-    --chart-1: 152 60% 30%;
-    --chart-2: 152 42% 46%;
-    --chart-3: 168 38% 40%;
-    --chart-4: 120 28% 55%;
-    --chart-5: 200 32% 46%;
+    /* Editorial charts/sparklines are neutral — never accent-hued */
+    --chart-1: 240 6% 10%;
+    --chart-2: 240 5% 45%;
+    --chart-3: 240 5% 65%;
+    --chart-4: 227 68% 58%; /* info blue */
+    --chart-5: 144 43% 43%; /* positive green */
 
     /* ── Semantic status (solid + subtle-tint pairs) ──────────────────────
+       Hue is signal, never decoration.
        Use via Tailwind: bg-success / text-success-foreground (solid),
-       bg-success-subtle / text-success-subtle-foreground (badge/banner tint).
-       These replace every ad-hoc emerald/amber/red/blue-* utility. */
-    --success: 152 55% 30%;
+       bg-success-subtle / text-success-subtle-foreground (badge/banner tint). */
+    --success: 144 43% 43%; /* #3E9B63 positive / "Live" */
     --success-foreground: 0 0% 100%;
-    --success-subtle: 150 46% 92%;
-    --success-subtle-foreground: 152 60% 22%;
+    --success-subtle: 144 42% 94%; /* #EAF6EE */
+    --success-subtle-foreground: 145 49% 27%; /* #23663F */
 
-    --warning: 35 92% 42%;
+    --warning: 39 63% 48%; /* #C9922E */
     --warning-foreground: 0 0% 100%;
-    --warning-subtle: 42 90% 90%;
-    --warning-subtle-foreground: 30 80% 28%;
+    --warning-subtle: 40 60% 94%; /* #FBF3E6 */
+    --warning-subtle-foreground: 40 67% 29%; /* #7A5A18 */
 
-    --info: 205 72% 40%;
+    --info: 227 68% 58%; /* #4B6BDD live-visitor / selected */
     --info-foreground: 0 0% 100%;
-    --info-subtle: 205 78% 93%;
-    --info-subtle-foreground: 205 70% 28%;
+    --info-subtle: 227 68% 96%; /* #EEF1FC */
+    --info-subtle-foreground: 228 54% 37%; /* #2C4093 */
 
-    /* danger === destructive (solid pair defined above); add the tint pair */
-    --destructive-subtle: 0 80% 95%;
-    --destructive-subtle-foreground: 0 65% 40%;
+    --destructive: 6 60% 56%; /* #D2574A negative */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-subtle: 8 67% 95%; /* #FBEDEB */
+    --destructive-subtle-foreground: 6 54% 37%; /* #93362C */
+
+    /* ── AI family (AI features only) ── */
+    --ai: 260 58% 56%; /* #7A50D0 */
+    --ai-foreground: 0 0% 100%;
+    --ai-subtle: 260 60% 96%; /* #F3EFFC */
+    --ai-subtle-foreground: 260 50% 36%; /* #4C2E8A */
 
     /* ── Categorical palette (tags & avatars, hashed deterministically).
-       Distinct-but-tasteful hues. Consumed ONLY by the Tag/Avatar primitives —
-       never hardcode these hues in feature code. */
+       Consumed ONLY by the Tag/Avatar primitives. */
     --cat-1: 205 65% 45%;
     --cat-2: 265 45% 52%;
     --cat-3: 152 45% 35%;
@@ -785,52 +833,81 @@ div[data-type="cta-button"] a:focus-visible {
     --cat-5: 330 55% 50%;
     --cat-6: 190 60% 40%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem; /* 12px cards; sm=8 inputs/chips, xl=16 modals */
+
+    /* ── Elevation (editorial soft shadows) ── */
+    --shadow-1: 0 1px 2px rgba(20, 20, 24, 0.06);
+    --shadow-2: 0 4px 14px rgba(20, 20, 24, 0.08);
+    --shadow-3: 0 16px 40px rgba(20, 20, 24, 0.14);
+    --ring-soft: 0 0 0 3px rgba(23, 23, 26, 0.18);
+
+    /* ── Dimensional "Send"-style primary CTA ── */
+    --cta-grad: linear-gradient(180deg, #35353c 0%, #1b1b1f 55%, #111114 100%);
+    --cta-grad-hover: linear-gradient(180deg, #4c4c55 0%, #2e2e34 55%, #202024 100%);
+    --cta-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(20, 20, 24, 0.35),
+      0 4px 12px rgba(20, 20, 24, 0.22);
+
+    /* ── AI CTA (always purple) ── */
+    --ai-grad: linear-gradient(180deg, #8b63e0 0%, #6e44c9 55%, #5c36b0 100%);
+    --ai-grad-hover: linear-gradient(180deg, #9d78eb 0%, #7e54d6 55%, #6a44be 100%);
+    --ai-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(60, 30, 120, 0.35),
+      0 4px 12px rgba(60, 30, 120, 0.28);
   }
   .dark {
-    --background: 225 8% 11%;
-    --foreground: 0 0% 95%;
-    --card: 225 8% 14%;
-    --card-foreground: 0 0% 95%;
-    --popover: 225 8% 14%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 152 60% 35%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 225 8% 18%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 225 8% 18%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 225 8% 20%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 225 8% 22%;
-    --input: 225 8% 18%;
-    --ring: 152 60% 35%;
-    --chart-1: 152 50% 45%;
-    --chart-2: 152 40% 60%;
-    --chart-3: 168 45% 52%;
-    --chart-4: 120 30% 60%;
-    --chart-5: 200 38% 56%;
+    /* ═══ EDITORIAL SYSTEM — dark (accent inverts to white) ═══ */
+    --background: 240 9% 7%; /* #101013 */
+    --foreground: 240 6% 96%; /* #F5F5F6 */
+    --card: 240 8% 10%; /* #18181C */
+    --card-foreground: 240 6% 96%;
+    --popover: 240 8% 10%;
+    --popover-foreground: 240 6% 96%;
+    --primary: 240 6% 96%; /* accent → white */
+    --primary-foreground: 240 7% 8%; /* #131316 */
+    --secondary: 240 7% 13%; /* #1F1F24 surface-2 */
+    --secondary-foreground: 240 6% 96%;
+    --muted: 240 7% 13%;
+    --muted-foreground: 240 6% 66%; /* #A4A4AD text-2 */
+    --accent: 240 7% 14%;
+    --accent-foreground: 240 6% 96%;
+    --border: 240 7% 18%; /* #2A2A30 */
+    --border-strong: 240 6% 24%; /* #3A3A42 */
+    --input: 240 6% 24%;
+    --ring: 240 6% 96%;
+    --text-3: 240 6% 45%; /* #6E6E78 */
 
-    /* ── Semantic status (dark) ── */
-    --success: 152 50% 42%;
+    --chart-1: 240 6% 96%;
+    --chart-2: 240 5% 60%;
+    --chart-3: 240 5% 40%;
+    --chart-4: 227 70% 66%;
+    --chart-5: 144 45% 52%;
+
+    /* ── Semantic status (dark) — same hues, low-alpha fills, lightened text ── */
+    --success: 144 45% 52%;
     --success-foreground: 0 0% 100%;
-    --success-subtle: 152 40% 16%;
-    --success-subtle-foreground: 150 55% 72%;
+    --success-subtle: 144 35% 15%;
+    --success-subtle-foreground: 144 50% 72%;
 
-    --warning: 38 85% 52%;
+    --warning: 39 70% 55%;
     --warning-foreground: 40 90% 8%;
-    --warning-subtle: 36 55% 16%;
-    --warning-subtle-foreground: 42 90% 72%;
+    --warning-subtle: 39 45% 15%;
+    --warning-subtle-foreground: 40 75% 70%;
 
-    --info: 205 70% 55%;
+    --info: 227 70% 66%;
     --info-foreground: 0 0% 100%;
-    --info-subtle: 205 50% 18%;
-    --info-subtle-foreground: 205 75% 76%;
+    --info-subtle: 227 45% 18%;
+    --info-subtle-foreground: 227 75% 78%;
 
-    --destructive-subtle: 0 45% 20%;
-    --destructive-subtle-foreground: 0 80% 80%;
+    --destructive: 6 62% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-subtle: 6 45% 18%;
+    --destructive-subtle-foreground: 6 75% 76%;
+
+    --ai: 260 62% 66%;
+    --ai-foreground: 0 0% 100%;
+    --ai-subtle: 260 40% 18%;
+    --ai-subtle-foreground: 260 70% 80%;
 
     /* ── Categorical palette (dark) ── */
     --cat-1: 205 60% 58%;
@@ -839,6 +916,24 @@ div[data-type="cta-button"] a:focus-visible {
     --cat-4: 25 70% 58%;
     --cat-5: 330 55% 66%;
     --cat-6: 190 55% 54%;
+
+    /* ── Elevation (blacker) ── */
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.6);
+    --ring-soft: 0 0 0 3px rgba(245, 245, 246, 0.22);
+
+    /* ── Primary CTA flips to a white gradient with dark text ── */
+    --cta-grad: linear-gradient(180deg, #ffffff 0%, #ededef 55%, #dddde0 100%);
+    --cta-grad-hover: linear-gradient(180deg, #ffffff 0%, #f6f6f7 55%, #e9e9ec 100%);
+    --cta-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+
+    /* ── AI CTA stays purple (brighter for dark) ── */
+    --ai-grad: linear-gradient(180deg, #9d78eb 0%, #7e54d6 55%, #6a44be 100%);
+    --ai-grad-hover: linear-gradient(180deg, #ad8af2 0%, #8e64e0 55%, #7a50cc 100%);
+    --ai-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(40, 15, 90, 0.5);
   }
 }
 

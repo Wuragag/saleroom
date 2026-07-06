@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { AppNav } from "@/components/app-nav";
-import { PageContainer } from "@/components/ui/page-container";
+import { AppShell } from "@/components/app-shell";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardStats } from "@/components/dashboard-stats";
 import { SortableDashboard } from "@/components/sortable-dashboard";
 import { getUserTeamId } from "@/lib/team-auth";
 import { ProductTour } from "@/components/tour/product-tour";
@@ -91,16 +91,28 @@ export default async function Dashboard() {
     lockedByName: p.lockedBy?.name ?? null,
   }));
 
+  const totalViews = Object.values(analyticsMap).reduce((s, a) => s + a.views, 0);
+  const weighted = Object.values(analyticsMap).reduce(
+    (s, a) => s + a.avgDuration * a.views,
+    0
+  );
+  const avgDuration = totalViews > 0 ? Math.round(weighted / totalViews) : 0;
+  const livePages = pages.filter((p) => p.published).length;
+
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <PageContainer size="md">
-        <DashboardHeader />
-        <div className="mt-6">
-          <SortableDashboard pages={pageItems} analyticsMap={analyticsMap} />
-        </div>
-      </PageContainer>
+    <AppShell>
+      <DashboardHeader />
+      <div className="mt-6">
+        <DashboardStats
+          totalViews={totalViews}
+          avgDuration={avgDuration}
+          livePages={livePages}
+        />
+      </div>
+      <div className="mt-6">
+        <SortableDashboard pages={pageItems} analyticsMap={analyticsMap} />
+      </div>
       <ProductTour />
-    </main>
+    </AppShell>
   );
 }

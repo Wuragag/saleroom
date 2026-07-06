@@ -92,12 +92,12 @@ export function PageShell({
         <span
           className="select-none"
           style={{
-            fontFamily: "var(--font-syne, var(--font-montserrat), sans-serif)",
+            fontFamily: "var(--font-dm-sans, sans-serif)",
             fontSize: "0.6875rem",
             fontWeight: 500,
-            letterSpacing: "0.06em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: isDark ? "#2e2e48" : "#c4c9d4",
+            color: "var(--pub-muted-color)",
           }}
         >
           Powered by SalesRoom
@@ -111,10 +111,11 @@ export function PageShell({
 
 /** Published page title styles — shared between the h1 and the editor's editable title */
 export const PUB_TITLE_STYLE: CSSProperties = {
+  // Follows the seller's selected page font (Design → Font)
   fontFamily: "var(--pub-font-body, inherit)",
-  fontSize: "clamp(2rem, 5.5vw, 3.5rem)",
-  fontWeight: 800,
-  letterSpacing: "-0.035em",
+  fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
+  fontWeight: 600,
+  letterSpacing: "-0.025em",
   lineHeight: 1.08,
   color: "var(--pub-heading-color)",
   marginBottom: "2.75rem",

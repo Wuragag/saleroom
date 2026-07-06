@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { HIGH_INTENT_VISITOR_WHERE } from "@/lib/engagement-score";
 import { getUserTeamId } from "@/lib/team-auth";
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 import { AnalyticsTable } from "@/components/analytics-table";
 import { AnalyticsStatCards } from "@/components/analytics-stat-cards";
 import { ViewsChart } from "@/components/views-chart";
@@ -195,9 +195,8 @@ export default async function AnalyticsPage({
   ];
 
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <PageContainer size="md">
+    <AppShell>
+      <PageContainer size="lg" className="p-0">
         <PageHeader
           title="Analytics"
           description="Performance overview — click any page row to open detailed analytics"
@@ -239,6 +238,6 @@ export default async function AnalyticsPage({
           )}
         </div>
       </PageContainer>
-    </main>
+    </AppShell>
   );
 }

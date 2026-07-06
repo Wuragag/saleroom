@@ -31,7 +31,6 @@ import { Tag } from "@/components/ui/tag";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { PageAnalytics, PageListItem } from "@/types";
-import { getAccentColor } from "@/lib/page-styles";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 export function timeAgo(dateStr: string) {
@@ -122,8 +121,6 @@ export function PageCard({ page, analytics }: PageCardProps) {
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const accent = getAccentColor(page.accentColor);
-
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -151,7 +148,7 @@ export function PageCard({ page, analytics }: PageCardProps) {
 
   return (
     <>
-      <div className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-primary/20 transition-all duration-300 ease-out flex flex-col">
+      <div className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-elevation-2 hover:-translate-y-1 hover:border-border-strong transition-all duration-300 ease-out flex flex-col">
 
         {/* Thumbnail */}
         <Link href={`/analytics/${page.id}`} className="block" aria-label={`Open analytics for ${page.title}`}>
@@ -250,17 +247,12 @@ export function PageCard({ page, analytics }: PageCardProps) {
               <span className="text-2xs text-muted-foreground truncate">{timeAgo(page.updatedAt)}</span>
             </div>
             {page.published ? (
-              <span
-                className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 transition-all duration-200"
-                style={{ backgroundColor: `${accent}18`, color: accent }}
-              >
-                <span className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-current animate-save-dot" />
-                  Live
-                </span>
-              </span>
+              <Badge variant="success" className="shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-ring" />
+                Live
+              </Badge>
             ) : (
-              <Badge variant="neutral" className="text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0">Draft</Badge>
+              <Badge variant="neutral" className="shrink-0">Draft</Badge>
             )}
           </div>
         </div>

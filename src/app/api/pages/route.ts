@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
+import { DEFAULT_PAGE_STYLE } from "@/lib/page-styles";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { assertCanCreatePageTx, withResourceLock, pageLockKey } from "@/lib/plan-limits";
@@ -57,6 +58,14 @@ export const POST = withErrorHandler(async (request: Request) => {
           content: JSON.stringify(DEFAULT_CONTENT),
           userId: session.user.id,
           teamId,
+          // Editorial baseline for new pages. Set explicitly because the DB
+          // column defaults (inter/slate) predate the redesign — without
+          // these, DEFAULT_PAGE_STYLE never applies to real rows.
+          font: DEFAULT_PAGE_STYLE.font,
+          accentColor: DEFAULT_PAGE_STYLE.accentColor,
+          background: DEFAULT_PAGE_STYLE.background,
+          layoutWidth: DEFAULT_PAGE_STYLE.layoutWidth,
+          tabPlacement: DEFAULT_PAGE_STYLE.tabPlacement,
           tabs: {
             create: {
               name: DEFAULT_TAB_NAME,

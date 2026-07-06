@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, FileText, Globe } from "lucide-react";
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { AnalyticsStatCards } from "@/components/analytics-stat-cards";
 import { BuyerAnalyticsPanel } from "@/components/buyer-analytics-panel";
@@ -136,9 +136,8 @@ export default async function PageAnalyticsDetail({
   ];
 
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <PageContainer size="lg">
+    <AppShell>
+      <PageContainer size="lg" className="p-0">
         <div className="mb-4">
           <Button asChild variant="ghost" size="sm" className="rounded-lg gap-1.5 px-2">
             <Link href="/analytics">
@@ -217,6 +216,6 @@ export default async function PageAnalyticsDetail({
           <ActivityTimeline pageId={page.id} />
         </div>
       </PageContainer>
-    </main>
+    </AppShell>
   );
 }

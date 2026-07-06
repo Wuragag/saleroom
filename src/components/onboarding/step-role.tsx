@@ -74,13 +74,16 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
     <div className="w-full max-w-lg">
       {/* Headline */}
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Welcome, {firstName}! 👋
+        <p className="text-caption font-semibold uppercase text-muted-foreground mb-2">
+          Welcome aboard
+        </p>
+        <h1 className="font-display text-display text-foreground">
+          Hi {firstName} — let’s set the scene
         </h1>
-        <p className="text-muted-foreground mt-2 text-base leading-relaxed">
-          One quick question before we get started.
+        <p className="text-muted-foreground mt-2 text-body leading-relaxed">
+          One quick question so we can tailor SalesRoom to you.
           <br />
-          What best describes you?
+          What best describes your role?
         </p>
       </div>
 
@@ -95,8 +98,8 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
               onClick={() => onSelect(id)}
               className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left transition-all duration-150 ${
                 isSelected
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border bg-card hover:border-primary/40 hover:bg-muted/40"
+                  ? "border-primary bg-muted shadow-elevation-1"
+                  : "border-border bg-card hover:border-border-strong hover:bg-muted/40"
               }`}
             >
               <div
@@ -136,9 +139,10 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
       <div className="mt-8">
         <Button
           type="button"
+          size="lg"
           onClick={handleContinue}
           disabled={!selected || loading}
-          className="w-full h-11 rounded-xl text-sm font-semibold"
+          className="w-full font-semibold"
         >
           {loading ? (
             <>

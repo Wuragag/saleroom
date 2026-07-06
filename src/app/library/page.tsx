@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { getTeamPlanLimits } from "@/lib/plan-limits";
 import { SyncedBlockLibrary } from "@/components/synced-block-library";
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/ui/page-container";
 
 export default async function LibraryPage() {
@@ -33,15 +33,14 @@ export default async function LibraryPage() {
   }));
 
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <PageContainer size="md">
+    <AppShell>
+      <PageContainer size="lg" className="p-0">
         <SyncedBlockLibrary
           initialBlocks={serialized}
           maxBlocks={planLimits.maxSyncedBlocks}
           plan={planLimits.plan}
         />
       </PageContainer>
-    </main>
+    </AppShell>
   );
 }

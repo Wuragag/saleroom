@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT } from "@/lib/constants";
+import { DEFAULT_PAGE_STYLE } from "@/lib/page-styles";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import {
@@ -100,6 +101,12 @@ export const POST = withErrorHandler(async (request: Request) => {
           content: JSON.stringify(firstTabContent),
           userId: session.user.id,
           teamId,
+          // Editorial baseline (DB column defaults predate the redesign)
+          font: DEFAULT_PAGE_STYLE.font,
+          accentColor: DEFAULT_PAGE_STYLE.accentColor,
+          background: DEFAULT_PAGE_STYLE.background,
+          layoutWidth: DEFAULT_PAGE_STYLE.layoutWidth,
+          tabPlacement: DEFAULT_PAGE_STYLE.tabPlacement,
         },
       });
       await assertCanCreateTabsTx(tx, created.id, teamId, tabs.length || 1);
