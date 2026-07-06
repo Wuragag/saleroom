@@ -228,3 +228,19 @@ export interface TimelineVisitor {
   email: string | null;
 }
 
+/**
+ * A workspace-level activity item for the dashboard Recent Activity feed.
+ * Same event vocabulary as the per-page timeline, plus the page it belongs to
+ * so a row can name and link to the page.
+ */
+export interface ActivityFeedItem {
+  id: string;
+  type: TimelineEventType;
+  timestamp: string; // ISO
+  actorName: string | null; // buyer contact name, if known
+  actorEmail: string | null; // buyer contact email, if known
+  actorHash: string | null; // short anonymous visitor hash, if no contact
+  detail: Record<string, string | number | boolean>;
+  page: { id: string; title: string };
+}
+

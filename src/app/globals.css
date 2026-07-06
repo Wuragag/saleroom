@@ -3,6 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Always render the vertical scrollbar so the layout width doesn't jump
+       when content height crosses the viewport (e.g. switching the pages list
+       between card and list view, or a sort re-render).
+       NOTE: use overflow-y:scroll, NOT scrollbar-gutter:stable — Radix's
+       react-remove-scroll measures the scrollbar via clientWidth and adds
+       padding on modal open; a reserved gutter (no real scrollbar to remove)
+       makes it double-compensate and shifts content sideways on classic
+       scrollbars. A real always-on scrollbar is removed+compensated net-zero. */
+    overflow-y: scroll;
+  }
   html,
   body {
     width: 100%;

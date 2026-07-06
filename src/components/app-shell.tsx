@@ -93,7 +93,15 @@ const railRowClass = (expanded: boolean, active = false) =>
  * opens a labeled slide-in menu — tooltips don't fire on touch, so the rail
  * is desktop-only.
  */
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  aside,
+}: {
+  children: React.ReactNode;
+  /** Optional full-height panel flush to the surface's right edge (e.g. the
+   *  dashboard Recent Activity drawer). Stacks below the content on mobile. */
+  aside?: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
@@ -339,8 +347,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ── Floating main surface ── */}
-      <main className="min-h-[calc(100vh-2rem)] min-w-0 flex-1 rounded-xl border border-border bg-card p-4 shadow-elevation-1 sm:p-6 md:p-8">
-        {children}
+      <main className="flex min-h-[calc(100vh-2rem)] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-elevation-1 lg:flex-row">
+        <div className="min-w-0 flex-1 p-4 sm:p-6 md:p-8">{children}</div>
+        {aside}
       </main>
     </div>
   );
