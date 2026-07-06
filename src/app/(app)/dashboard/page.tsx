@@ -5,7 +5,8 @@ import { AppShell } from "@/components/app-shell";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { SortableDashboard } from "@/components/sortable-dashboard";
-import { getUserTeamId } from "@/lib/team-auth";
+import { ActivityDrawer } from "@/components/activity-drawer";
+import { getUserTeamId, accessiblePageWhere } from "@/lib/team-auth";
 import { ProductTour } from "@/components/tour/product-tour";
 import type { PageAnalytics, PageListItem } from "@/types";
 
@@ -24,14 +25,7 @@ export default async function Dashboard() {
 
   // Show team pages (TEAM visibility) + user's own private pages
   const pages = await prisma.page.findMany({
-    where: teamId
-      ? {
-          OR: [
-            { teamId, visibility: "TEAM" },
-            { userId: session.user.id, visibility: "PRIVATE" },
-          ],
-        }
-      : { userId: session.user.id },
+    where: accessiblePageWhere(session.user.id, teamId),
     orderBy: { updatedAt: "desc" },
     include: {
       user: { select: { name: true } },
@@ -100,7 +94,7 @@ export default async function Dashboard() {
   const livePages = pages.filter((p) => p.published).length;
 
   return (
-    <AppShell>
+    <AppShell aside={<ActivityDrawer />}>
       <DashboardHeader />
       <div className="mt-6">
         <DashboardStats

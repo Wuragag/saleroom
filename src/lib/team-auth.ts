@@ -1,7 +1,28 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import type { Prisma } from "@/generated/prisma";
 
 export type PagePermission = "view" | "edit" | "delete";
+
+/**
+ * The Prisma `where` for pages a user may see in their workspace: every TEAM
+ * page in their team plus their own PRIVATE pages (or, with no team, only their
+ * own pages). Single source of truth so the dashboard list and the activity
+ * feed can never diverge on who-can-see-what.
+ */
+export function accessiblePageWhere(
+  userId: string,
+  teamId: string | null
+): Prisma.PageWhereInput {
+  return teamId
+    ? {
+        OR: [
+          { teamId, visibility: "TEAM" },
+          { userId, visibility: "PRIVATE" },
+        ],
+      }
+    : { userId };
+}
 
 interface AuthResult {
   authorized: boolean;
