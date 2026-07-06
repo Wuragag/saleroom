@@ -94,7 +94,7 @@ export function DashboardHeader() {
             <Button variant="ai" asChild data-tour="ai-write">
               <Link href="/ai">
                 <PenLine className="h-4 w-4" />
-                Write with AI
+                Create with AI
               </Link>
             </Button>
             <DropdownMenu>
