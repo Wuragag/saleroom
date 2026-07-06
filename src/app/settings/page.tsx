@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 import { AccountSettings } from "@/components/account-settings";
 import { TeamSettings } from "@/components/team-settings";
 import { BillingSettings } from "@/components/billing-settings";
@@ -32,7 +32,7 @@ function SettingsContent() {
   };
 
   return (
-    <PageContainer size="sm">
+    <PageContainer size="md" className="p-0">
       {/* Heading */}
       <PageHeader
         title="Settings"
@@ -98,8 +98,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
+    <AppShell>
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-16">
@@ -109,6 +108,6 @@ export default function SettingsPage() {
       >
         <SettingsContent />
       </Suspense>
-    </main>
+    </AppShell>
   );
 }

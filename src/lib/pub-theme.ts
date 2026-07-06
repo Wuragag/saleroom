@@ -33,18 +33,22 @@ export function getPubCssVars(opts: {
   const fontStyle = getFontStyle(opts.font);
   return {
     "--pub-accent":           opts.accentColor,
-    "--pub-heading-color":    isDark ? "#f0efe9" : "#0f172a",
-    "--pub-subheading-color": isDark ? "#c8c8d8" : "#334155",
-    "--pub-body-color":       isDark ? "#a8a8b3" : "#475569",
-    "--pub-surface":          isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.038)",
-    "--pub-divider":          isDark ? "rgba(255,255,255,0.075)" : "rgba(0,0,0,0.075)",
-    "--pub-tab-bg":           isDark ? "rgba(10,10,15,0.88)" : "rgba(255,255,255,0.92)",
-    "--pub-table-header-bg":  isDark ? "#13131a" : "#f1f5f9",
+    // Editorial neutral ramp (black-and-white baseline). The seller accent is
+    // layered on via --pub-accent; the text ramp stays a restrained neutral.
+    "--pub-heading-color":    isDark ? "#f5f5f6" : "#17171a",
+    "--pub-subheading-color": isDark ? "#c8c8d0" : "#3a3a42",
+    "--pub-body-color":       isDark ? "#a4a4ad" : "#5f5f66",
+    "--pub-muted-color":      isDark ? "#6e6e78" : "#97979f",
+    "--pub-surface":          isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.032)",
+    "--pub-divider":          isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.09)",
+    "--pub-tab-bg":           isDark ? "rgba(16,16,19,0.9)" : "rgba(246,246,247,0.9)",
+    "--pub-table-header-bg":  isDark ? "#1f1f24" : "#f1f1f2",
     "--pub-table-alt-bg":     isDark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.02)",
-    "--pub-table-hover-bg":   isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+    "--pub-table-hover-bg":   isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.035)",
     "--pub-card-bg":          isDark ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.025)",
-    "--pub-header-border":    isDark ? "rgba(255,255,255,0.065)" : "rgba(0,0,0,0.065)",
-    // Expose selected page font for body text in .pub-content
+    "--pub-header-border":    isDark ? "rgba(255,255,255,0.075)" : "rgba(0,0,0,0.08)",
+    // Expose the seller's selected page font — drives body AND headings/title
+    // in .pub-content so the Design → Font control changes the whole page.
     "--pub-font-body":        (fontStyle.fontFamily as string) ?? "inherit",
   } as CSSProperties;
 }

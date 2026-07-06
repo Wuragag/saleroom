@@ -17,9 +17,9 @@ import { Pencil, ExternalLink, Eye, MoreVertical, Trash2, Copy, Clock, Link2, Ta
 import { timeAgo, formatDuration, TagEditor } from "@/components/page-card";
 import { Tag } from "@/components/ui/tag";
 import { Avatar } from "@/components/ui/avatar";
+import { Monogram } from "@/components/ui/monogram";
 import { Badge } from "@/components/ui/badge";
 import type { PageAnalytics, PageListItem } from "@/types";
-import { getAccentColor } from "@/lib/page-styles";
 
 interface PageListRowProps {
   page: PageListItem;
@@ -37,8 +37,6 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
   const [tags, setTags] = useState<string[]>(page.tags);
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const accent = getAccentColor(page.accentColor);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -88,18 +86,19 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
           onKeyDown={(e) => e.stopPropagation()}
         />
 
-        {/* Accent dot */}
-        <div
-          className="relative z-10 h-2 w-2 rounded-full shrink-0 hidden sm:block pointer-events-none"
-          style={{ backgroundColor: accent }}
-        />
+        {/* Monogram tile */}
+        <span className="relative z-10 shrink-0 pointer-events-none">
+          <Monogram name={page.title} size="sm" />
+        </span>
 
-        {/* Title */}
+        {/* Title + URL */}
         <div className="relative z-10 flex-1 min-w-0 pointer-events-none">
-          <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate block">
+          <span className="text-small font-semibold text-foreground group-hover:text-primary transition-colors truncate block">
             {page.title}
           </span>
-          <p className="text-2xs text-muted-foreground mt-0.5">{timeAgo(page.updatedAt)}</p>
+          <p className="text-2xs text-tertiary mt-0.5 truncate">
+            /p/{page.slug} · {timeAgo(page.updatedAt)}
+          </p>
         </div>
 
         {/* Tags column */}
@@ -140,14 +139,12 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
 
         {/* Status badge */}
         {page.published ? (
-          <span
-            className="relative z-10 text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex pointer-events-none"
-            style={{ backgroundColor: `${accent}18`, color: accent }}
-          >
-            Published
-          </span>
+          <Badge variant="success" className="relative z-10 shrink-0 hidden sm:inline-flex pointer-events-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-ring" />
+            Live
+          </Badge>
         ) : (
-          <Badge variant="neutral" className="relative z-10 text-3xs font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-flex pointer-events-none">Draft</Badge>
+          <Badge variant="neutral" className="relative z-10 shrink-0 hidden sm:inline-flex pointer-events-none">Draft</Badge>
         )}
 
         {/* User avatar */}

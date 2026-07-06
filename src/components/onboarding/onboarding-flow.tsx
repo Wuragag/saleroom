@@ -60,11 +60,16 @@ export function OnboardingFlow({ userName }: Props) {
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 max-w-lg mx-auto w-full">
-        <span className="text-xs font-medium text-muted-foreground tracking-tight">
+        <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
           Step {currentStep} of {totalSteps}
         </span>
-        <span className="text-xs font-semibold text-foreground tracking-tight">
-          SalesRoom
+        <span className="flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary font-display text-small text-primary-foreground">
+            S
+          </span>
+          <span className="font-display text-heading text-foreground">
+            SalesRoom
+          </span>
         </span>
       </div>
 

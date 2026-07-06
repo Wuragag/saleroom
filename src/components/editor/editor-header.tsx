@@ -91,6 +91,8 @@ interface EditorHeaderProps {
   password?: string;
   onPasswordChange?: (value: string) => void;
   passwordProtection?: boolean;
+  /** When the AI panel hosts its own Design tab, hide this header popover. */
+  hideDesign?: boolean;
 }
 
 export function EditorHeader({
@@ -115,6 +117,7 @@ export function EditorHeader({
   password,
   onPasswordChange,
   passwordProtection,
+  hideDesign,
 }: EditorHeaderProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -331,7 +334,7 @@ export function EditorHeader({
             {/* Right: actions */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Design popover — page style controls */}
-              {!readOnly && pageStyle && onStyleChange && (
+              {!readOnly && !hideDesign && pageStyle && onStyleChange && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button

@@ -35,7 +35,7 @@ export function AnalyticsStatCards({ cards }: { cards: StatCard[] }) {
           <TooltipTrigger asChild>
             <div
               tabIndex={0}
-              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 cursor-default shadow-elevation-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -46,10 +46,10 @@ export function AnalyticsStatCards({ cards }: { cards: StatCard[] }) {
                 />
               </div>
               <div>
-                <p className="text-xl font-bold text-foreground tracking-tight">
+                <p className="font-display text-display text-foreground tabular-figures leading-none">
                   {value}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                <p className="text-2xs text-muted-foreground mt-1.5 leading-tight">
                   {label}
                 </p>
               </div>

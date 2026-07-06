@@ -60,6 +60,10 @@ export interface AiEditorBridge {
   renameTab(tabId: string, name: string): Promise<void>;
   createTab(name: string): Promise<TabData | null>;
   activateTab(tabId: string): void;
+  reorderTabs(tabIds: string[]): Promise<void>;
+  deleteTab(tabId: string): Promise<void>;
+  /** Debounced-save page password (same path as the header Design popover). */
+  setPagePassword(value: string): void;
   /** Returns false when the content can't be rendered by the editor schema. */
   setTabContent(tabId: string, content: JSONContent): Promise<boolean>;
   applyMapItems(payload: {
@@ -82,9 +86,23 @@ interface TiptapEditorProps {
   /** While true (AI generating), text editing is disabled so an AI update
    *  can't clobber concurrent hand edits. */
   aiBusy?: boolean;
+  /** Pushes live tab + style state up so an AI panel can render Structure /
+   *  Design tabs that stay in sync with the canvas. */
+  onEditorStateChange?: (state: EditorPanelState) => void;
+  /** Hide the header's Design popover (the AI panel hosts a Design tab). */
+  hideDesign?: boolean;
 }
 
-export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, aiBridgeRef, aiBusy = false }: TiptapEditorProps) {
+/** Snapshot the AI panel needs to render Structure + Design in sync. */
+export interface EditorPanelState {
+  tabs: { id: string; name: string; order: number }[];
+  activeTabId: string;
+  style: PageStyle;
+  password: string;
+  passwordProtection: boolean;
+}
+
+export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, aiBridgeRef, aiBusy = false, onEditorStateChange, hideDesign = false }: TiptapEditorProps) {
   const { data: session } = useSession();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const passwordProtection = (session?.user as any)?.planLimits?.passwordProtection ?? true;
@@ -437,6 +455,9 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       renameTab: (tabId: string, name: string) => renameTab(tabId, name),
       createTab: (name: string) => addTab(name),
       activateTab: (tabId: string) => handleSelectTab(tabId),
+      reorderTabs: (tabIds: string[]) => reorderTabs(tabIds),
+      deleteTab: (tabId: string) => deleteTab(tabId),
+      setPagePassword: (value: string) => handlePasswordChange(value),
       setTabContent,
       applyMapItems,
       removeMap: () => mapState.disableMap(),
@@ -503,6 +524,25 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       aiBridgeRef.current = null;
     };
   });
+
+  // Keep the AI panel's Structure/Design tabs in sync with the live canvas.
+  // `tabs` changes identity on every content autosave, so compare the pushed
+  // slice and skip no-op pushes — otherwise the whole AI workspace (chat
+  // included) re-renders every few seconds while the user types.
+  const lastPanelStateRef = useRef<string>("");
+  useEffect(() => {
+    const snapshot: EditorPanelState = {
+      tabs: tabs.map((t) => ({ id: t.id, name: t.name, order: t.order })),
+      activeTabId,
+      style: pageStyle,
+      password,
+      passwordProtection,
+    };
+    const key = JSON.stringify(snapshot);
+    if (key === lastPanelStateRef.current) return;
+    lastPanelStateRef.current = key;
+    onEditorStateChange?.(snapshot);
+  }, [tabs, activeTabId, pageStyle, password, passwordProtection, onEditorStateChange]);
 
   // ── WYSIWYG canvas: derive the published-page shell from the live style ──
   const accent = getAccentColor(pageStyle.accentColor);
@@ -579,6 +619,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         onRequireEmailChange={setRequireEmail}
         pageStyle={pageStyle}
         onStyleChange={handleStyleChange}
+        hideDesign={hideDesign}
         password={password}
         onPasswordChange={handlePasswordChange}
         passwordProtection={passwordProtection}

@@ -89,31 +89,18 @@ export function AiChatPanel({
 
   return (
     <div className="flex h-full flex-col bg-background">
-      {/* Header */}
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-border/70 px-4 py-3.5">
-        <span className="gradient-ai flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-sm">
-          <Sparkles className="h-4 w-4" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold leading-tight text-foreground">Create with AI</p>
-          <p className="text-2xs leading-tight text-muted-foreground">
-            Describe your page — watch it build itself
-          </p>
-        </div>
-      </div>
-
       {/* Messages */}
       <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-5 pb-10 text-center">
-            <span className="gradient-ai flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md">
+            <span className="gradient-ai flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-ai-cta">
               <Sparkles className="h-5 w-5" />
             </span>
-            <div className="space-y-1">
-              <p className="text-lg font-semibold text-foreground">
+            <div className="space-y-1.5">
+              <p className="font-display text-title text-foreground">
                 What would you like to build?
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-small text-muted-foreground">
                 Start with a prompt, or pick an idea below.
               </p>
             </div>
@@ -227,7 +214,7 @@ export function AiChatPanel({
 
       {/* Input */}
       <div className="shrink-0 border-t border-border/70 p-3">
-        <div className="rounded-2xl border border-border bg-white shadow-sm transition-shadow focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-ring/40">
+        <div className="rounded-2xl border border-border bg-card shadow-elevation-1 transition-shadow focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-ring/40">
           <textarea
             ref={inputRef}
             value={input}

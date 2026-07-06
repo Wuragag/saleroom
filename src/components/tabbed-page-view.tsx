@@ -77,7 +77,7 @@ export function TabbedPageView({
           className="flex items-center gap-1.5 text-sm font-medium transition-all"
           style={{
             color: accentColor,
-            fontFamily: "var(--font-syne, var(--font-montserrat), sans-serif)",
+            fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
           }}
         >
           <ExternalLink className="h-3.5 w-3.5 opacity-60 flex-shrink-0" />
@@ -118,11 +118,14 @@ export function TabbedPageView({
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-all w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="text-left px-3 py-2.5 text-sm rounded-lg transition-all w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{
                     fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
-                    color: isActive ? accentColor : "var(--pub-body-color)",
-                    background: isActive ? `${accentColor}18` : "transparent",
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive
+                      ? "var(--pub-heading-color)"
+                      : "var(--pub-body-color)",
+                    background: isActive ? "var(--pub-surface)" : "transparent",
                   }}
                 >
                   {tab.name}
@@ -188,28 +191,21 @@ export function TabbedPageView({
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className="relative flex-shrink-0 px-4 py-3.5 text-sm font-medium transition-colors whitespace-nowrap rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="relative flex-shrink-0 px-1 mr-6 py-4 text-[0.9375rem] transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 style={{
                   fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
+                  fontWeight: isActive ? 600 : 500,
                   color: isActive
                     ? "var(--pub-heading-color)"
                     : "var(--pub-body-color)",
                 }}
               >
-                {/* Active background pill */}
-                {isActive && (
-                  <span
-                    className="absolute inset-x-1.5 top-1.5 bottom-1.5 rounded-lg"
-                    style={{ background: `${accentColor}14` }}
-                    aria-hidden="true"
-                  />
-                )}
                 <span className="relative z-10">{tab.name}</span>
-                {/* Active underline */}
+                {/* Prominent active underline (overlaps the bar hairline) */}
                 {isActive && (
                   <span
-                    className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full"
-                    style={{ background: accentColor }}
+                    className="absolute -bottom-px left-0 right-0 h-[2px] rounded-full"
+                    style={{ background: "var(--pub-heading-color)" }}
                     aria-hidden="true"
                   />
                 )}

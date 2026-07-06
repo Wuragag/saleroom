@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Sparkles, MessageSquare, FileText } from "lucide-react";
+import { Sparkles, MessageSquare, FileText, Layers, Palette } from "lucide-react";
 import type { JSONContent } from "@tiptap/core";
 import {
   TiptapEditor,
   type AiEditorBridge,
+  type EditorPanelState,
 } from "@/components/editor/tiptap-editor";
 import {
   AiChatPanel,
   type ChatMessage,
   type ProgressStep,
 } from "./ai-chat-panel";
+import { StructurePanel } from "./structure-panel";
+import { StylePanel } from "@/components/editor/style-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { PageData } from "@/types";
@@ -50,6 +53,15 @@ async function waitForBridge(
 const docIsEmpty = (c: JSONContent | null) =>
   !c?.content?.length ||
   c.content.every((n) => n.type === "paragraph" && !n.content?.length);
+
+/** Placeholder for the Structure/Design tabs before a page exists. */
+function PanelHint({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center px-8 text-center">
+      <p className="text-small text-muted-foreground">{label}</p>
+    </div>
+  );
+}
 
 /** Does any built doc contain a ctaButton node? */
 function hasCta(docs: (JSONContent | null)[]): boolean {
@@ -102,7 +114,7 @@ function PageBuildingSkeleton() {
   return (
     <div className="absolute inset-0 z-10 overflow-hidden bg-background">
       <div className="mx-auto max-w-[720px] px-6 pt-20 pb-16">
-        <div className="mb-10 flex items-center gap-2.5 rounded-full border border-border/70 bg-white/70 px-4 py-2 w-fit shadow-sm backdrop-blur">
+        <div className="mb-10 flex items-center gap-2.5 rounded-full border border-border/70 bg-card/70 px-4 py-2 w-fit shadow-elevation-1 backdrop-blur">
           <span className="gradient-ai flex h-5 w-5 items-center justify-center rounded-full text-white">
             <Sparkles className="h-3 w-3" />
           </span>
@@ -151,6 +163,8 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
   const [limitError, setLimitError] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"chat" | "page">("chat");
   const [hasBuilt, setHasBuilt] = useState(!!initialPage);
+  const [panelTab, setPanelTab] = useState<"chat" | "structure" | "design">("chat");
+  const [editorState, setEditorState] = useState<EditorPanelState | null>(null);
   const bridgeRef = useRef<AiEditorBridge | null>(null);
   const pageRef = useRef<PageData | null>(initialPage);
 
@@ -641,15 +655,112 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
           mobileView === "chat" ? "flex" : "hidden"
         )}
       >
-        <AiChatPanel
-          messages={messages}
-          onSend={sendMessage}
-          generating={generating}
-          generatingLabel={generatingLabel}
-          limitError={limitError}
-          onClearLimitError={() => setLimitError(null)}
-          hasPage={!!page}
-        />
+        {/* Shared panel header */}
+        <div className="flex shrink-0 items-center gap-2.5 px-4 pb-3 pt-4">
+          <span className="gradient-ai flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-elevation-1">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight text-foreground">
+              Create with AI
+            </p>
+            <p className="text-2xs leading-tight text-muted-foreground">
+              Describe your page — watch it build
+            </p>
+          </div>
+        </div>
+
+        {/* Pill tab switcher */}
+        <div className="shrink-0 px-4 pb-3">
+          <div className="flex items-center gap-1 rounded-full border border-border bg-muted/50 p-1">
+            {(
+              [
+                { key: "chat", label: "Chat", Icon: MessageSquare },
+                { key: "structure", label: "Structure", Icon: Layers },
+                { key: "design", label: "Design", Icon: Palette },
+              ] as const
+            ).map(({ key, label, Icon }) => {
+              const disabled = key !== "chat" && !editorState;
+              return (
+                <button
+                  key={key}
+                  onClick={() => !disabled && setPanelTab(key)}
+                  disabled={disabled}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40",
+                    panelTab === key
+                      ? "bg-card text-foreground shadow-elevation-1"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Active panel */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {/* Chat stays mounted so its scroll + state survive tab switches */}
+          <div
+            className={cn(
+              "min-h-0 flex-1 flex-col",
+              panelTab === "chat" ? "flex" : "hidden"
+            )}
+          >
+            <AiChatPanel
+              messages={messages}
+              onSend={sendMessage}
+              generating={generating}
+              generatingLabel={generatingLabel}
+              limitError={limitError}
+              onClearLimitError={() => setLimitError(null)}
+              hasPage={!!page}
+            />
+          </div>
+
+          {panelTab === "structure" &&
+            (editorState ? (
+              <StructurePanel
+                tabs={editorState.tabs}
+                activeTabId={editorState.activeTabId}
+                onSelect={(id) => bridgeRef.current?.activateTab(id)}
+                onReorder={(ids) => {
+                  void bridgeRef.current?.reorderTabs(ids);
+                }}
+                onRename={(id, name) => {
+                  void bridgeRef.current?.renameTab(id, name);
+                }}
+                onDelete={(id) => {
+                  void bridgeRef.current?.deleteTab(id);
+                }}
+                onAdd={() => {
+                  void bridgeRef.current?.createTab(
+                    `Section ${editorState.tabs.length + 1}`
+                  );
+                }}
+              />
+            ) : (
+              <PanelHint label="Start building to organize sections here." />
+            ))}
+
+          {panelTab === "design" &&
+            (editorState ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <StylePanel
+                  style={editorState.style}
+                  onChange={(patch) => bridgeRef.current?.setStyle(patch)}
+                  password={editorState.password}
+                  onPasswordChange={(v) => bridgeRef.current?.setPagePassword(v)}
+                  passwordProtection={editorState.passwordProtection}
+                />
+              </div>
+            ) : (
+              <PanelHint label="Start building to style your page here." />
+            ))}
+        </div>
       </aside>
 
       {/* Live editor */}
@@ -666,6 +777,8 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
               isCreator
               aiBridgeRef={bridgeRef}
               aiBusy={generating}
+              onEditorStateChange={setEditorState}
+              hideDesign
             />
           ) : (
             !buildingFirstPlan && (
@@ -692,7 +805,7 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
             keep the pill out of the way at the top) */}
         {generating && !buildingFirstPlan && (
           <div className="absolute inset-0 z-20 cursor-not-allowed" aria-hidden="true">
-            <div className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-white px-3.5 py-1.5 shadow-md">
+            <div className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 shadow-elevation-2">
               <span className="gradient-ai flex h-4 w-4 items-center justify-center rounded-full text-white">
                 <Sparkles className="h-2.5 w-2.5" />
               </span>

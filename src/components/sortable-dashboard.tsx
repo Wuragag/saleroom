@@ -274,7 +274,7 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
+              {s === "all" ? "All" : s === "published" ? "Live" : "Drafts"}
             </button>
           ))}
         </div>
@@ -471,7 +471,7 @@ export function SortableDashboard({ pages: initialPages, analyticsMap }: Sortabl
 
       {/* ── Floating bulk bar ─────────────────────────────────────────── */}
       {selected.size > 0 && view === "list" && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border bg-card shadow-xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border bg-card shadow-elevation-3">
           <span className="text-sm font-medium">{selected.size} selected</span>
           <div className="h-4 w-px bg-border" />
           <Button variant="destructive" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setShowBulkDelete(true)}>

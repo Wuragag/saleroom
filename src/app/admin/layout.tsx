@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 
 export default async function AdminLayout({
   children,
@@ -12,10 +12,5 @@ export default async function AdminLayout({
     redirect("/");
   }
 
-  return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      {children}
-    </main>
-  );
+  return <AppShell>{children}</AppShell>;
 }

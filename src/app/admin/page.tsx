@@ -23,7 +23,7 @@ function AdminContent() {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
-    <PageContainer size="lg">
+    <PageContainer size="lg" className="p-0">
       {/* Heading */}
       <PageHeader
         title="Admin Dashboard"

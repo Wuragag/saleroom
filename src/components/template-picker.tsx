@@ -151,12 +151,12 @@ export function TemplatePicker({
         className="sm:max-w-4xl max-h-[88vh] flex flex-col gap-0 overflow-hidden p-0"
       >
         {/* ── Header ── */}
-        <DialogHeader className="px-6 py-4 border-b border-border shrink-0 text-left">
-          <DialogTitle className="text-lg font-semibold text-foreground">
-            Choose a Template
+        <DialogHeader className="px-6 py-5 border-b border-border shrink-0 text-left">
+          <DialogTitle className="font-display text-title text-foreground">
+            Choose a template
           </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground mt-0.5">
-            Start with a pre-built page or create from scratch
+          <DialogDescription className="text-small text-muted-foreground mt-0.5">
+            Start from a proven layout, or begin with a blank page.
           </DialogDescription>
         </DialogHeader>
 
@@ -174,10 +174,10 @@ export function TemplatePicker({
                   setSelectedCategory(cat.value);
                   setSelectedTemplateId(null);
                 }}
-                className={`w-full text-sm text-left px-3 py-1.5 rounded-md transition-colors ${
+                className={`w-full text-small text-left px-3 py-2 rounded-lg transition-colors ${
                   selectedCategory === cat.value
                     ? "bg-primary text-primary-foreground font-medium"
-                    : "text-foreground hover:bg-muted"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {cat.label}
@@ -188,10 +188,10 @@ export function TemplatePicker({
             <div className="mt-auto pt-3 border-t border-border">
               <button
                 onClick={onCreateBlank}
-                className="w-full text-sm text-left px-3 py-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
+                className="w-full text-small text-left px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
               >
                 <FileText className="h-3.5 w-3.5 shrink-0" />
-                Blank Page
+                Blank page
               </button>
             </div>
           </aside>
@@ -235,25 +235,20 @@ export function TemplatePicker({
 
         {/* ── Footer ── */}
         <div className="px-6 py-4 border-t border-border flex items-center justify-between shrink-0">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-2xs text-tertiary">
             {selectedTemplateId
-              ? `"${templates.find((t) => t.id === selectedTemplateId)?.name}" selected · double-click or press Enter to open`
-              : "Select a template to continue, or use ↑ ↓ arrow keys"}
+              ? `"${templates.find((t) => t.id === selectedTemplateId)?.name}" selected · press Enter to open`
+              : "Select a template, or use ↑ ↓ arrow keys"}
           </p>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="rounded-lg"
-            >
+            <Button variant="outline" size="sm" onClick={onClose}>
               Cancel
             </Button>
             <Button
               size="sm"
               onClick={handleUseSelected}
               disabled={!selectedTemplateId || isCreating}
-              className="rounded-lg gap-2 min-w-[160px]"
+              className="gap-2 min-w-[150px]"
             >
               {isCreating ? (
                 <>
@@ -261,7 +256,7 @@ export function TemplatePicker({
                   Creating page…
                 </>
               ) : (
-                "Use Selected Template"
+                "Use this template"
               )}
             </Button>
           </div>
@@ -308,22 +303,24 @@ function TemplateCard({
       onKeyDown={(e) => {
         if (e.key === "Enter") onUse();
       }}
-      className={`p-4 rounded-xl border-2 cursor-pointer transition-all select-none ${
+      className={`p-4 rounded-xl border cursor-pointer transition-all select-none ${
         isSelected
-          ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-          : "border-border hover:border-primary/40 hover:shadow-sm bg-card"
+          ? "border-foreground bg-muted shadow-elevation-1"
+          : "border-border hover:border-border-strong hover:shadow-elevation-1 bg-card"
       }`}
     >
-      {/* Icon */}
-      <div className="text-4xl mb-2.5 leading-none">{template.icon}</div>
+      {/* Monochrome icon tile */}
+      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-2xl leading-none grayscale">
+        {template.icon}
+      </div>
 
       {/* Name */}
-      <h3 className="font-semibold text-foreground text-sm mb-1">
+      <h3 className="font-semibold text-foreground text-small mb-1">
         {template.name}
       </h3>
 
       {/* Description */}
-      <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
+      <p className="text-2xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
         {template.description}
       </p>
 

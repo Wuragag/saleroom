@@ -79,8 +79,12 @@ export interface PageStyle {
 }
 
 export const DEFAULT_PAGE_STYLE: PageStyle = {
-  font: "inter",
-  accentColor: "#64748b",
+  // Editorial baseline: DM Sans (the whole page follows the selected font via
+  // --pub-font-body) + ink accent on a clean white canvas. Applied explicitly
+  // at page creation (api/pages, api/pages/from-template) — the DB column
+  // defaults predate the redesign.
+  font: "dmsans",
+  accentColor: "#17171a",
   layoutWidth: "default",
   background: "white",
   tabPlacement: "top",

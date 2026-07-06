@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { SubmissionsTable } from "@/components/submissions-table";
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -44,16 +44,15 @@ export default async function SubmissionsPage() {
   }));
 
   return (
-    <main className="min-h-screen bg-background">
-      <AppNav />
-      <PageContainer size="md">
+    <AppShell>
+      <PageContainer size="lg" className="p-0">
         <PageHeader
-          title="Form Submissions"
+          title="Submissions"
           description="View and export form submissions from your pages"
           className="mb-6"
         />
         <SubmissionsTable submissions={serialized} pages={pages} />
       </PageContainer>
-    </main>
+    </AppShell>
   );
 }

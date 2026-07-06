@@ -13,7 +13,7 @@ export function SectionLabel({
   return (
     <p
       className={cn(
-        "text-3xs font-semibold uppercase tracking-widest text-muted-foreground",
+        "text-caption font-semibold uppercase text-muted-foreground",
         className
       )}
       {...props}
