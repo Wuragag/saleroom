@@ -15,6 +15,7 @@ import {
 import { X, Send, Copy, Check, Loader2, Trash2, ExternalLink, Bell, Video } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { SESSION_REPLAY_ENABLED } from "@/lib/feature-flags";
 import type { PageContactRow } from "@/types";
 
 interface ShareModalProps {
@@ -396,7 +397,7 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
         )}
 
         {/* Session replay toggle */}
-        {recordingEnabled !== null && (
+        {SESSION_REPLAY_ENABLED && recordingEnabled !== null && (
           <SettingToggle
             checked={recordingEnabled}
             icon={Video}
