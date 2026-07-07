@@ -91,6 +91,14 @@ export async function POST(request: Request) {
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
+      // Keep the client message non-technical; log the actual cause so
+      // whoever owns this server (dev or prod) can fix it without digging.
+      // Env files are only read at process startup — a common gotcha is
+      // adding the key after the server is already running.
+      console.error(
+        "Document import unavailable: ANTHROPIC_API_KEY is not set in this server's environment. " +
+          "If you just added it to .env/.env.local, restart the server to pick it up."
+      );
       return NextResponse.json(
         { error: "AI features are not configured. Please contact support." },
         { status: 503 }
