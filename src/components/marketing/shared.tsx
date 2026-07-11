@@ -114,8 +114,8 @@ export function CTABanner({
         className="sr-cta-section"
         style={{
           padding: "120px 0",
-          background: "var(--db-text)",
-          color: "#FFFFFF",
+          background: "var(--db-accent)",
+          color: "var(--db-on-accent)",
         }}
       >
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
@@ -142,7 +142,7 @@ export function CTABanner({
             style={{
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 17,
-              color: "rgba(255,255,255,0.6)",
+              color: "color-mix(in srgb, var(--db-on-accent) 60%, transparent)",
               lineHeight: 1.7,
               marginBottom: 40,
               maxWidth: 480,
@@ -159,8 +159,8 @@ export function CTABanner({
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 15,
               fontWeight: 500,
-              background: "#FFFFFF",
-              color: "var(--db-text)",
+              background: "var(--db-on-accent)",
+              color: "var(--db-accent)",
               borderRadius: 100,
               padding: "14px 32px",
               textDecoration: "none",
