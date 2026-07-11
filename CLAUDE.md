@@ -47,7 +47,9 @@ Env vars in use (all secrets, kept out of git): `DATABASE_URL`, `DIRECT_URL`
 `NEXTAUTH_URL`, `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`,
 `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, `STRIPE_TEAM_PRICE_ID`,
 `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, `UPSTASH_REDIS_REST_URL`,
-`UPSTASH_REDIS_REST_TOKEN`.
+`UPSTASH_REDIS_REST_TOKEN`. Optional external-analytics forwarding (all unset ⇒
+disabled): `ANALYTICS_PROVIDER` (`posthog`|`mixpanel`), `POSTHOG_KEY`,
+`POSTHOG_HOST` (default `https://us.i.posthog.com`), `MIXPANEL_TOKEN`.
 
 ## Architecture
 
@@ -124,6 +126,12 @@ Uploads (PDF/DOCX/PPTX, ≤10 MB) are guarded against decompression bombs.
   `SessionRecording`) — identity-aware engagement, per-tab dwell, scroll depth,
   engagement scoring/intent (`engagement-score.ts`, `section-engagement.ts`), and
   opt-in rrweb session replay stored in Postgres. Access follows page visibility.
+- **External forwarding** (`src/lib/analytics-forwarder.ts`) — optional, provider-
+  agnostic mirror of selected events (product-usage, buyer, raw views) to PostHog
+  or Mixpanel. Server-side only (no client SDK / no CSP change), fired via
+  Next's `after()` off the response path, and a silent no-op unless the
+  `ANALYTICS_PROVIDER` env is set. Postgres stays the source of truth. The pure
+  request builders are unit-tested; add new mirrored events there, not inline.
 
 ### Shared library (`src/lib/`)
 Pure, testable business logic lives here (engagement scoring, visible-time,

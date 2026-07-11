@@ -8,10 +8,11 @@
  * }
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
+import { trackEvents } from "@/lib/analytics-forwarder";
 
 // Rate limit: 30 event batches per minute per IP
 const limiter = rateLimit({ limit: 30, window: "60s" });
@@ -54,14 +55,13 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ error: "Too many events" }, { status: 400 });
     }
 
-    // Filter and sanitize events
-    const validEvents = events
-      .filter((e) => ALLOWED_TYPES.has(e.type))
-      .map((e) => ({
-        sessionId,
-        type: e.type,
-        metadata: JSON.stringify(e.metadata ?? {}),
-      }));
+    // Filter to allowed types once; reuse for both the DB write and forwarding.
+    const allowed = events.filter((e) => ALLOWED_TYPES.has(e.type));
+    const validEvents = allowed.map((e) => ({
+      sessionId,
+      type: e.type,
+      metadata: JSON.stringify(e.metadata ?? {}),
+    }));
 
     if (validEvents.length === 0) {
       return NextResponse.json({ inserted: 0 });
@@ -70,10 +70,41 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     try {
       // FK constraint on sessionId validates the session exists — no separate lookup needed
       await prisma.buyerEvent.createMany({ data: validEvents });
-      return NextResponse.json({ inserted: validEvents.length });
     } catch {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
+
+    // Mirror to product analytics, keyed by the session's visitor hash so buyer
+    // events stitch onto the same profile as the session. The lookup + send run
+    // off the response path; no-op unless a provider is configured.
+    after(async () => {
+      try {
+        const session = await prisma.buyerSession.findUnique({
+          where: { id: sessionId },
+          select: {
+            pageId: true,
+            visitor: { select: { visitorHash: true, contactId: true } },
+          },
+        });
+        const visitorHash = session?.visitor?.visitorHash;
+        if (!visitorHash) return;
+        await trackEvents(
+          allowed.map((e) => ({
+            distinctId: visitorHash,
+            event: `buyer_${e.type.toLowerCase()}`,
+            properties: {
+              pageId: session.pageId,
+              contactId: session.visitor?.contactId ?? null,
+              ...(e.metadata ?? {}),
+            },
+          }))
+        );
+      } catch (err) {
+        console.error("[buyer/events forward]", err);
+      }
+    });
+
+    return NextResponse.json({ inserted: validEvents.length });
   } catch (err) {
     console.error("[buyer/events POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withErrorHandler } from "@/lib/api-error";
 import { checkPageAccess } from "@/lib/team-auth";
+import { trackEvent } from "@/lib/analytics-forwarder";
 
 export const POST = withErrorHandler(async (
   _req: Request,
@@ -31,6 +32,17 @@ export const POST = withErrorHandler(async (
       meta: JSON.stringify({ source: "copy_link" }),
     },
   });
+
+  const actorId = access.session?.user?.id;
+  if (actorId) {
+    after(() =>
+      trackEvent({
+        distinctId: actorId,
+        event: "page_shared",
+        properties: { pageId: id, source: "copy_link" },
+      })
+    );
+  }
 
   return NextResponse.json({ ok: true });
 });

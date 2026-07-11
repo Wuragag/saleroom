@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canSetPassword } from "@/lib/plan-limits";
 import { withErrorHandler } from "@/lib/api-error";
+import { trackEvent } from "@/lib/analytics-forwarder";
 import bcrypt from "bcryptjs";
 import slugify from "slugify";
 
@@ -131,6 +132,22 @@ export const PUT = withErrorHandler(async (
   // Bust ISR cache so buyers see the latest version immediately
   if (page.slug) {
     revalidatePath(`/p/${page.slug}`);
+  }
+
+  // Mirror the publish moment (false→true only, so re-saves of an already-live
+  // page don't re-fire) to product analytics, off the response path.
+  const becamePublished = body.published === true && access.page?.published === false;
+  if (becamePublished) {
+    const actorId = access.session?.user?.id;
+    if (actorId) {
+      after(() =>
+        trackEvent({
+          distinctId: actorId,
+          event: "page_published",
+          properties: { pageId: id, teamId: page.teamId, title: page.title },
+        })
+      );
+    }
   }
 
   // Strip password hash from response

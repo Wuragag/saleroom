@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 import { isBotUserAgent } from "@/lib/bot-detect";
+import { trackEvent } from "@/lib/analytics-forwarder";
 
 const limiter = rateLimit({ limit: 20, window: "60s" });
 
@@ -37,5 +38,18 @@ export const POST = withErrorHandler(async (req: Request) => {
   }
 
   const view = await prisma.pageView.create({ data: { pageId } });
+
+  // Anonymous page view — no visitor identity at this layer, so mark it
+  // anonymous (no person profile) and key it to the view id. Off the response
+  // path; no-op unless a provider is configured.
+  after(() =>
+    trackEvent({
+      distinctId: `view:${view.id}`,
+      event: "page_view",
+      anonymous: true,
+      properties: { pageId },
+    })
+  );
+
   return NextResponse.json({ viewId: view.id });
 });

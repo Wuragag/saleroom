@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
 import { DEFAULT_PAGE_STYLE } from "@/lib/page-styles";
@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { assertCanCreatePageTx, withResourceLock, pageLockKey } from "@/lib/plan-limits";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
+import { trackEvent } from "@/lib/analytics-forwarder";
 import slugify from "slugify";
 
 function generateSlug(title: string): string {
@@ -77,6 +78,17 @@ export const POST = withErrorHandler(async (request: Request) => {
         include: { tabs: { orderBy: { order: "asc" } } },
       });
     }
+  );
+
+  // Mirror to the product-analytics provider (no-op unless configured), off the
+  // response path so it can't add latency or fail the create.
+  const creatorId = session.user.id;
+  after(() =>
+    trackEvent({
+      distinctId: creatorId,
+      event: "page_created",
+      properties: { pageId: page.id, teamId, title: page.title },
+    })
   );
 
   return NextResponse.json(page, { status: 201 });

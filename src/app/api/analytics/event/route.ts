@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 import { isBotUserAgent } from "@/lib/bot-detect";
+import { trackEvent } from "@/lib/analytics-forwarder";
 
 const limiter = rateLimit({ limit: 30, window: "60s" });
 
@@ -61,5 +62,18 @@ export const POST = withErrorHandler(async (req: Request) => {
   await prisma.pageEvent.create({
     data: { pageId, type, meta: safeMeta },
   });
+
+  // Anonymous page interaction — no visitor identity at this layer. Mark it
+  // anonymous (no person profile) and key it to the page. `safeMeta` is already
+  // PII-stripped above. Off the response path; no-op unless configured.
+  after(() =>
+    trackEvent({
+      distinctId: `page:${pageId}`,
+      event: `page_${type}`,
+      anonymous: true,
+      properties: { pageId, type, meta: safeMeta },
+    })
+  );
+
   return NextResponse.json({ ok: true });
 });

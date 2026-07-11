@@ -17,6 +17,7 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 import { isBotUserAgent } from "@/lib/bot-detect";
 import { sendViewNotificationEmail } from "@/lib/email";
+import { trackEvent } from "@/lib/analytics-forwarder";
 
 // 30-minute inactivity window (ms)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -188,6 +189,21 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         }
       });
     }
+
+    // Mirror the (pseudonymous) buyer session to product analytics, keyed by
+    // the visitor hash so returning buyers stitch into one profile. Runs off
+    // the response path; no-op unless a provider is configured.
+    after(() =>
+      trackEvent({
+        distinctId: visitorHash,
+        event: result.isNew ? "buyer_session_started" : "buyer_session_resumed",
+        properties: {
+          pageId,
+          contactId,
+          isReturn: result.session.isReturn,
+        },
+      })
+    );
 
     return NextResponse.json({
       sessionId: result.session.id,
