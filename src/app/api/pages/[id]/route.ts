@@ -97,12 +97,19 @@ export const PUT = withErrorHandler(async (
   if (body.recordingEnabled !== undefined) updateData.recordingEnabled = !!body.recordingEnabled;
   if (body.slug !== undefined) updateData.slug = body.slug;
   if (body.font !== undefined) updateData.font = body.font;
+  if (body.headingFont !== undefined) updateData.headingFont = body.headingFont;
   if (body.accentColor !== undefined) updateData.accentColor = body.accentColor;
   if (body.layoutWidth !== undefined) updateData.layoutWidth = body.layoutWidth;
   if (body.background !== undefined) updateData.background = body.background;
   if (body.tabPlacement !== undefined) updateData.tabPlacement = body.tabPlacement;
   if (body.logoUrl !== undefined) updateData.logoUrl = body.logoUrl;
   if (body.coverImage !== undefined) updateData.coverImage = body.coverImage;
+  if (body.coverLayout !== undefined) updateData.coverLayout = body.coverLayout;
+  if (body.coverHeight !== undefined) updateData.coverHeight = body.coverHeight;
+  if (body.eyebrow !== undefined) updateData.eyebrow = String(body.eyebrow).slice(0, 80);
+  if (body.subtitle !== undefined) updateData.subtitle = String(body.subtitle).slice(0, 220);
+  if (body.themeRadius !== undefined) updateData.themeRadius = body.themeRadius;
+  if (body.themeDepth !== undefined) updateData.themeDepth = body.themeDepth;
   if (body.links !== undefined) updateData.links = body.links;
   if (body.password !== undefined) {
     // ── Plan limit check: password protection ──

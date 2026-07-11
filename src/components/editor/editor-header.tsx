@@ -91,6 +91,8 @@ interface EditorHeaderProps {
   password?: string;
   onPasswordChange?: (value: string) => void;
   passwordProtection?: boolean;
+  /** Whether the page has a cover image — enables the Cover design controls */
+  hasCover?: boolean;
   /** When the AI panel hosts its own Design tab, hide this header popover. */
   hideDesign?: boolean;
 }
@@ -117,6 +119,7 @@ export function EditorHeader({
   password,
   onPasswordChange,
   passwordProtection,
+  hasCover,
   hideDesign,
 }: EditorHeaderProps) {
   const router = useRouter();
@@ -357,6 +360,7 @@ export function EditorHeader({
                       password={password ?? ""}
                       onPasswordChange={onPasswordChange ?? (() => {})}
                       passwordProtection={passwordProtection}
+                      hasCover={hasCover}
                     />
                   </PopoverContent>
                 </Popover>

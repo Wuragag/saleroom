@@ -5,7 +5,19 @@ import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground } from "@/lib/pub-theme";
-import { PageShell, PUB_TITLE_STYLE, PUB_LOGO_STYLE } from "@/components/page-shell";
+import {
+  PageShell,
+  PUB_TITLE_STYLE,
+  PUB_LOGO_STYLE,
+  PUB_EYEBROW_STYLE,
+  PUB_SUBTITLE_STYLE,
+} from "@/components/page-shell";
+import {
+  PubCover,
+  PUB_OVERLAY_TEXT_STYLE,
+  PUB_OVERLAY_SUBTITLE_STYLE,
+  PUB_OVERLAY_EYEBROW_STYLE,
+} from "@/components/pub-cover";
 import { PublishedFormHydrator } from "@/components/published-form";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
@@ -51,7 +63,34 @@ export default async function PreviewPage({
     accentColor,
     background: page.background,
     font: page.font,
+    headingFont: page.headingFont,
+    themeRadius: page.themeRadius,
+    themeDepth: page.themeDepth,
   });
+
+  // Hero elements — rendered on the cover in overlay layout, in the column otherwise
+  const overlayHero = Boolean(page.coverImage) && page.coverLayout === "overlay";
+  const heroLogo = page.logoUrl ? (
+    <Image src={page.logoUrl} alt="Logo" width={180} height={36} style={PUB_LOGO_STYLE} />
+  ) : undefined;
+  const heroEyebrow = page.eyebrow ? (
+    <span style={{ ...PUB_EYEBROW_STYLE, ...(overlayHero ? PUB_OVERLAY_EYEBROW_STYLE : {}) }}>
+      {page.eyebrow}
+    </span>
+  ) : undefined;
+  const heroTitle = (
+    <h1
+      className="pub-title"
+      style={{ ...PUB_TITLE_STYLE, ...(overlayHero ? PUB_OVERLAY_TEXT_STYLE : {}) }}
+    >
+      {page.title}
+    </h1>
+  );
+  const heroSubtitle = page.subtitle ? (
+    <p style={{ ...PUB_SUBTITLE_STYLE, ...(overlayHero ? PUB_OVERLAY_SUBTITLE_STYLE : {}) }}>
+      {page.subtitle}
+    </p>
+  ) : undefined;
 
   const previewBanner = (
     <div
@@ -112,22 +151,31 @@ export default async function PreviewPage({
       isDark={isDark}
       maxWidth={maxWidth}
       banner={previewBanner}
-      logo={
-        page.logoUrl ? (
-          <Image
-            src={page.logoUrl}
-            alt="Logo"
-            width={180}
-            height={36}
-            style={PUB_LOGO_STYLE}
+      paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
+      coverImage={
+        page.coverImage ? (
+          <PubCover
+            src={page.coverImage}
+            coverHeight={page.coverHeight}
+            coverLayout={page.coverLayout}
+            maxWidth={maxWidth}
+            overlayContent={
+              overlayHero ? (
+                <>
+                  {heroLogo}
+                  {heroEyebrow}
+                  {heroTitle}
+                  {heroSubtitle}
+                </>
+              ) : undefined
+            }
           />
         ) : undefined
       }
-      title={
-        <h1 className="pub-title" style={PUB_TITLE_STYLE}>
-          {page.title}
-        </h1>
-      }
+      logo={overlayHero ? undefined : heroLogo}
+      eyebrow={overlayHero ? undefined : heroEyebrow}
+      title={overlayHero ? undefined : heroTitle}
+      subtitle={overlayHero ? undefined : heroSubtitle}
       trailing={<PublishedFormHydrator pageId={page.id} accentColor={accentColor} />}
     >
       <TabbedPageView

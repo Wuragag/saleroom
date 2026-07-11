@@ -6,7 +6,19 @@ import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground } from "@/lib/pub-theme";
-import { PageShell, PUB_TITLE_STYLE, PUB_LOGO_STYLE } from "@/components/page-shell";
+import {
+  PageShell,
+  PUB_TITLE_STYLE,
+  PUB_LOGO_STYLE,
+  PUB_EYEBROW_STYLE,
+  PUB_SUBTITLE_STYLE,
+} from "@/components/page-shell";
+import {
+  PubCover,
+  PUB_OVERLAY_TEXT_STYLE,
+  PUB_OVERLAY_SUBTITLE_STYLE,
+  PUB_OVERLAY_EYEBROW_STYLE,
+} from "@/components/pub-cover";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
@@ -102,7 +114,34 @@ export default async function PublishedPage({
     accentColor,
     background: page.background,
     font: page.font,
+    headingFont: page.headingFont,
+    themeRadius: page.themeRadius,
+    themeDepth: page.themeDepth,
   });
+
+  // Hero elements — rendered on the cover in overlay layout, in the column otherwise
+  const overlayHero = Boolean(page.coverImage) && page.coverLayout === "overlay";
+  const heroLogo = page.logoUrl ? (
+    <Image src={page.logoUrl} alt="Logo" width={180} height={36} style={PUB_LOGO_STYLE} />
+  ) : undefined;
+  const heroEyebrow = page.eyebrow ? (
+    <span style={{ ...PUB_EYEBROW_STYLE, ...(overlayHero ? PUB_OVERLAY_EYEBROW_STYLE : {}) }}>
+      {page.eyebrow}
+    </span>
+  ) : undefined;
+  const heroTitle = (
+    <h1
+      className="pub-title"
+      style={{ ...PUB_TITLE_STYLE, ...(overlayHero ? PUB_OVERLAY_TEXT_STYLE : {}) }}
+    >
+      {page.title}
+    </h1>
+  );
+  const heroSubtitle = page.subtitle ? (
+    <p style={{ ...PUB_SUBTITLE_STYLE, ...(overlayHero ? PUB_OVERLAY_SUBTITLE_STYLE : {}) }}>
+      {page.subtitle}
+    </p>
+  ) : undefined;
 
   return (
     <PageShell
@@ -112,19 +151,25 @@ export default async function PublishedPage({
       accentColor={accentColor}
       isDark={isDark}
       maxWidth={maxWidth}
-      paddingTop={page.coverImage ? "40px" : "72px"}
+      paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
       coverImage={
         page.coverImage ? (
-          <div className="relative z-10 w-full" style={{ height: "300px" }}>
-            <Image
-              src={page.coverImage}
-              alt=""
-              fill
-              sizes="100vw"
-              priority
-              style={{ objectFit: "cover" }}
-            />
-          </div>
+          <PubCover
+            src={page.coverImage}
+            coverHeight={page.coverHeight}
+            coverLayout={page.coverLayout}
+            maxWidth={maxWidth}
+            overlayContent={
+              overlayHero ? (
+                <>
+                  {heroLogo}
+                  {heroEyebrow}
+                  {heroTitle}
+                  {heroSubtitle}
+                </>
+              ) : undefined
+            }
+          />
         ) : undefined
       }
       header={
@@ -190,22 +235,10 @@ export default async function PublishedPage({
           </div>
         ) : undefined
       }
-      logo={
-        page.logoUrl ? (
-          <Image
-            src={page.logoUrl}
-            alt="Logo"
-            width={180}
-            height={36}
-            style={PUB_LOGO_STYLE}
-          />
-        ) : undefined
-      }
-      title={
-        <h1 className="pub-title" style={PUB_TITLE_STYLE}>
-          {page.title}
-        </h1>
-      }
+      logo={overlayHero ? undefined : heroLogo}
+      eyebrow={overlayHero ? undefined : heroEyebrow}
+      title={overlayHero ? undefined : heroTitle}
+      subtitle={overlayHero ? undefined : heroSubtitle}
       trailing={
         <>
           <AnalyticsTracker pageId={page.id} />

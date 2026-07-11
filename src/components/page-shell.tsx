@@ -19,8 +19,13 @@ interface PageShellProps {
   intro?: ReactNode;
   /** Logo slot, rendered above the title */
   logo?: ReactNode;
-  /** Page title slot (h1.pub-title on published pages, editable in the editor) */
-  title: ReactNode;
+  /** Small uppercase label above the title (hero eyebrow) */
+  eyebrow?: ReactNode;
+  /** Page title slot (h1.pub-title on published pages, editable in the editor).
+   *  Omit when the hero is rendered elsewhere (cover overlay layout). */
+  title?: ReactNode;
+  /** Hero subtitle rendered under the title */
+  subtitle?: ReactNode;
   /** Column top padding — published pages use 40px with a cover, 72px without */
   paddingTop?: string;
   children: ReactNode;
@@ -28,12 +33,14 @@ interface PageShellProps {
   trailing?: ReactNode;
   /** Extra styles merged onto <main> (e.g. --page-accent in the editor) */
   style?: CSSProperties;
+  /** "Powered by" footer badge; hidden for plans with white-label branding */
+  showBranding?: boolean;
 }
 
 /**
  * Shared published-page shell: background, theme CSS vars, gradient depth
- * accents, content column, logo, title and footer. Used by /p/[slug],
- * /preview/[id] and the WYSIWYG editor so all three look identical.
+ * accents, content column, logo, eyebrow, title, subtitle and footer. Used by
+ * /p/[slug], /preview/[id] and the WYSIWYG editor so all three look identical.
  */
 export function PageShell({
   bgHex,
@@ -47,11 +54,14 @@ export function PageShell({
   header,
   intro,
   logo,
+  eyebrow,
   title,
+  subtitle,
   paddingTop = "72px",
   children,
   trailing,
   style,
+  showBranding = true,
 }: PageShellProps) {
   return (
     <main
@@ -66,7 +76,7 @@ export function PageShell({
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: getAccentGradients(accentColor) }}
+        style={{ background: getAccentGradients(accentColor, isDark) }}
       />
 
       {header}
@@ -80,7 +90,17 @@ export function PageShell({
 
         {logo}
 
-        {title}
+        {/* Hero text block: eyebrow → title → subtitle, one consistent gap after.
+            Skipped entirely when the hero lives on the cover (overlay layout). */}
+        {(eyebrow || title || subtitle) && (
+          <div style={{ marginBottom: PUB_HERO_GAP }}>
+            {eyebrow}
+
+            {title}
+
+            {subtitle}
+          </div>
+        )}
 
         {children}
       </div>
@@ -90,19 +110,21 @@ export function PageShell({
         className="relative z-10 py-10 text-center"
         style={{ borderTop: "1px solid var(--pub-header-border)" }}
       >
-        <span
-          className="select-none"
-          style={{
-            fontFamily: "var(--font-dm-sans, sans-serif)",
-            fontSize: "0.6875rem",
-            fontWeight: 500,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--pub-muted-color)",
-          }}
-        >
-          Powered by {APP_NAME}
-        </span>
+        {showBranding && (
+          <span
+            className="select-none"
+            style={{
+              fontFamily: "var(--font-dm-sans, sans-serif)",
+              fontSize: "0.6875rem",
+              fontWeight: 500,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--pub-muted-color)",
+            }}
+          >
+            Powered by {APP_NAME}
+          </span>
+        )}
       </footer>
 
       {trailing}
@@ -112,16 +134,43 @@ export function PageShell({
 
 /** Published page title styles — shared between the h1 and the editor's editable title */
 export const PUB_TITLE_STYLE: CSSProperties = {
-  // Follows the seller's selected page font (Design → Font)
-  fontFamily: "var(--pub-font-body, inherit)",
+  // Heading font when a pairing is set (Design → Typography), else body font
+  fontFamily: "var(--pub-font-heading, var(--pub-font-body, inherit))",
   fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
-  fontWeight: 600,
+  fontWeight: "var(--pub-title-weight, 600)" as CSSProperties["fontWeight"],
   letterSpacing: "-0.025em",
   lineHeight: 1.08,
   color: "var(--pub-heading-color)",
-  marginBottom: "2.75rem",
+  marginBottom: 0,
   marginTop: 0,
 };
+
+/** Hero eyebrow — small uppercase brand label above the title */
+export const PUB_EYEBROW_STYLE: CSSProperties = {
+  fontFamily: "var(--pub-font-body, inherit)",
+  fontSize: "0.8125rem",
+  fontWeight: 600,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--pub-accent-safe, var(--pub-accent))",
+  marginBottom: "1.25rem",
+  display: "block",
+};
+
+/** Hero subtitle under the title */
+export const PUB_SUBTITLE_STYLE: CSSProperties = {
+  fontFamily: "var(--pub-font-body, inherit)",
+  fontSize: "1.1875rem",
+  fontWeight: 400,
+  lineHeight: 1.55,
+  color: "var(--pub-subheading-color)",
+  maxWidth: "36rem",
+  marginTop: "1rem",
+  marginBottom: 0,
+};
+
+/** Gap between the hero text block and the page content */
+export const PUB_HERO_GAP = "2.75rem";
 
 /** Published logo image styles */
 export const PUB_LOGO_STYLE: CSSProperties = {

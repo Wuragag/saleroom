@@ -171,12 +171,19 @@ model Page {
   requireEmail Boolean        @default(false)
   mutualActionPlan MutualActionPlan?
   font          String         @default("inter")
+  headingFont   String         @default("") // "" = follow body font
   accentColor   String         @default("slate")
   layoutWidth   String         @default("default")
   background    String         @default("white")
   tabPlacement  String         @default("top")
   logoUrl       String         @default("")
   coverImage    String         @default("")
+  coverLayout   String         @default("standard") // standard | overlay (title on cover)
+  coverHeight   String         @default("default")  // compact | default | tall
+  eyebrow       String         @default("") // small label above the hero title
+  subtitle      String         @default("") // hero subtitle under the title
+  themeRadius   String         @default("default") // sharp | default | soft
+  themeDepth    String         @default("default") // flat | default | elevated
   links         String         @default("[]")
   password      String?
   tags          String         @default("[]")

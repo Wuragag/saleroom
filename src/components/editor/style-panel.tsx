@@ -5,10 +5,16 @@ import Image from "next/image";
 import { ImagePlus, Lock, X, Zap } from "lucide-react";
 import {
   FONT_OPTIONS,
+  FONT_PAIRINGS,
   BACKGROUND_OPTIONS,
   WIDTH_OPTIONS,
   THEME_PRESETS,
+  RADIUS_OPTIONS,
+  DEPTH_OPTIONS,
+  COVER_HEIGHTS,
+  COVER_LAYOUTS,
   getAccentColor,
+  getFontStyle,
   type PageStyle,
 } from "@/lib/page-styles";
 import { PRESET_COLORS } from "@/lib/color-palettes";
@@ -20,9 +26,11 @@ interface StylePanelProps {
   password: string;
   onPasswordChange: (value: string) => void;
   passwordProtection?: boolean;
+  /** Whether the page currently has a cover image (shows the Cover controls) */
+  hasCover?: boolean;
 }
 
-export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true }: StylePanelProps) {
+export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true, hasCover = false }: StylePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Color picker state
@@ -59,6 +67,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             const bg = BACKGROUND_OPTIONS.find((b) => b.value === preset.background);
             const isActive =
               style.font === preset.font &&
+              style.headingFont === preset.headingFont &&
               getAccentColor(style.accentColor) === preset.accentColor &&
               style.background === preset.background;
             return (
@@ -69,8 +78,11 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
                 onClick={() =>
                   onChange({
                     font: preset.font,
+                    headingFont: preset.headingFont,
                     accentColor: preset.accentColor,
                     background: preset.background,
+                    themeRadius: preset.themeRadius,
+                    themeDepth: preset.themeDepth,
                   })
                 }
                 className={`relative flex flex-col items-center gap-1 py-2 px-1 text-3xs rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
@@ -135,10 +147,41 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         />
       </div>
 
-      {/* Font */}
+      {/* Typography: curated heading/body pairings */}
       <div>
-        <SectionLabel className="mb-1.5">Font</SectionLabel>
-        <div className="grid grid-cols-2 gap-1">
+        <SectionLabel className="mb-1.5">Typography</SectionLabel>
+        <div className="grid grid-cols-2 gap-1 mb-2">
+          {FONT_PAIRINGS.map((pair) => {
+            const isActive = style.font === pair.body && style.headingFont === pair.heading;
+            const headingStyle = getFontStyle(pair.heading || pair.body);
+            return (
+              <button
+                key={pair.id}
+                aria-label={`${pair.label} font pairing`}
+                aria-pressed={isActive}
+                onClick={() => onChange({ font: pair.body, headingFont: pair.heading })}
+                className={`px-2 py-1.5 rounded border transition-colors text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                  isActive
+                    ? "border-foreground bg-accent text-accent-foreground"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                <span className="block text-xs font-semibold truncate" style={headingStyle}>
+                  {pair.label}
+                </span>
+                <span className="block text-3xs text-muted-foreground truncate">
+                  {(FONT_OPTIONS.find((f) => f.value === (pair.heading || pair.body))?.label ?? "") +
+                    " · " +
+                    (FONT_OPTIONS.find((f) => f.value === pair.body)?.label ?? "")}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Body font */}
+        <SectionLabel className="mb-1.5">Body font</SectionLabel>
+        <div className="grid grid-cols-2 gap-1 mb-2">
           {FONT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -156,6 +199,22 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             </button>
           ))}
         </div>
+
+        {/* Heading font */}
+        <SectionLabel className="mb-1.5">Heading font</SectionLabel>
+        <select
+          value={style.headingFont}
+          onChange={(e) => onChange({ headingFont: e.target.value })}
+          aria-label="Heading font"
+          className="w-full px-2 py-1.5 text-xs rounded border border-border bg-card focus:outline-none focus:ring-1 focus:ring-primary/40"
+        >
+          <option value="">Same as body</option>
+          {FONT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Color picker */}
@@ -286,6 +345,96 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
           ))}
         </div>
       </div>
+
+      {/* Corners */}
+      <div>
+        <SectionLabel className="mb-1.5">Corners</SectionLabel>
+        <div className="flex gap-1">
+          {RADIUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              aria-label={`${opt.label} corners`}
+              aria-pressed={style.themeRadius === opt.value}
+              onClick={() => onChange({ themeRadius: opt.value })}
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                style.themeRadius === opt.value
+                  ? "border-foreground bg-accent text-accent-foreground"
+                  : "border-border hover:bg-accent/50"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Depth */}
+      <div>
+        <SectionLabel className="mb-1.5">Depth</SectionLabel>
+        <div className="flex gap-1">
+          {DEPTH_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              aria-label={`${opt.label} depth`}
+              aria-pressed={style.themeDepth === opt.value}
+              onClick={() => onChange({ themeDepth: opt.value })}
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                style.themeDepth === opt.value
+                  ? "border-foreground bg-accent text-accent-foreground"
+                  : "border-border hover:bg-accent/50"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Cover — only when a cover image is set */}
+      {hasCover && (
+        <div>
+          <SectionLabel className="mb-1.5">Cover</SectionLabel>
+          <div className="flex gap-1 mb-1.5">
+            {COVER_LAYOUTS.map((opt) => (
+              <button
+                key={opt.value}
+                aria-label={`${opt.label} cover layout`}
+                aria-pressed={style.coverLayout === opt.value}
+                onClick={() => onChange({ coverLayout: opt.value })}
+                className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                  style.coverLayout === opt.value
+                    ? "border-foreground bg-accent text-accent-foreground"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            {COVER_HEIGHTS.map((opt) => (
+              <button
+                key={opt.value}
+                aria-label={`${opt.label} cover height`}
+                aria-pressed={style.coverHeight === opt.value}
+                onClick={() => onChange({ coverHeight: opt.value })}
+                className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                  style.coverHeight === opt.value
+                    ? "border-foreground bg-accent text-accent-foreground"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {style.coverLayout === "overlay" && (
+            <p className="mt-1 text-3xs text-muted-foreground/70">
+              Title and subtitle render on the cover on the published page.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Tab placement */}
       <div>
