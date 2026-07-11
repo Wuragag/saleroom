@@ -1,5 +1,23 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+/**
+ * tailwind.config.ts defines a custom fontSize scale (text-caption, text-body,
+ * text-heading, …) alongside the usual custom color tokens (text-primary,
+ * text-foreground, …). Plain `twMerge` doesn't know about that custom scale,
+ * so it can't tell "text-body" apart from a text-color utility — it lumps
+ * both into the same conflict group and silently drops whichever came first
+ * (e.g. `text-primary-foreground text-body` loses the color, leaving text
+ * invisible against a dark CTA background). Registering the scale here keeps
+ * size and color from colliding.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: ["3xs", "2xs", "caption", "small", "body", "heading", "title", "display", "stat", "hero"],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
