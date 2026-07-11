@@ -84,8 +84,9 @@ export default function Hero() {
               textWrap: "pretty",
             }}
           >
-            Proposal, pricing and next steps — a single link your buyer actually
-            reads. Remove the unnecessary. Keep the deal.
+            Stop sending proposals into silence. Proposal, pricing and next
+            steps become one link your buyer actually reads — and you know the
+            moment they do.
           </p>
           <div
             style={{

@@ -8,8 +8,7 @@ export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: `${APP_NAME} — One page. Every deal, in order.`,
-  description:
-    "Proposal, pricing and next steps — a single link your buyer actually reads. Remove the unnecessary. Keep the deal.",
+  description: `Stop sending proposals into silence. ${APP_NAME} turns proposal, pricing and next steps into one link your buyer actually reads — and tells you the moment they do.`,
 }
 
 /**

@@ -6,7 +6,7 @@
 
 import Hero from "@/components/marketing/Hero"
 import HowItWorks from "@/components/marketing/HowItWorks"
-import FeatureBento from "@/components/marketing/FeatureBento"
+import FeatureGrid from "@/components/marketing/FeatureGrid"
 import PhilosophySection from "@/components/marketing/PhilosophySection"
 import PricingSection from "@/components/marketing/PricingSection"
 import FinalCTA from "@/components/marketing/FinalCTA"
@@ -16,7 +16,7 @@ export default function MarketingPage() {
     <>
       <Hero />
       <HowItWorks />
-      <FeatureBento />
+      <FeatureGrid />
       <PhilosophySection />
       <PricingSection />
       <FinalCTA />
