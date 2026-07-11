@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
-import { DEFAULT_PAGE_STYLE } from "@/lib/page-styles";
+import { brandDefaultPageStyle, getTeamBrandKit } from "@/lib/brand-kit";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { assertCanCreatePageTx, withResourceLock, pageLockKey } from "@/lib/plan-limits";
@@ -44,6 +44,11 @@ export const POST = withErrorHandler(async (request: Request) => {
   // Assign to user's team
   const teamId = await getUserTeamId(session.user.id);
 
+  // New pages start from the team's brand kit (Settings → Branding), falling
+  // back to the editorial baseline. Set explicitly because the DB column
+  // defaults (inter/slate) predate the redesign.
+  const style = brandDefaultPageStyle(await getTeamBrandKit(teamId));
+
   // Atomic plan-limit enforcement + create. The advisory lock serializes
   // concurrent creates for this team/user so the count can't be raced
   // (PlanLimitError → 403 PLAN_LIMIT via withErrorHandler).
@@ -58,14 +63,15 @@ export const POST = withErrorHandler(async (request: Request) => {
           content: JSON.stringify(DEFAULT_CONTENT),
           userId: session.user.id,
           teamId,
-          // Editorial baseline for new pages. Set explicitly because the DB
-          // column defaults (inter/slate) predate the redesign — without
-          // these, DEFAULT_PAGE_STYLE never applies to real rows.
-          font: DEFAULT_PAGE_STYLE.font,
-          accentColor: DEFAULT_PAGE_STYLE.accentColor,
-          background: DEFAULT_PAGE_STYLE.background,
-          layoutWidth: DEFAULT_PAGE_STYLE.layoutWidth,
-          tabPlacement: DEFAULT_PAGE_STYLE.tabPlacement,
+          font: style.font,
+          headingFont: style.headingFont,
+          accentColor: style.accentColor,
+          background: style.background,
+          layoutWidth: style.layoutWidth,
+          tabPlacement: style.tabPlacement,
+          themeRadius: style.themeRadius,
+          themeDepth: style.themeDepth,
+          logoUrl: style.logoUrl,
           tabs: {
             create: {
               name: DEFAULT_TAB_NAME,

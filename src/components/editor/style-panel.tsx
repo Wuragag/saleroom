@@ -32,10 +32,49 @@ interface StylePanelProps {
   pageId?: string;
 }
 
+interface TeamBrandKit {
+  primaryColor: string;
+  secondaryColors: string[];
+  logoUrl: string;
+  font: string;
+  headingFont: string;
+  background: string;
+  themeRadius: string;
+  themeDepth: string;
+}
+
 export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true, hasCover = false, pageId }: StylePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
+
+  // Team brand kit — brand swatches + one-click "Apply brand kit"
+  const [brandKit, setBrandKit] = useState<TeamBrandKit | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/team/brand")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.configured && data.kit) setBrandKit(data.kit);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const applyBrandKit = () => {
+    if (!brandKit) return;
+    onChange({
+      accentColor: brandKit.primaryColor,
+      font: brandKit.font,
+      headingFont: brandKit.headingFont,
+      background: brandKit.background,
+      themeRadius: brandKit.themeRadius,
+      themeDepth: brandKit.themeDepth,
+      ...(brandKit.logoUrl ? { logoUrl: brandKit.logoUrl } : {}),
+    });
+  };
 
   // Color picker state
   const currentHex = getAccentColor(style.accentColor);
@@ -90,6 +129,23 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
   return (
     <div className="p-3 space-y-4">
       <SectionLabel>Style</SectionLabel>
+
+      {/* Team brand kit */}
+      {brandKit && (
+        <button
+          onClick={applyBrandKit}
+          className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border hover:bg-accent/50 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <span
+              className="h-4 w-4 rounded-full ring-1 ring-border shrink-0"
+              style={{ backgroundColor: brandKit.primaryColor }}
+            />
+            <span className="text-xs font-medium truncate">Apply brand kit</span>
+          </span>
+          <span className="text-3xs text-muted-foreground shrink-0">Team default</span>
+        </button>
+      )}
 
       {/* Theme Presets */}
       <div>
@@ -311,6 +367,33 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             />
           </div>
         </div>
+
+        {/* Brand swatches from the team brand kit */}
+        {brandKit && (
+          <div className="mb-2.5">
+            <span className="block text-3xs font-medium text-muted-foreground mb-1">Brand</span>
+            <div className="grid grid-cols-6 gap-1.5">
+              {[brandKit.primaryColor, ...brandKit.secondaryColors].map((hex, i) => {
+                const isActive = currentHex.toLowerCase() === hex.toLowerCase();
+                return (
+                  <button
+                    key={`${hex}-${i}`}
+                    title={hex}
+                    aria-label={`Brand color ${hex}`}
+                    aria-pressed={isActive}
+                    onClick={() => onChange({ accentColor: hex })}
+                    style={{ backgroundColor: hex }}
+                    className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                      isActive
+                        ? "ring-2 ring-offset-1 ring-foreground border-transparent scale-110"
+                        : "border-border/30"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Preset swatches — 6×2 grid */}
         <div className="grid grid-cols-6 gap-1.5">

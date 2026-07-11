@@ -2,6 +2,7 @@ import { after, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
+import { brandDefaultPageStyle, getTeamBrandKit } from "@/lib/brand-kit";
 import {
   assertCanCreatePageTx,
   withResourceLock,
@@ -134,6 +135,10 @@ export async function POST(request: Request) {
       content: [{ type: "paragraph" }],
     });
 
+    // New pages start from the team's brand kit (falls back to the editorial
+    // baseline — previously this path silently used the stale DB defaults).
+    const style = brandDefaultPageStyle(await getTeamBrandKit(teamId));
+
     // Atomic plan-limit enforcement + create (also caps teamless users at FREE).
     const page = await withResourceLock(
       pageLockKey(teamId, session.user.id),
@@ -148,6 +153,15 @@ export async function POST(request: Request) {
             importText: text, // Store extracted text for the processing step
             userId: session.user.id,
             teamId,
+            font: style.font,
+            headingFont: style.headingFont,
+            accentColor: style.accentColor,
+            background: style.background,
+            layoutWidth: style.layoutWidth,
+            tabPlacement: style.tabPlacement,
+            themeRadius: style.themeRadius,
+            themeDepth: style.themeDepth,
+            logoUrl: style.logoUrl,
             tabs: {
               create: {
                 name: DEFAULT_TAB_NAME,

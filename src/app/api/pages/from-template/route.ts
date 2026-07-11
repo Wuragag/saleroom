@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_CONTENT } from "@/lib/constants";
-import { DEFAULT_PAGE_STYLE } from "@/lib/page-styles";
+import { brandDefaultPageStyle, getTeamBrandKit } from "@/lib/brand-kit";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import {
@@ -90,6 +90,10 @@ export const POST = withErrorHandler(async (request: Request) => {
   // Atomic plan-limit enforcement + create. Enforces both the page cap and the
   // per-page tab cap (a FREE plan can't instantiate a template with more tabs
   // than its limit) inside one advisory-locked transaction.
+  // New pages start from the team's brand kit, falling back to the editorial
+  // baseline (DB column defaults predate the redesign).
+  const style = brandDefaultPageStyle(await getTeamBrandKit(teamId));
+
   const page = await withResourceLock(
     pageLockKey(teamId, session.user.id),
     async (tx) => {
@@ -101,12 +105,15 @@ export const POST = withErrorHandler(async (request: Request) => {
           content: JSON.stringify(firstTabContent),
           userId: session.user.id,
           teamId,
-          // Editorial baseline (DB column defaults predate the redesign)
-          font: DEFAULT_PAGE_STYLE.font,
-          accentColor: DEFAULT_PAGE_STYLE.accentColor,
-          background: DEFAULT_PAGE_STYLE.background,
-          layoutWidth: DEFAULT_PAGE_STYLE.layoutWidth,
-          tabPlacement: DEFAULT_PAGE_STYLE.tabPlacement,
+          font: style.font,
+          headingFont: style.headingFont,
+          accentColor: style.accentColor,
+          background: style.background,
+          layoutWidth: style.layoutWidth,
+          tabPlacement: style.tabPlacement,
+          themeRadius: style.themeRadius,
+          themeDepth: style.themeDepth,
+          logoUrl: style.logoUrl,
         },
       });
       await assertCanCreateTabsTx(tx, created.id, teamId, tabs.length || 1);

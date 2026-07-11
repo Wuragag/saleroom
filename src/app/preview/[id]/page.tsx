@@ -19,6 +19,8 @@ import {
   PUB_OVERLAY_EYEBROW_STYLE,
 } from "@/components/pub-cover";
 import { PublishedFormHydrator } from "@/components/published-form";
+import { getTeamBrandKit } from "@/lib/brand-kit";
+import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 
@@ -67,6 +69,16 @@ export default async function PreviewPage({
     themeRadius: page.themeRadius,
     themeDepth: page.themeDepth,
   });
+
+  // Mirror the published page's white-label state so the preview is faithful
+  let showBranding = true;
+  if (page.teamId) {
+    const [kit, plan] = await Promise.all([
+      getTeamBrandKit(page.teamId),
+      getTeamPlan(page.teamId),
+    ]);
+    showBranding = !(kit?.hideBranding && PLAN_LIMITS[plan].hideBranding);
+  }
 
   // Hero elements — rendered on the cover in overlay layout, in the column otherwise
   const overlayHero = Boolean(page.coverImage) && page.coverLayout === "overlay";
@@ -151,6 +163,7 @@ export default async function PreviewPage({
       isDark={isDark}
       maxWidth={maxWidth}
       banner={previewBanner}
+      showBranding={showBranding}
       paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
       coverImage={
         page.coverImage ? (

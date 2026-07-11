@@ -24,6 +24,8 @@ import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
+import { getTeamBrandKit } from "@/lib/brand-kit";
+import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 
 // ISR: serve cached pages, revalidate in background every 60s.
 // Analytics tracking moved client-side so this page can be cached.
@@ -119,6 +121,18 @@ export default async function PublishedPage({
     themeDepth: page.themeDepth,
   });
 
+  // White-label: hide the "Powered by" badge when the team's brand kit asks
+  // for it AND the plan allows it (server-enforced, so a downgrade re-shows
+  // the badge within the ISR window).
+  let showBranding = true;
+  if (page.teamId) {
+    const [kit, plan] = await Promise.all([
+      getTeamBrandKit(page.teamId),
+      getTeamPlan(page.teamId),
+    ]);
+    showBranding = !(kit?.hideBranding && PLAN_LIMITS[plan].hideBranding);
+  }
+
   // Hero elements — rendered on the cover in overlay layout, in the column otherwise
   const overlayHero = Boolean(page.coverImage) && page.coverLayout === "overlay";
   const heroLogo = page.logoUrl ? (
@@ -151,6 +165,7 @@ export default async function PublishedPage({
       accentColor={accentColor}
       isDark={isDark}
       maxWidth={maxWidth}
+      showBranding={showBranding}
       paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
       coverImage={
         page.coverImage ? (
