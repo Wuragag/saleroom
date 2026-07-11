@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { APP_NAME } from "@/lib/constants";
 
 export default function NotFound() {
   return (
@@ -10,7 +11,7 @@ export default function NotFound() {
       {/* Minimal top bar */}
       <header className="flex items-center justify-between px-6 py-5">
         <Link href="/" className="font-display text-heading text-foreground">
-          SalesRoom
+          {APP_NAME}
         </Link>
         <ThemeToggle />
       </header>
@@ -49,7 +50,7 @@ export default function NotFound() {
       {/* Footer */}
       <footer className="flex items-center justify-between px-6 py-5 text-2xs text-tertiary">
         <span>Error 404 · Page not found</span>
-        <span>Powered by SalesRoom</span>
+        <span>Powered by {APP_NAME}</span>
       </footer>
     </div>
   );

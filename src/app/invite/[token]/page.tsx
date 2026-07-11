@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
+import { APP_NAME } from "@/lib/constants";
 import { AcceptInviteCard } from "./accept-invite-card";
 
 export default async function InvitePage({
@@ -75,7 +76,7 @@ export default async function InvitePage({
           </h1>
           <p className="text-sm text-muted-foreground mb-6">
             {invite.invitedBy.name} invited you to join{" "}
-            <strong>{invite.team.name}</strong> on SalesRoom. Sign in or create
+            <strong>{invite.team.name}</strong> on {APP_NAME}. Sign in or create
             an account to accept.
           </p>
           <div className="flex flex-col gap-3">

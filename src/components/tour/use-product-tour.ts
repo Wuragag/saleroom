@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { TOUR_STEPS, STORAGE_KEY, type TourStep } from "./tour-steps";
+import { TOUR_STEPS, STORAGE_KEY, LEGACY_STORAGE_KEY, type TourStep } from "./tour-steps";
 
 export type TourState = "idle" | "welcome" | "spotlight" | "completion";
 
@@ -52,7 +52,8 @@ export function useProductTour(): ProductTourHook {
 
   // Initialize: check localStorage first (instant), then verify with server
   useEffect(() => {
-    const completed = localStorage.getItem(STORAGE_KEY);
+    const completed =
+      localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     if (completed) {
       // Already dismissed locally — stay idle
       setState("idle");

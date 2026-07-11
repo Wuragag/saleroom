@@ -32,13 +32,22 @@ const EVENTS_API  = "/api/buyer/events";
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
+const VISITOR_ID_KEY = "db_visitor_id";
+// Legacy key (pre-Dealbeam rebrand) — migrate so returning visitors keep identity.
+const LEGACY_VISITOR_ID_KEY = "sr_visitor_id";
+
 function getOrCreateVisitorId(): string {
   if (typeof window === "undefined") return "";
   try {
-    const stored = localStorage.getItem("sr_visitor_id");
-    if (stored) return stored;
+    const stored =
+      localStorage.getItem(VISITOR_ID_KEY) ?? localStorage.getItem(LEGACY_VISITOR_ID_KEY);
+    if (stored) {
+      // Persist under the new key so the legacy one can eventually be dropped.
+      localStorage.setItem(VISITOR_ID_KEY, stored);
+      return stored;
+    }
     const id = crypto.randomUUID();
-    localStorage.setItem("sr_visitor_id", id);
+    localStorage.setItem(VISITOR_ID_KEY, id);
     return id;
   } catch {
     return crypto.randomUUID();

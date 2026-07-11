@@ -9,7 +9,7 @@ export default function DemoSection() {
       <section
       style={{
         padding: "120px 0",
-        background: "var(--sr-text)",
+        background: "var(--db-text)",
         color: "#FFFFFF",
       }}
     >
@@ -66,7 +66,7 @@ export default function DemoSection() {
               fontSize: 15,
               fontWeight: 500,
               background: "#FFFFFF",
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               borderRadius: 100,
               padding: "14px 32px",
               textDecoration: "none",

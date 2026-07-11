@@ -1,4 +1,4 @@
-# SalesRoom Product Design System
+# Dealbeam Product Design System
 
 > The single source of truth for the **product UI (app chrome)**. Everything a
 > reskin touches lives in two places: **tokens** (`globals.css` + `tailwind.config.ts`)

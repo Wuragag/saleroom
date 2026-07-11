@@ -32,7 +32,7 @@ function AnimatedCheck({ delay, inView }: { delay: number; inView: boolean }) {
         transition: `opacity 400ms ${delay}ms ease, transform 400ms ${delay}ms ease`,
       }}
     >
-      <circle cx="9" cy="9" r="9" fill="var(--sr-text)" />
+      <circle cx="9" cy="9" r="9" fill="var(--db-text)" />
       <path
         d="M5.5 9L8 11.5L12.5 6.5"
         stroke="#FFFFFF"
@@ -83,7 +83,7 @@ export default function ComparisonSection() {
         className="sr-compare-section"
         style={{
           padding: "120px 0",
-          borderTop: "1px solid var(--sr-border)",
+          borderTop: "1px solid var(--db-border)",
         }}
       >
         <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 24px" }}>
@@ -94,7 +94,7 @@ export default function ComparisonSection() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
                 fontWeight: 500,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 marginBottom: 16,
@@ -108,7 +108,7 @@ export default function ComparisonSection() {
                 fontFamily: "var(--font-serif), serif",
                 fontSize: 48,
                 fontWeight: 400,
-                color: "var(--sr-text)",
+                color: "var(--db-text)",
                 lineHeight: 1.1,
                 margin: 0,
               }}
@@ -127,7 +127,7 @@ export default function ComparisonSection() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 24,
@@ -137,8 +137,8 @@ export default function ComparisonSection() {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="var(--sr-text-muted)" strokeWidth="1.5" />
-                  <path d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5" stroke="var(--sr-text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="8" cy="8" r="7" stroke="var(--db-text-muted)" strokeWidth="1.5" />
+                  <path d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5" stroke="var(--db-text-muted)" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
                 Emails, PDFs &amp; attachments
               </div>
@@ -148,10 +148,10 @@ export default function ComparisonSection() {
                     key={i}
                     style={{
                       padding: "16px 0",
-                      borderBottom: "1px solid var(--sr-border)",
+                      borderBottom: "1px solid var(--db-border)",
                       fontFamily: "var(--font-inter), sans-serif",
                       fontSize: 15,
-                      color: "var(--sr-text-muted)",
+                      color: "var(--db-text-muted)",
                       lineHeight: 1.6,
                       display: "flex",
                       alignItems: "flex-start",
@@ -168,10 +168,10 @@ export default function ComparisonSection() {
                       fill="none"
                       style={{ flexShrink: 0, marginTop: 2 }}
                     >
-                      <circle cx="9" cy="9" r="9" fill="var(--sr-surface-dim)" />
+                      <circle cx="9" cy="9" r="9" fill="var(--db-surface-dim)" />
                       <path
                         d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5"
-                        stroke="var(--sr-text-muted)"
+                        stroke="var(--db-text-muted)"
                         strokeWidth="1.5"
                         strokeLinecap="round"
                       />
@@ -189,7 +189,7 @@ export default function ComparisonSection() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 24,
@@ -199,10 +199,10 @@ export default function ComparisonSection() {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" fill="var(--sr-text)" />
+                  <circle cx="8" cy="8" r="7" fill="var(--db-text)" />
                   <path d="M5 8L7 10L11 6" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                SalesRoom
+                Dealbeam
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                 {NEW_WAY.map((item, i) => (
@@ -210,10 +210,10 @@ export default function ComparisonSection() {
                     key={i}
                     style={{
                       padding: "16px 0",
-                      borderBottom: "1px solid var(--sr-border)",
+                      borderBottom: "1px solid var(--db-border)",
                       fontFamily: "var(--font-inter), sans-serif",
                       fontSize: 15,
-                      color: "var(--sr-text)",
+                      color: "var(--db-text)",
                       lineHeight: 1.6,
                       display: "flex",
                       alignItems: "flex-start",

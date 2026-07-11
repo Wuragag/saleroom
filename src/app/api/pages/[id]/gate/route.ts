@@ -56,7 +56,7 @@ export const POST = withErrorHandler(async (
 
     // Set the ref cookie so future visits bypass the gate
     const cookieStore = await cookies();
-    cookieStore.set(`sr_ref_${pageId}`, contact.refToken, {
+    cookieStore.set(`db_ref_${pageId}`, contact.refToken, {
       httpOnly: true,
       path: "/p/",
       sameSite: "lax",

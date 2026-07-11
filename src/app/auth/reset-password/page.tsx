@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 
@@ -55,7 +56,7 @@ function ResetPasswordForm() {
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">SalesRoom</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{APP_NAME}</h1>
           <p className="text-sm text-muted-foreground mt-1">Choose a new password</p>
         </div>
 

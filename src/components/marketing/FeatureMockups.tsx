@@ -13,9 +13,9 @@ function BrowserChrome({
   return (
     <div
       style={{
-        background: "var(--sr-surface)",
+        background: "var(--db-surface)",
         borderRadius: 16,
-        border: "1px solid var(--sr-border)",
+        border: "1px solid var(--db-border)",
         boxShadow:
           "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
         overflow: "hidden",
@@ -24,7 +24,7 @@ function BrowserChrome({
       <div
         style={{
           padding: "14px 16px",
-          borderBottom: "1px solid var(--sr-border)",
+          borderBottom: "1px solid var(--db-border)",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -48,12 +48,12 @@ function BrowserChrome({
           style={{
             flex: 1,
             marginLeft: 8,
-            background: "var(--sr-surface-dim)",
+            background: "var(--db-surface-dim)",
             borderRadius: 8,
             padding: "6px 14px",
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 12,
-            color: "var(--sr-text-muted)",
+            color: "var(--db-text-muted)",
           }}
         >
           {url}
@@ -102,7 +102,7 @@ function FadeInView({ children }: { children: React.ReactNode }) {
 /* ── Page Builder mockup ── */
 function PageBuilderMockup() {
   return (
-    <BrowserChrome url="app.salesroom.com/editor">
+    <BrowserChrome url="app.dealbeam.com/editor">
       <div style={{ padding: 20, background: "#FCFCFB" }}>
         {/* Toolbar */}
         <div
@@ -111,7 +111,7 @@ function PageBuilderMockup() {
             gap: 4,
             marginBottom: 16,
             padding: "8px 12px",
-            background: "var(--sr-surface-dim)",
+            background: "var(--db-surface-dim)",
             borderRadius: 8,
           }}
         >
@@ -128,10 +128,10 @@ function PageBuilderMockup() {
                   textDecoration: item === "U" ? "underline" : "none",
                   color:
                     item === "|"
-                      ? "var(--sr-border)"
+                      ? "var(--db-border)"
                       : item === "+"
-                        ? "var(--sr-text)"
-                        : "var(--sr-text-secondary)",
+                        ? "var(--db-text)"
+                        : "var(--db-text-secondary)",
                   borderRadius: 4,
                   cursor: "default",
                 }}
@@ -149,7 +149,7 @@ function PageBuilderMockup() {
               fontFamily: "var(--font-serif), serif",
               fontSize: 22,
               fontWeight: 400,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               marginBottom: 12,
             }}
           >
@@ -169,7 +169,7 @@ function PageBuilderMockup() {
                   width: `${w}%`,
                   height: 7,
                   borderRadius: 4,
-                  background: "var(--sr-surface-dim)",
+                  background: "var(--db-surface-dim)",
                 }}
               />
             ))}
@@ -179,7 +179,7 @@ function PageBuilderMockup() {
         {/* Embedded video block */}
         <div
           style={{
-            background: "var(--sr-surface-dim)",
+            background: "var(--db-surface-dim)",
             borderRadius: 12,
             padding: "24px 0",
             display: "flex",
@@ -193,7 +193,7 @@ function PageBuilderMockup() {
               width: 40,
               height: 40,
               borderRadius: "50%",
-              background: "var(--sr-text)",
+              background: "var(--db-text)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -221,8 +221,8 @@ function PageBuilderMockup() {
               style={{
                 padding: 14,
                 borderRadius: 10,
-                border: "1px solid var(--sr-border)",
-                background: "var(--sr-surface)",
+                border: "1px solid var(--db-border)",
+                background: "var(--db-surface)",
               }}
             >
               <div
@@ -230,7 +230,7 @@ function PageBuilderMockup() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 11,
                   fontWeight: 600,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   marginBottom: 6,
@@ -242,7 +242,7 @@ function PageBuilderMockup() {
                 style={{
                   fontFamily: "var(--font-serif), serif",
                   fontSize: 20,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                 }}
               >
                 {price}
@@ -278,7 +278,7 @@ function AnalyticsMockup() {
 
   return (
     <div ref={ref}>
-      <BrowserChrome url="app.salesroom.com/analytics">
+      <BrowserChrome url="app.dealbeam.com/analytics">
         <div style={{ padding: 20, background: "#FCFCFB" }}>
           {/* Stats row */}
           <div
@@ -287,7 +287,7 @@ function AnalyticsMockup() {
               gap: 32,
               marginBottom: 20,
               paddingBottom: 20,
-              borderBottom: "1px solid var(--sr-border)",
+              borderBottom: "1px solid var(--db-border)",
             }}
           >
             {[
@@ -300,7 +300,7 @@ function AnalyticsMockup() {
                   style={{
                     fontFamily: "var(--font-serif), serif",
                     fontSize: 24,
-                    color: "var(--sr-text)",
+                    color: "var(--db-text)",
                     lineHeight: 1,
                     marginBottom: 4,
                   }}
@@ -311,7 +311,7 @@ function AnalyticsMockup() {
                   style={{
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 11,
-                    color: "var(--sr-text-muted)",
+                    color: "var(--db-text-muted)",
                   }}
                 >
                   {label}
@@ -327,7 +327,7 @@ function AnalyticsMockup() {
               alignItems: "center",
               gap: 12,
               padding: "12px 0",
-              borderBottom: "1px solid var(--sr-border)",
+              borderBottom: "1px solid var(--db-border)",
             }}
           >
             <div
@@ -335,14 +335,14 @@ function AnalyticsMockup() {
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                background: "var(--sr-surface-dim)",
+                background: "var(--db-surface-dim)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 11,
                 fontWeight: 600,
-                color: "var(--sr-text-secondary)",
+                color: "var(--db-text-secondary)",
               }}
             >
               S
@@ -353,7 +353,7 @@ function AnalyticsMockup() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 13,
                   fontWeight: 500,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                 }}
               >
                 Sarah Chen
@@ -362,7 +362,7 @@ function AnalyticsMockup() {
                 style={{
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 11,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                 }}
               >
                 4m 32s on Pricing
@@ -397,8 +397,8 @@ function AnalyticsMockup() {
                     borderRadius: 4,
                     background:
                       i === 5
-                        ? "var(--sr-text)"
-                        : "var(--sr-surface-dim)",
+                        ? "var(--db-text)"
+                        : "var(--db-surface-dim)",
                     transition: `height 600ms ${i * 70}ms ease`,
                   }}
                 />
@@ -420,8 +420,8 @@ function AnalyticsMockup() {
       >
         <div
           style={{
-            background: "var(--sr-surface)",
-            border: "1px solid var(--sr-border)",
+            background: "var(--db-surface)",
+            border: "1px solid var(--db-border)",
             borderRadius: 12,
             padding: "14px 18px",
             boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
@@ -434,7 +434,7 @@ function AnalyticsMockup() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 13,
               fontWeight: 500,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               marginBottom: 4,
             }}
           >
@@ -444,7 +444,7 @@ function AnalyticsMockup() {
             style={{
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 12,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
             }}
           >
             Spending time on Pricing
@@ -469,7 +469,7 @@ function AnalyticsMockup() {
 /* ── AI Content mockup ── */
 function AIContentMockup() {
   return (
-    <BrowserChrome url="app.salesroom.com/editor">
+    <BrowserChrome url="app.dealbeam.com/editor">
       <div style={{ padding: 20, background: "#FCFCFB" }}>
         {/* Existing content */}
         <div style={{ marginBottom: 16 }}>
@@ -487,7 +487,7 @@ function AIContentMockup() {
                   width: `${w}%`,
                   height: 7,
                   borderRadius: 4,
-                  background: "var(--sr-surface-dim)",
+                  background: "var(--db-surface-dim)",
                 }}
               />
             ))}
@@ -538,7 +538,7 @@ function AIContentMockup() {
             style={{
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 14,
-              color: "var(--sr-text-secondary)",
+              color: "var(--db-text-secondary)",
               lineHeight: 1.7,
               marginBottom: 12,
             }}
@@ -586,7 +586,7 @@ function AIContentMockup() {
                   width: `${w}%`,
                   height: 7,
                   borderRadius: 4,
-                  background: "var(--sr-surface-dim)",
+                  background: "var(--db-surface-dim)",
                 }}
               />
             ))}
@@ -600,7 +600,7 @@ function AIContentMockup() {
 /* ── Collaboration mockup ── */
 function CollaborationMockup() {
   return (
-    <BrowserChrome url="app.salesroom.com/team">
+    <BrowserChrome url="app.dealbeam.com/team">
       <div style={{ padding: 20, background: "#FCFCFB" }}>
         {/* Template grid header */}
         <div
@@ -608,7 +608,7 @@ function CollaborationMockup() {
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 12,
             fontWeight: 600,
-            color: "var(--sr-text-muted)",
+            color: "var(--db-text-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.06em",
             marginBottom: 12,
@@ -637,8 +637,8 @@ function CollaborationMockup() {
               style={{
                 padding: 12,
                 borderRadius: 10,
-                border: "1px solid var(--sr-border)",
-                background: "var(--sr-surface)",
+                border: "1px solid var(--db-border)",
+                background: "var(--db-surface)",
               }}
             >
               <div
@@ -646,7 +646,7 @@ function CollaborationMockup() {
                   width: "100%",
                   height: 4,
                   borderRadius: 2,
-                  background: "var(--sr-surface-dim)",
+                  background: "var(--db-surface-dim)",
                   marginBottom: 8,
                 }}
               />
@@ -655,7 +655,7 @@ function CollaborationMockup() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 12,
                   fontWeight: 500,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                 }}
               >
                 {name}
@@ -670,7 +670,7 @@ function CollaborationMockup() {
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 12,
             fontWeight: 600,
-            color: "var(--sr-text-muted)",
+            color: "var(--db-text-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.06em",
             marginBottom: 12,
@@ -690,7 +690,7 @@ function CollaborationMockup() {
               alignItems: "center",
               gap: 10,
               padding: "10px 0",
-              borderBottom: "1px solid var(--sr-border)",
+              borderBottom: "1px solid var(--db-border)",
             }}
           >
             <div
@@ -698,14 +698,14 @@ function CollaborationMockup() {
                 width: 24,
                 height: 24,
                 borderRadius: "50%",
-                background: "var(--sr-surface-dim)",
+                background: "var(--db-surface-dim)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 10,
                 fontWeight: 600,
-                color: "var(--sr-text-secondary)",
+                color: "var(--db-text-secondary)",
               }}
             >
               {item.name[0]}
@@ -716,7 +716,7 @@ function CollaborationMockup() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 12,
                   fontWeight: 500,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                 }}
               >
                 {item.name}
@@ -725,7 +725,7 @@ function CollaborationMockup() {
                 style={{
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 12,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                 }}
               >
                 {" "}
@@ -736,7 +736,7 @@ function CollaborationMockup() {
               style={{
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 11,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
               }}
             >
               {item.time}
@@ -753,9 +753,9 @@ function IntegrationsMockup() {
   return (
     <div
       style={{
-        background: "var(--sr-surface)",
+        background: "var(--db-surface)",
         borderRadius: 16,
-        border: "1px solid var(--sr-border)",
+        border: "1px solid var(--db-border)",
         boxShadow:
           "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
         padding: 24,
@@ -766,7 +766,7 @@ function IntegrationsMockup() {
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 12,
           fontWeight: 600,
-          color: "var(--sr-text-muted)",
+          color: "var(--db-text-muted)",
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           marginBottom: 20,
@@ -781,7 +781,7 @@ function IntegrationsMockup() {
           { name: "HubSpot", status: "Connected", color: "#10B981" },
           { name: "Slack", status: "Connected", color: "#10B981" },
           { name: "Calendly", status: "Setup required", color: "#F59E0B" },
-          { name: "Zapier", status: "Available", color: "var(--sr-text-muted)" },
+          { name: "Zapier", status: "Available", color: "var(--db-text-muted)" },
         ].map((app) => (
           <div
             key={app.name}
@@ -791,7 +791,7 @@ function IntegrationsMockup() {
               gap: 12,
               padding: "12px 16px",
               borderRadius: 10,
-              border: "1px solid var(--sr-border)",
+              border: "1px solid var(--db-border)",
             }}
           >
             <div
@@ -799,14 +799,14 @@ function IntegrationsMockup() {
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                background: "var(--sr-surface-dim)",
+                background: "var(--db-surface-dim)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 14,
                 fontWeight: 600,
-                color: "var(--sr-text-secondary)",
+                color: "var(--db-text-secondary)",
               }}
             >
               {app.name[0]}
@@ -817,7 +817,7 @@ function IntegrationsMockup() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 14,
                   fontWeight: 500,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                 }}
               >
                 {app.name}
@@ -842,7 +842,7 @@ function IntegrationsMockup() {
                 style={{
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 12,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                 }}
               >
                 {app.status}

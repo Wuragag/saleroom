@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat, Playfair_Display, Lora, DM_Sans, Syne, Inter, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { APP_NAME } from "@/lib/constants";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -47,7 +48,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "SalesRoom",
+  title: APP_NAME,
   description: "Create and share beautiful sales pages",
 };
 
@@ -66,7 +67,7 @@ export default function RootLayout({
             light for real buyers. Keep in sync with src/hooks/use-app-theme.ts. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(!location.pathname.startsWith('/p/')){var t=localStorage.getItem('sr-ds-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.setAttribute('data-theme','light');}}}catch(e){}`,
+            __html: `try{if(!location.pathname.startsWith('/p/')){var t=localStorage.getItem('db-ds-theme')||localStorage.getItem('sr-ds-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.setAttribute('data-theme','light');}}}catch(e){}`,
           }}
         />
       </head>

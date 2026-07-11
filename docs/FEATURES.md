@@ -1,6 +1,6 @@
-# SalesRoom — Feature Documentation
+# Dealbeam — Feature Documentation
 
-> Codename: **pager** / **saleroom**. User-facing brand: **SalesRoom**.
+> Codename: **dealbeam** / **saleroom**. User-facing brand: **Dealbeam**.
 > A multi-tenant sales-enablement platform where reps build branded, trackable
 > deal pages — proposals, mutual action plans, onboarding hubs — share them as a
 > single link, and see exactly how buyers engage.

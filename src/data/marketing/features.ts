@@ -82,7 +82,7 @@ export const FEATURES: Feature[] = [
     title: "Integrations",
     label: "Connect",
     description:
-      "Connect SalesRoom to your CRM, calendar, and communication tools. Keep your workflow in one place.",
+      "Connect Dealbeam to your CRM, calendar, and communication tools. Keep your workflow in one place.",
     detailHeading: "Fits right into your existing stack",
     detailBody:
       "Push engagement data to Salesforce or HubSpot automatically. Embed your Calendly link for instant booking. Get Slack alerts the moment a key buyer engages with your proposal.",

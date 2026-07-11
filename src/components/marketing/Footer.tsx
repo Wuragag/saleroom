@@ -23,11 +23,11 @@ export default function Footer() {
   return (
     <>
     <style>{`
-      .sr-footer-link:hover { color: var(--sr-text) !important; }
+      .sr-footer-link:hover { color: var(--db-text) !important; }
     `}</style>
     <footer
       style={{
-        borderTop: "1px solid var(--sr-border)",
+        borderTop: "1px solid var(--db-border)",
         padding: "64px 0 48px",
       }}
     >
@@ -54,18 +54,18 @@ export default function Footer() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 18,
                 fontWeight: 600,
-                color: "var(--sr-text)",
+                color: "var(--db-text)",
                 letterSpacing: "-0.02em",
                 marginBottom: 8,
               }}
             >
-              SalesRoom
+              Dealbeam
             </div>
             <div
               style={{
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 14,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
                 maxWidth: 260,
                 lineHeight: 1.6,
               }}
@@ -82,7 +82,7 @@ export default function Footer() {
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 12,
                     fontWeight: 600,
-                    color: "var(--sr-text)",
+                    color: "var(--db-text)",
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     marginBottom: 16,
@@ -99,7 +99,7 @@ export default function Footer() {
                       style={{
                         fontFamily: "var(--font-inter), sans-serif",
                         fontSize: 14,
-                        color: "var(--sr-text-secondary)",
+                        color: "var(--db-text-secondary)",
                         textDecoration: "none",
                         transition: "color 150ms ease",
                       }}
@@ -116,14 +116,14 @@ export default function Footer() {
         {/* Bottom row */}
         <div
           style={{
-            borderTop: "1px solid var(--sr-border)",
+            borderTop: "1px solid var(--db-border)",
             paddingTop: 24,
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 13,
-            color: "var(--sr-text-muted)",
+            color: "var(--db-text-muted)",
           }}
         >
-          &copy; {new Date().getFullYear()} SalesRoom. All rights reserved.
+          &copy; {new Date().getFullYear()} Dealbeam. All rights reserved.
         </div>
       </div>
     </footer>

@@ -7,9 +7,9 @@ function BrowserMockup({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        background: "var(--sr-surface)",
+        background: "var(--db-surface)",
         borderRadius: 16,
-        border: "1px solid var(--sr-border)",
+        border: "1px solid var(--db-border)",
         boxShadow: "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
         overflow: "hidden",
       }}
@@ -18,7 +18,7 @@ function BrowserMockup({ children }: { children: React.ReactNode }) {
       <div
         style={{
           padding: "14px 16px",
-          borderBottom: "1px solid var(--sr-border)",
+          borderBottom: "1px solid var(--db-border)",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -42,15 +42,15 @@ function BrowserMockup({ children }: { children: React.ReactNode }) {
           style={{
             flex: 1,
             marginLeft: 8,
-            background: "var(--sr-surface-dim)",
+            background: "var(--db-surface-dim)",
             borderRadius: 8,
             padding: "6px 14px",
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 12,
-            color: "var(--sr-text-muted)",
+            color: "var(--db-text-muted)",
           }}
         >
-          acme.salesroom.app/q4-proposal
+          acme.dealbeam.app/q4-proposal
         </div>
       </div>
       {children}
@@ -69,7 +69,7 @@ function PageMockupContent() {
             width: 36,
             height: 36,
             borderRadius: 8,
-            background: "var(--sr-surface-dim)",
+            background: "var(--db-surface-dim)",
           }}
         />
         <div>
@@ -78,7 +78,7 @@ function PageMockupContent() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 14,
               fontWeight: 600,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
             }}
           >
             Q4 Partnership Proposal
@@ -87,7 +87,7 @@ function PageMockupContent() {
             style={{
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 11,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
             }}
           >
             Prepared for Sarah Chen
@@ -100,7 +100,7 @@ function PageMockupContent() {
         style={{
           display: "flex",
           gap: 0,
-          borderBottom: "1px solid var(--sr-border)",
+          borderBottom: "1px solid var(--db-border)",
           marginBottom: 24,
         }}
       >
@@ -114,8 +114,8 @@ function PageMockupContent() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
                 fontWeight: active ? 600 : 400,
-                color: active ? "var(--sr-text)" : "var(--sr-text-muted)",
-                borderBottom: active ? "2px solid var(--sr-text)" : "2px solid transparent",
+                color: active ? "var(--db-text)" : "var(--db-text-muted)",
+                borderBottom: active ? "2px solid var(--db-text)" : "2px solid transparent",
                 marginBottom: -1,
               }}
             >
@@ -134,7 +134,7 @@ function PageMockupContent() {
               width: `${w}%`,
               height: 8,
               borderRadius: 4,
-              background: "var(--sr-surface-dim)",
+              background: "var(--db-surface-dim)",
             }}
           />
         ))}
@@ -151,8 +151,8 @@ function PageMockupContent() {
             style={{
               padding: "16px",
               borderRadius: 12,
-              border: `1px solid ${active ? "var(--sr-text)" : "var(--sr-border)"}`,
-              background: active ? "var(--sr-text)" : "var(--sr-surface)",
+              border: `1px solid ${active ? "var(--db-text)" : "var(--db-border)"}`,
+              background: active ? "var(--db-text)" : "var(--db-surface)",
             }}
           >
             <div
@@ -160,7 +160,7 @@ function PageMockupContent() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 11,
                 fontWeight: 600,
-                color: active ? "rgba(255,255,255,0.6)" : "var(--sr-text-muted)",
+                color: active ? "rgba(255,255,255,0.6)" : "var(--db-text-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 marginBottom: 8,
@@ -172,7 +172,7 @@ function PageMockupContent() {
               style={{
                 fontFamily: "var(--font-serif), serif",
                 fontSize: 24,
-                color: active ? "#FFFFFF" : "var(--sr-text)",
+                color: active ? "#FFFFFF" : "var(--db-text)",
               }}
             >
               {price}
@@ -185,7 +185,7 @@ function PageMockupContent() {
                     width: `${w}%`,
                     height: 5,
                     borderRadius: 3,
-                    background: active ? "rgba(255,255,255,0.15)" : "var(--sr-surface-dim)",
+                    background: active ? "rgba(255,255,255,0.15)" : "var(--db-surface-dim)",
                   }}
                 />
               ))}
@@ -202,9 +202,9 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
   return (
     <div
       style={{
-        background: "var(--sr-surface)",
+        background: "var(--db-surface)",
         borderRadius: 16,
-        border: "1px solid var(--sr-border)",
+        border: "1px solid var(--db-border)",
         boxShadow: "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
         padding: 24,
       }}
@@ -216,7 +216,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
           gap: 32,
           marginBottom: 24,
           paddingBottom: 24,
-          borderBottom: "1px solid var(--sr-border)",
+          borderBottom: "1px solid var(--db-border)",
         }}
       >
         {[
@@ -229,7 +229,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
               style={{
                 fontFamily: "var(--font-serif), serif",
                 fontSize: 28,
-                color: "var(--sr-text)",
+                color: "var(--db-text)",
                 lineHeight: 1,
                 marginBottom: 6,
               }}
@@ -240,7 +240,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
               style={{
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
               }}
             >
               {label}
@@ -261,7 +261,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
             alignItems: "center",
             gap: 12,
             padding: "12px 0",
-            borderBottom: "1px solid var(--sr-border)",
+            borderBottom: "1px solid var(--db-border)",
           }}
         >
           <div
@@ -269,14 +269,14 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
               width: 32,
               height: 32,
               borderRadius: "50%",
-              background: "var(--sr-surface-dim)",
+              background: "var(--db-surface-dim)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 12,
               fontWeight: 600,
-              color: "var(--sr-text-secondary)",
+              color: "var(--db-text-secondary)",
               flexShrink: 0,
             }}
           >
@@ -288,7 +288,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
-                color: "var(--sr-text)",
+                color: "var(--db-text)",
               }}
             >
               {v.name}
@@ -297,7 +297,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
               style={{
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
               }}
             >
               {v.detail}
@@ -307,7 +307,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
             style={{
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 12,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
             }}
           >
             {v.time}
@@ -332,7 +332,7 @@ function AnalyticsMockup({ inView }: { inView: boolean }) {
                 width: "100%",
                 height: inView ? `${h}%` : "0%",
                 borderRadius: 4,
-                background: i === 5 ? "var(--sr-text)" : "var(--sr-surface-dim)",
+                background: i === 5 ? "var(--db-text)" : "var(--db-surface-dim)",
                 transition: `height 600ms ${i * 70}ms ease`,
               }}
             />
@@ -351,8 +351,8 @@ function NotificationCard() {
         position: "absolute",
         top: -16,
         right: -16,
-        background: "var(--sr-surface)",
-        border: "1px solid var(--sr-border)",
+        background: "var(--db-surface)",
+        border: "1px solid var(--db-border)",
         borderRadius: 12,
         padding: "14px 18px",
         boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
@@ -365,7 +365,7 @@ function NotificationCard() {
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 13,
           fontWeight: 500,
-          color: "var(--sr-text)",
+          color: "var(--db-text)",
           marginBottom: 6,
         }}
       >
@@ -375,7 +375,7 @@ function NotificationCard() {
         style={{
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 12,
-          color: "var(--sr-text-muted)",
+          color: "var(--db-text-muted)",
         }}
       >
         Spending time on Pricing
@@ -455,7 +455,7 @@ export default function SolutionSection() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
                 fontWeight: 500,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 marginBottom: 16,
@@ -469,7 +469,7 @@ export default function SolutionSection() {
                 fontFamily: "var(--font-serif), serif",
                 fontSize: 48,
                 fontWeight: 400,
-                color: "var(--sr-text)",
+                color: "var(--db-text)",
                 lineHeight: 1.1,
                 margin: 0,
               }}
@@ -500,7 +500,7 @@ export default function SolutionSection() {
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 12,
                     fontWeight: 500,
-                    color: "var(--sr-text-muted)",
+                    color: "var(--db-text-muted)",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
                     marginBottom: 16,
@@ -514,7 +514,7 @@ export default function SolutionSection() {
                     fontFamily: "var(--font-serif), serif",
                     fontSize: 36,
                     fontWeight: 400,
-                    color: "var(--sr-text)",
+                    color: "var(--db-text)",
                     lineHeight: 1.2,
                     margin: "0 0 16px",
                   }}
@@ -525,7 +525,7 @@ export default function SolutionSection() {
                   style={{
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 16,
-                    color: "var(--sr-text-secondary)",
+                    color: "var(--db-text-secondary)",
                     lineHeight: 1.7,
                     margin: 0,
                     maxWidth: 420,

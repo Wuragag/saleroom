@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { APP_NAME } from "@/lib/constants";
 
 /**
  * Split editorial auth shell shared by sign-in / sign-up: a full-bleed
@@ -40,7 +41,7 @@ export function AuthLayout({
         />
         <div className="absolute left-10 top-10">
           <span className="font-display text-heading text-foreground">
-            SalesRoom
+            {APP_NAME}
           </span>
         </div>
         <p className="absolute bottom-12 left-10 max-w-sm font-display text-title leading-tight text-foreground">

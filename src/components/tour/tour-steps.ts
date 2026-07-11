@@ -47,4 +47,8 @@ export const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-export const STORAGE_KEY = "pager-tour-completed";
+export const STORAGE_KEY = "dealbeam-tour-completed";
+
+/** Legacy key (pre-Dealbeam rebrand); read as a fallback so users who already
+ *  finished the tour don't see it again before the server check confirms. */
+export const LEGACY_STORAGE_KEY = "pager-tour-completed";

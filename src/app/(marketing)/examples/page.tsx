@@ -3,8 +3,8 @@ import { PageHero, CTABanner } from "@/components/marketing/shared"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
 
 export const metadata = {
-  title: "Examples — SalesRoom",
-  description: "See real pages built with SalesRoom — proposals, onboarding guides, investor updates, and more.",
+  title: "Examples — Dealbeam",
+  description: "See real pages built with Dealbeam — proposals, onboarding guides, investor updates, and more.",
 }
 
 function ExampleCard({ title, category, description, tabs }: {
@@ -17,15 +17,15 @@ function ExampleCard({ title, category, description, tabs }: {
     <div
       className="sr-example-card"
       style={{
-        background: "var(--sr-surface)",
-        border: "1px solid var(--sr-border)",
+        background: "var(--db-surface)",
+        border: "1px solid var(--db-border)",
         borderRadius: 16,
         overflow: "hidden",
         transition: "border-color 200ms ease, box-shadow 200ms ease",
       }}
     >
       {/* Mini browser mockup */}
-      <div style={{ borderBottom: "1px solid var(--sr-border)" }}>
+      <div style={{ borderBottom: "1px solid var(--db-border)" }}>
         <div
           style={{
             padding: "12px 16px",
@@ -50,15 +50,15 @@ function ExampleCard({ title, category, description, tabs }: {
             style={{
               flex: 1,
               marginLeft: 8,
-              background: "var(--sr-surface-dim)",
+              background: "var(--db-surface-dim)",
               borderRadius: 6,
               padding: "4px 12px",
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 11,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
             }}
           >
-            salesroom.app/p/...
+            dealbeam.app/p/...
           </span>
         </div>
 
@@ -66,7 +66,7 @@ function ExampleCard({ title, category, description, tabs }: {
         <div
           style={{
             display: "flex",
-            borderTop: "1px solid var(--sr-border)",
+            borderTop: "1px solid var(--db-border)",
           }}
         >
           {tabs.map((tab, i) => (
@@ -76,9 +76,9 @@ function ExampleCard({ title, category, description, tabs }: {
                 padding: "8px 14px",
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 11,
-                color: i === 0 ? "var(--sr-text)" : "var(--sr-text-muted)",
+                color: i === 0 ? "var(--db-text)" : "var(--db-text-muted)",
                 fontWeight: i === 0 ? 600 : 400,
-                borderBottom: i === 0 ? "2px solid var(--sr-text)" : "2px solid transparent",
+                borderBottom: i === 0 ? "2px solid var(--db-text)" : "2px solid transparent",
               }}
             >
               {tab}
@@ -95,7 +95,7 @@ function ExampleCard({ title, category, description, tabs }: {
                 width: `${w}%`,
                 height: 6,
                 borderRadius: 3,
-                background: "var(--sr-surface-dim)",
+                background: "var(--db-surface-dim)",
               }}
             />
           ))}
@@ -109,7 +109,7 @@ function ExampleCard({ title, category, description, tabs }: {
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 11,
             fontWeight: 600,
-            color: "var(--sr-text-muted)",
+            color: "var(--db-text-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.08em",
             marginBottom: 8,
@@ -122,7 +122,7 @@ function ExampleCard({ title, category, description, tabs }: {
             fontFamily: "var(--font-serif), serif",
             fontSize: 20,
             fontWeight: 400,
-            color: "var(--sr-text)",
+            color: "var(--db-text)",
             lineHeight: 1.3,
             margin: "0 0 8px",
           }}
@@ -133,7 +133,7 @@ function ExampleCard({ title, category, description, tabs }: {
           style={{
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 14,
-            color: "var(--sr-text-secondary)",
+            color: "var(--db-text-secondary)",
             lineHeight: 1.6,
             margin: 0,
           }}
@@ -155,7 +155,7 @@ export default function ExamplesPage() {
           gap: 20px;
         }
         .sr-example-card:hover {
-          border-color: var(--sr-border-hover) !important;
+          border-color: var(--db-border-hover) !important;
           box-shadow: 0 8px 24px rgba(0,0,0,0.04);
         }
         @media (max-width: 900px) {
@@ -169,7 +169,7 @@ export default function ExamplesPage() {
       <PageHero
         label="Examples"
         heading="See what you can build"
-        headingAccent="with SalesRoom"
+        headingAccent="with Dealbeam"
         subtitle="Real page templates for proposals, onboarding, investor updates, and everything in between."
       />
 

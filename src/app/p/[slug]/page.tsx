@@ -41,9 +41,13 @@ export default async function PublishedPage({
   // page — a searchParams-conditional redirect() here didn't consistently
   // take effect once `revalidate` was in play.
 
-  // Read existing ref cookie (set by /api/ref on a prior visit)
+  // Read existing ref cookie (set by /api/ref on a prior visit). Fall back to
+  // the legacy `sr_` cookie name (pre-Dealbeam rebrand) so in-flight refs survive.
   const cookieStore = await cookies();
-  const refToken: string | null = cookieStore.get(`sr_ref_${page.id}`)?.value ?? null;
+  const refToken: string | null =
+    cookieStore.get(`db_ref_${page.id}`)?.value ??
+    cookieStore.get(`sr_ref_${page.id}`)?.value ??
+    null;
 
   // ── Email gate ──
   if (page.requireEmail && !refToken) {

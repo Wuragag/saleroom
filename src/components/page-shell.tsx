@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { getAccentGradients } from "@/lib/pub-theme";
+import { APP_NAME } from "@/lib/constants";
 
 interface PageShellProps {
   bgHex: string;
@@ -100,7 +101,7 @@ export function PageShell({
             color: "var(--pub-muted-color)",
           }}
         >
-          Powered by SalesRoom
+          Powered by {APP_NAME}
         </span>
       </footer>
 

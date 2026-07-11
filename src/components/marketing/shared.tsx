@@ -40,7 +40,7 @@ export function PageHero({
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 12,
               fontWeight: 500,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
               textTransform: "uppercase",
               letterSpacing: "0.1em",
               marginBottom: 16,
@@ -54,7 +54,7 @@ export function PageHero({
               fontFamily: "var(--font-serif), serif",
               fontSize: 56,
               fontWeight: 400,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               lineHeight: 1.1,
               margin: "0 0 20px",
               letterSpacing: "-0.01em",
@@ -73,7 +73,7 @@ export function PageHero({
             style={{
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 17,
-              color: "var(--sr-text-secondary)",
+              color: "var(--db-text-secondary)",
               lineHeight: 1.7,
               margin: "0 auto",
               maxWidth: 520,
@@ -114,7 +114,7 @@ export function CTABanner({
         className="sr-cta-section"
         style={{
           padding: "120px 0",
-          background: "var(--sr-text)",
+          background: "var(--db-text)",
           color: "#FFFFFF",
         }}
       >
@@ -160,7 +160,7 @@ export function CTABanner({
               fontSize: 15,
               fontWeight: 500,
               background: "#FFFFFF",
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               borderRadius: 100,
               padding: "14px 32px",
               textDecoration: "none",
@@ -193,8 +193,8 @@ export function FeatureCard({
       className="sr-feature-card"
       style={{
         padding: 36,
-        background: "var(--sr-surface)",
-        border: "1px solid var(--sr-border)",
+        background: "var(--db-surface)",
+        border: "1px solid var(--db-border)",
         borderRadius: 16,
         transition: "border-color 200ms ease, box-shadow 200ms ease",
         height: "100%",
@@ -207,7 +207,7 @@ export function FeatureCard({
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 11,
           fontWeight: 600,
-          color: "var(--sr-text-muted)",
+          color: "var(--db-text-muted)",
           textTransform: "uppercase",
           letterSpacing: "0.08em",
           marginBottom: 12,
@@ -220,7 +220,7 @@ export function FeatureCard({
           fontFamily: "var(--font-serif), serif",
           fontSize: 24,
           fontWeight: 400,
-          color: "var(--sr-text)",
+          color: "var(--db-text)",
           lineHeight: 1.2,
           margin: "0 0 12px",
         }}
@@ -231,7 +231,7 @@ export function FeatureCard({
         style={{
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 15,
-          color: "var(--sr-text-secondary)",
+          color: "var(--db-text-secondary)",
           lineHeight: 1.7,
           margin: 0,
           flex: 1,
@@ -246,7 +246,7 @@ export function FeatureCard({
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 14,
             fontWeight: 500,
-            color: "var(--sr-text)",
+            color: "var(--db-text)",
           }}
         >
           Learn more &rarr;

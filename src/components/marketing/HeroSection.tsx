@@ -19,7 +19,7 @@ export default function HeroSection() {
         .sr-hero-cta    { opacity: 0; animation: sr-fade-up 600ms cubic-bezier(0.16,1,0.3,1) 240ms forwards; }
         .sr-hero-logos  { opacity: 0; animation: sr-fade-up 600ms cubic-bezier(0.16,1,0.3,1) 320ms forwards; }
         .sr-hero-pill:hover { opacity: 0.85; }
-        .sr-hero-text-link:hover { color: var(--sr-text) !important; }
+        .sr-hero-text-link:hover { color: var(--db-text) !important; }
         .sr-hero-logo:hover { opacity: 1 !important; }
 
         @media (prefers-reduced-motion: reduce) {
@@ -53,9 +53,9 @@ export default function HeroSection() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
-                color: "var(--sr-text-secondary)",
-                background: "var(--sr-surface)",
-                border: "1px solid var(--sr-border)",
+                color: "var(--db-text-secondary)",
+                background: "var(--db-surface)",
+                border: "1px solid var(--db-border)",
                 borderRadius: 100,
                 padding: "8px 18px",
                 display: "inline-block",
@@ -74,7 +74,7 @@ export default function HeroSection() {
               fontWeight: 400,
               lineHeight: 1.08,
               letterSpacing: "-0.02em",
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               margin: 0,
             }}
           >
@@ -92,7 +92,7 @@ export default function HeroSection() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 18,
               fontWeight: 400,
-              color: "var(--sr-text-secondary)",
+              color: "var(--db-text-secondary)",
               lineHeight: 1.7,
               marginTop: 28,
               marginBottom: 0,
@@ -124,7 +124,7 @@ export default function HeroSection() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 15,
                 fontWeight: 500,
-                background: "var(--sr-text)",
+                background: "var(--db-text)",
                 color: "#FFFFFF",
                 borderRadius: 100,
                 padding: "14px 32px",
@@ -141,7 +141,7 @@ export default function HeroSection() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 15,
                 fontWeight: 500,
-                color: "var(--sr-text-secondary)",
+                color: "var(--db-text-secondary)",
                 textDecoration: "none",
                 padding: "14px 8px",
                 transition: "color 150ms ease",
@@ -165,7 +165,7 @@ export default function HeroSection() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 12,
               fontWeight: 500,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
               textTransform: "uppercase",
               letterSpacing: "0.1em",
               marginBottom: 24,
@@ -190,7 +190,7 @@ export default function HeroSection() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 14,
                   fontWeight: 500,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                   opacity: 0.5,
                   transition: "opacity 200ms ease",
                   cursor: "default",

@@ -1,6 +1,7 @@
 import { Resend } from "resend";
+import { APP_NAME, EMAIL_FROM } from "./constants";
 
-const FROM = "SalesRoom <onboarding@resend.dev>";
+const FROM = EMAIL_FROM;
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
 export async function sendPasswordResetEmail(
@@ -21,7 +22,7 @@ export async function sendPasswordResetEmail(
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: "Reset your SalesRoom password",
+    subject: `Reset your ${APP_NAME} password`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -31,7 +32,7 @@ export async function sendPasswordResetEmail(
         Reset your password
       </h1>
       <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
-        Someone requested a password reset for your SalesRoom account.
+        Someone requested a password reset for your ${APP_NAME} account.
         Click the button below to choose a new password. This link expires in
         <strong>1 hour</strong>.
       </p>
@@ -80,7 +81,7 @@ export async function sendSharePageEmail(
       </h1>
       <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
         ${greeting} <strong>${senderName}</strong> shared
-        <strong>&ldquo;${pageName}&rdquo;</strong> with you on SalesRoom.
+        <strong>&ldquo;${pageName}&rdquo;</strong> with you on ${APP_NAME}.
       </p>
       <a href="${pageUrl}"
          style="display:inline-block;background:#09090b;color:#fff;font-size:14px;font-weight:600;padding:10px 24px;border-radius:8px;text-decoration:none;">
@@ -116,7 +117,7 @@ export async function sendTeamInviteEmail(
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `${inviterName} invited you to join ${teamName} on SalesRoom`,
+    subject: `${inviterName} invited you to join ${teamName} on ${APP_NAME}`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -127,7 +128,7 @@ export async function sendTeamInviteEmail(
       </h1>
       <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
         <strong>${inviterName}</strong> invited you to join
-        <strong>${teamName}</strong> on SalesRoom. Click the button below
+        <strong>${teamName}</strong> on ${APP_NAME}. Click the button below
         to accept the invitation. This link expires in
         <strong>7 days</strong>.
       </p>

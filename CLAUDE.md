@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-SalesRoom (package codename `pager`, repo `saleroom`) — a multi-tenant
+Dealbeam (package codename `dealbeam`, repo `saleroom`) — a multi-tenant
 sales-enablement platform. Reps build branded, trackable deal pages (proposals,
 mutual action plans, onboarding hubs), share them as a single link, and see
-exactly how buyers engage. Public brand name: **SalesRoom**.
+exactly how buyers engage. Public brand name: **Dealbeam** (defined once in
+`src/lib/constants.ts` as `APP_NAME` — import it rather than hardcoding).
 
 **Stack:** Next.js 15 (App Router) · React 18 · TypeScript (strict) · NextAuth v5
 (JWT sessions) · Prisma 5 + PostgreSQL (Neon) · Stripe billing · Vercel Blob

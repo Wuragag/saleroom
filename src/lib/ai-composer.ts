@@ -8,6 +8,7 @@ import type {
   EditTabContext,
 } from "@/types/ai-composer";
 import { TIPTAP_SPEC, STYLE_VOCAB, sanitizeDoc, sanitizeStylePatch } from "./ai-page-generation";
+import { APP_NAME } from "./constants";
 
 /**
  * Server-side brain of the sales-page composer: the shared writing rules,
@@ -55,7 +56,7 @@ export function buildPlanSystemPrompt(ctx: {
   style: Partial<PageStyle>;
   maxTabs: number;
 }): string {
-  return `You are the planning brain of a sales-page composer inside SalesRoom. The user describes a page; you infer the sales context and return a build plan. A separate step writes each tab afterwards.
+  return `You are the planning brain of a sales-page composer inside ${APP_NAME}. The user describes a page; you infer the sales context and return a build plan. A separate step writes each tab afterwards.
 
 Infer from the conversation: what type of page this is, who the buyer/persona is, what stage the deal is in, what the buyer should do next, and what source material the user provided.
 
@@ -70,7 +71,7 @@ Your output MUST be ONLY a valid JSON object (no markdown, no code fences):
   "reply": "2-4 sentences, first person, confident: what you'll build and why it fits the buyer journey. End with the structure, e.g. 'I'll use 4 tabs: Recap, Recommended Solution, Business Case, and Next Steps, plus a Mutual Action Plan and a CTA to book the pricing call.'",
   "plan": {
     "pageType": "one of the library ids (or closest fit)",
-    "title": "Buyer-facing page title (max 80 chars, e.g. 'Acme + SalesRoom — Next Steps')",
+    "title": "Buyer-facing page title (max 80 chars, e.g. 'Acme + ${APP_NAME} — Next Steps')",
     "style": { ... },                     // OPTIONAL, only when a look clearly fits
     "tabs": [{ "name": "Recap", "purpose": "One line: what this tab must accomplish for the buyer" }],
     "ctaTabName": "Next Steps",           // tab carrying the ONE primary CTA, or null
@@ -148,7 +149,7 @@ export function buildEditSystemPrompt(ctx: {
 ${ctx.syncedBlocks.map((b) => `- ${b.id} — "${b.name}"`).join("\n")}`
       : `Never use: syncedBlock.`;
 
-  return `You are a sales-page editor inside SalesRoom. The user asks for changes; you return the MINIMUM set of operations that fulfils the request. Never regenerate tabs the request doesn't affect — the user is steering the page, not starting over.
+  return `You are a sales-page editor inside ${APP_NAME}. The user asks for changes; you return the MINIMUM set of operations that fulfils the request. Never regenerate tabs the request doesn't affect — the user is steering the page, not starting over.
 
 Operations you can return (use real tabIds from the inventory):
 - { "op": "updateTab", "tabId": "...", "content": { "type": "doc", ... } } — FULLY REPLACES that tab, so return the complete revised doc, but only for tabs the request touches.

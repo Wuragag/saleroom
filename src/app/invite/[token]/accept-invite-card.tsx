@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { APP_NAME } from "@/lib/constants";
 
 export function AcceptInviteCard({
   token,
@@ -41,8 +42,8 @@ export function AcceptInviteCard({
         Join {teamName}
       </h1>
       <p className="text-sm text-muted-foreground mb-6">
-        {inviterName} invited you to join <strong>{teamName}</strong> on
-        SalesRoom.
+        {inviterName} invited you to join <strong>{teamName}</strong> on{" "}
+        {APP_NAME}.
       </p>
 
       {error && (

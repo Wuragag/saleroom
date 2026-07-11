@@ -1,5 +1,5 @@
 /**
- * SalesRoom — Marketing Landing Page
+ * Dealbeam — Marketing Landing Page
  *
  * Route: / (via the (marketing) route group)
  */

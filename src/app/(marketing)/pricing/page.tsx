@@ -28,8 +28,8 @@ function PricingCard({
       className="sr-pricing-card"
       style={{
         padding: 36,
-        background: highlighted ? "var(--sr-text)" : "var(--sr-surface)",
-        border: `1px solid ${highlighted ? "var(--sr-text)" : "var(--sr-border)"}`,
+        background: highlighted ? "var(--db-text)" : "var(--db-surface)",
+        border: `1px solid ${highlighted ? "var(--db-text)" : "var(--db-border)"}`,
         borderRadius: 16,
         display: "flex",
         flexDirection: "column",
@@ -41,7 +41,7 @@ function PricingCard({
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 12,
           fontWeight: 600,
-          color: highlighted ? "rgba(255,255,255,0.5)" : "var(--sr-text-muted)",
+          color: highlighted ? "rgba(255,255,255,0.5)" : "var(--db-text-muted)",
           textTransform: "uppercase",
           letterSpacing: "0.08em",
           marginBottom: 16,
@@ -55,7 +55,7 @@ function PricingCard({
             fontFamily: "var(--font-serif), serif",
             fontSize: 48,
             fontWeight: 400,
-            color: highlighted ? "#FFFFFF" : "var(--sr-text)",
+            color: highlighted ? "#FFFFFF" : "var(--db-text)",
             lineHeight: 1,
           }}
         >
@@ -65,7 +65,7 @@ function PricingCard({
           style={{
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 14,
-            color: highlighted ? "rgba(255,255,255,0.5)" : "var(--sr-text-muted)",
+            color: highlighted ? "rgba(255,255,255,0.5)" : "var(--db-text-muted)",
             marginLeft: 8,
           }}
         >
@@ -76,7 +76,7 @@ function PricingCard({
         style={{
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 15,
-          color: highlighted ? "rgba(255,255,255,0.6)" : "var(--sr-text-secondary)",
+          color: highlighted ? "rgba(255,255,255,0.6)" : "var(--db-text-secondary)",
           lineHeight: 1.6,
           margin: "0 0 28px",
         }}
@@ -90,8 +90,8 @@ function PricingCard({
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 15,
           fontWeight: 500,
-          background: highlighted ? "#FFFFFF" : "var(--sr-text)",
-          color: highlighted ? "var(--sr-text)" : "#FFFFFF",
+          background: highlighted ? "#FFFFFF" : "var(--db-text)",
+          color: highlighted ? "var(--db-text)" : "#FFFFFF",
           borderRadius: 100,
           padding: "14px 0",
           textDecoration: "none",
@@ -113,7 +113,7 @@ function PricingCard({
               padding: "10px 0",
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 14,
-              color: highlighted ? "rgba(255,255,255,0.75)" : "var(--sr-text-secondary)",
+              color: highlighted ? "rgba(255,255,255,0.75)" : "var(--db-text-secondary)",
               lineHeight: 1.5,
               display: "flex",
               alignItems: "center",
@@ -129,7 +129,7 @@ function PricingCard({
             >
               <path
                 d="M4 8L7 11L12 5"
-                stroke={highlighted ? "rgba(255,255,255,0.6)" : "var(--sr-text-muted)"}
+                stroke={highlighted ? "rgba(255,255,255,0.6)" : "var(--db-text-muted)"}
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -155,7 +155,7 @@ function FAQSection() {
               fontFamily: "var(--font-serif), serif",
               fontSize: 36,
               fontWeight: 400,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               lineHeight: 1.2,
               margin: 0,
             }}
@@ -169,7 +169,7 @@ function FAQSection() {
             <div
               key={i}
               style={{
-                borderBottom: "1px solid var(--sr-border)",
+                borderBottom: "1px solid var(--db-border)",
               }}
             >
               <button
@@ -191,7 +191,7 @@ function FAQSection() {
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 16,
                     fontWeight: 500,
-                    color: "var(--sr-text)",
+                    color: "var(--db-text)",
                     textAlign: "left",
                   }}
                 >
@@ -210,7 +210,7 @@ function FAQSection() {
                 >
                   <path
                     d="M10 4V16M4 10H16"
-                    stroke="var(--sr-text-muted)"
+                    stroke="var(--db-text-muted)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                   />
@@ -227,7 +227,7 @@ function FAQSection() {
                   style={{
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 15,
-                    color: "var(--sr-text-secondary)",
+                    color: "var(--db-text-secondary)",
                     lineHeight: 1.7,
                     margin: "0 0 20px",
                     paddingRight: 40,

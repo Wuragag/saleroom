@@ -691,7 +691,7 @@ async function main() {
     create: {
       id: "demo-user-001",
       name: "Demo User",
-      email: "demo@salesroom.dev",
+      email: "demo@dealbeam.dev",
     },
   });
   console.log("Seeded demo user.");

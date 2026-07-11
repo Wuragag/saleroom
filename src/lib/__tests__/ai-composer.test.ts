@@ -8,7 +8,7 @@ describe("sanitizePlan", () => {
     const plan = sanitizePlan(
       {
         pageType: "proposal",
-        title: "Acme + SalesRoom Next Steps",
+        title: "Acme + Dealbeam Next Steps",
         style: {
           font: "inter",
           accentColor: TEST_ACCENT,

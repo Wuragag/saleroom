@@ -3,8 +3,8 @@ import { PageHero, CTABanner } from "@/components/marketing/shared"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
 
 export const metadata = {
-  title: "Use Cases — SalesRoom",
-  description: "See how teams use SalesRoom across proposals, onboarding, QBRs, and more.",
+  title: "Use Cases — Dealbeam",
+  description: "See how teams use Dealbeam across proposals, onboarding, QBRs, and more.",
 }
 
 export default function UseCasesPage() {
@@ -18,13 +18,13 @@ export default function UseCasesPage() {
         }
         .sr-usecase-card {
           padding: 36px;
-          background: var(--sr-surface);
-          border: 1px solid var(--sr-border);
+          background: var(--db-surface);
+          border: 1px solid var(--db-border);
           border-radius: 16px;
           transition: border-color 200ms ease;
         }
         .sr-usecase-card:hover {
-          border-color: var(--sr-border-hover);
+          border-color: var(--db-border-hover);
         }
         @media (max-width: 900px) {
           .sr-usecase-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -38,7 +38,7 @@ export default function UseCasesPage() {
         label="Use Cases"
         heading="One tool,"
         headingAccent="every revenue moment"
-        subtitle="From first pitch to renewal, SalesRoom keeps your buyers engaged and your team informed."
+        subtitle="From first pitch to renewal, Dealbeam keeps your buyers engaged and your team informed."
       />
 
       <section style={{ padding: "0 0 120px" }}>
@@ -52,7 +52,7 @@ export default function UseCasesPage() {
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 11,
                     fontWeight: 600,
-                    color: "var(--sr-text-muted)",
+                    color: "var(--db-text-muted)",
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     marginBottom: 12,
@@ -65,7 +65,7 @@ export default function UseCasesPage() {
                     fontFamily: "var(--font-serif), serif",
                     fontSize: 24,
                     fontWeight: 400,
-                    color: "var(--sr-text)",
+                    color: "var(--db-text)",
                     lineHeight: 1.2,
                     margin: "0 0 12px",
                   }}
@@ -76,7 +76,7 @@ export default function UseCasesPage() {
                   style={{
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 15,
-                    color: "var(--sr-text-secondary)",
+                    color: "var(--db-text-secondary)",
                     lineHeight: 1.7,
                     margin: 0,
                   }}

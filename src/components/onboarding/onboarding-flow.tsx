@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { APP_NAME } from "@/lib/constants";
 import { StepRole } from "./step-role";
 
 export type OnboardingRole =
@@ -65,10 +66,10 @@ export function OnboardingFlow({ userName }: Props) {
         </span>
         <span className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary font-display text-small text-primary-foreground">
-            S
+            {APP_NAME[0]}
           </span>
           <span className="font-display text-heading text-foreground">
-            SalesRoom
+            {APP_NAME}
           </span>
         </span>
       </div>

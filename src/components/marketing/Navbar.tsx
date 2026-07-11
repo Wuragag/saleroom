@@ -45,21 +45,21 @@ export default function Navbar() {
           font-family: var(--font-inter), sans-serif;
           font-size: 14px;
           font-weight: 500;
-          color: var(--sr-text-secondary);
+          color: var(--db-text-secondary);
           text-decoration: none;
           transition: color 150ms ease;
           position: relative;
         }
         .sr-nav-link:hover, .sr-nav-link[data-active="true"] {
-          color: var(--sr-text);
+          color: var(--db-text);
         }
         .sr-dropdown {
           position: absolute;
           top: calc(100% + 8px);
           left: 50%;
           transform: translateX(-50%);
-          background: var(--sr-surface);
-          border: 1px solid var(--sr-border);
+          background: var(--db-surface);
+          border: 1px solid var(--db-border);
           border-radius: 12px;
           padding: 8px;
           min-width: 220px;
@@ -79,14 +79,14 @@ export default function Navbar() {
           padding: 10px 14px;
           font-family: var(--font-inter), sans-serif;
           font-size: 14px;
-          color: var(--sr-text-secondary);
+          color: var(--db-text-secondary);
           text-decoration: none;
           border-radius: 8px;
           transition: background 150ms ease, color 150ms ease;
         }
         .sr-dropdown-item:hover {
-          background: var(--sr-surface-dim);
-          color: var(--sr-text);
+          background: var(--db-surface-dim);
+          color: var(--db-text);
         }
         .sr-mobile-overlay {
           position: fixed;
@@ -108,7 +108,7 @@ export default function Navbar() {
           bottom: 0;
           width: 300px;
           max-width: 85vw;
-          background: var(--sr-surface);
+          background: var(--db-surface);
           z-index: 200;
           padding: 24px;
           transform: translateX(100%);
@@ -124,7 +124,7 @@ export default function Navbar() {
           border: none;
           cursor: pointer;
           padding: 8px;
-          color: var(--sr-text);
+          color: var(--db-text);
         }
         .sr-desktop-nav { display: flex; }
         .sr-desktop-actions { display: flex; }
@@ -147,7 +147,7 @@ export default function Navbar() {
           backdropFilter: scrolled ? "blur(20px)" : "none",
           WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
           borderBottom: scrolled
-            ? "1px solid var(--sr-border)"
+            ? "1px solid var(--db-border)"
             : "1px solid transparent",
         }}
         aria-label="Main navigation"
@@ -170,12 +170,12 @@ export default function Navbar() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 18,
               fontWeight: 600,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               letterSpacing: "-0.02em",
               textDecoration: "none",
             }}
           >
-            SalesRoom
+            Dealbeam
           </Link>
 
           {/* Center nav */}
@@ -221,7 +221,7 @@ export default function Navbar() {
 
                 {link.hasDropdown && (
                   <div className="sr-dropdown" data-open={dropdownOpen ? "true" : undefined}>
-                    <Link href="/features" className="sr-dropdown-item" style={{ fontWeight: 600, color: "var(--sr-text)" }}>
+                    <Link href="/features" className="sr-dropdown-item" style={{ fontWeight: 600, color: "var(--db-text)" }}>
                       All Features
                     </Link>
                     {FEATURES.map((f) => (
@@ -257,7 +257,7 @@ export default function Navbar() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 14,
                 fontWeight: 500,
-                background: "var(--sr-text)",
+                background: "var(--db-text)",
                 color: "#FFFFFF",
                 borderRadius: 100,
                 padding: "10px 24px",
@@ -307,7 +307,7 @@ export default function Navbar() {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               padding: 4,
             }}
             aria-label="Close menu"
@@ -329,7 +329,7 @@ export default function Navbar() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 16,
                   fontWeight: 500,
-                  color: pathname.startsWith(link.href) ? "var(--sr-text)" : "var(--sr-text-secondary)",
+                  color: pathname.startsWith(link.href) ? "var(--db-text)" : "var(--db-text-secondary)",
                   textDecoration: "none",
                   borderRadius: 8,
                 }}
@@ -347,7 +347,7 @@ export default function Navbar() {
                         padding: "8px 16px",
                         fontFamily: "var(--font-inter), sans-serif",
                         fontSize: 14,
-                        color: "var(--sr-text-muted)",
+                        color: "var(--db-text-muted)",
                         textDecoration: "none",
                         borderRadius: 8,
                       }}
@@ -363,7 +363,7 @@ export default function Navbar() {
 
         <div
           style={{
-            borderTop: "1px solid var(--sr-border)",
+            borderTop: "1px solid var(--db-border)",
             marginTop: 24,
             paddingTop: 24,
             display: "flex",
@@ -378,7 +378,7 @@ export default function Navbar() {
               padding: "12px 16px",
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 16,
-              color: "var(--sr-text-secondary)",
+              color: "var(--db-text-secondary)",
               textDecoration: "none",
               textAlign: "center",
               borderRadius: 8,
@@ -394,7 +394,7 @@ export default function Navbar() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 16,
               fontWeight: 500,
-              background: "var(--sr-text)",
+              background: "var(--db-text)",
               color: "#FFFFFF",
               borderRadius: 100,
               textDecoration: "none",

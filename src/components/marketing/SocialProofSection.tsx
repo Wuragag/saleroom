@@ -3,7 +3,7 @@
 const TESTIMONIALS = [
   {
     quote:
-      "SalesRoom became my mutual action plan for every deal. When a new stakeholder joins, I send them the page. They're up to speed in 4 minutes.",
+      "Dealbeam became my mutual action plan for every deal. When a new stakeholder joins, I send them the page. They're up to speed in 4 minutes.",
     name: "Jordan Lee",
     role: "Senior AE, Gong",
   },
@@ -27,13 +27,13 @@ export default function SocialProofSection() {
       <style>{`
         .sr-testimonial-card {
           padding: 36px;
-          background: var(--sr-surface);
-          border: 1px solid var(--sr-border);
+          background: var(--db-surface);
+          border: 1px solid var(--db-border);
           border-radius: 16px;
           transition: border-color 200ms ease;
         }
         .sr-testimonial-card:hover {
-          border-color: var(--sr-border-hover);
+          border-color: var(--db-border-hover);
         }
 
         @media (max-width: 860px) {
@@ -53,7 +53,7 @@ export default function SocialProofSection() {
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: 12,
                 fontWeight: 500,
-                color: "var(--sr-text-muted)",
+                color: "var(--db-text-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 marginBottom: 16,
@@ -67,7 +67,7 @@ export default function SocialProofSection() {
                 fontFamily: "var(--font-serif), serif",
                 fontSize: 48,
                 fontWeight: 400,
-                color: "var(--sr-text)",
+                color: "var(--db-text)",
                 lineHeight: 1.1,
                 margin: 0,
               }}
@@ -92,7 +92,7 @@ export default function SocialProofSection() {
                   style={{
                     fontFamily: "var(--font-inter), sans-serif",
                     fontSize: 15,
-                    color: "var(--sr-text-secondary)",
+                    color: "var(--db-text-secondary)",
                     lineHeight: 1.7,
                     margin: "0 0 24px",
                     fontStyle: "italic",
@@ -106,7 +106,7 @@ export default function SocialProofSection() {
                       fontFamily: "var(--font-inter), sans-serif",
                       fontSize: 14,
                       fontWeight: 600,
-                      color: "var(--sr-text)",
+                      color: "var(--db-text)",
                     }}
                   >
                     {t.name}
@@ -115,7 +115,7 @@ export default function SocialProofSection() {
                     style={{
                       fontFamily: "var(--font-inter), sans-serif",
                       fontSize: 13,
-                      color: "var(--sr-text-muted)",
+                      color: "var(--db-text-muted)",
                       marginTop: 2,
                     }}
                   >

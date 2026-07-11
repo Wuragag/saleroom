@@ -63,9 +63,9 @@ export default function AISection() {
         className="sr-ai-section"
         style={{
           padding: "120px 0",
-          background: "var(--sr-surface)",
-          borderTop: "1px solid var(--sr-border)",
-          borderBottom: "1px solid var(--sr-border)",
+          background: "var(--db-surface)",
+          borderTop: "1px solid var(--db-border)",
+          borderBottom: "1px solid var(--db-border)",
         }}
       >
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
@@ -77,7 +77,7 @@ export default function AISection() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 12,
                   fontWeight: 500,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.1em",
                   marginBottom: 16,
@@ -91,7 +91,7 @@ export default function AISection() {
                   fontFamily: "var(--font-serif), serif",
                   fontSize: 44,
                   fontWeight: 400,
-                  color: "var(--sr-text)",
+                  color: "var(--db-text)",
                   lineHeight: 1.1,
                   margin: "0 0 24px",
                 }}
@@ -104,7 +104,7 @@ export default function AISection() {
                 style={{
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 16,
-                  color: "var(--sr-text-secondary)",
+                  color: "var(--db-text-secondary)",
                   lineHeight: 1.7,
                   margin: "0 0 36px",
                   maxWidth: 440,
@@ -121,8 +121,8 @@ export default function AISection() {
                     key={i}
                     style={{
                       padding: "20px 0",
-                      borderTop: i === 0 ? "1px solid var(--sr-border)" : "none",
-                      borderBottom: "1px solid var(--sr-border)",
+                      borderTop: i === 0 ? "1px solid var(--db-border)" : "none",
+                      borderBottom: "1px solid var(--db-border)",
                     }}
                   >
                     <h3
@@ -130,7 +130,7 @@ export default function AISection() {
                         fontFamily: "var(--font-inter), sans-serif",
                         fontSize: 16,
                         fontWeight: 600,
-                        color: "var(--sr-text)",
+                        color: "var(--db-text)",
                         margin: "0 0 6px",
                       }}
                     >
@@ -140,7 +140,7 @@ export default function AISection() {
                       style={{
                         fontFamily: "var(--font-inter), sans-serif",
                         fontSize: 14,
-                        color: "var(--sr-text-secondary)",
+                        color: "var(--db-text-secondary)",
                         lineHeight: 1.6,
                         margin: 0,
                       }}
@@ -158,7 +158,7 @@ export default function AISection() {
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 15,
                   fontWeight: 500,
-                  background: "var(--sr-text)",
+                  background: "var(--db-text)",
                   color: "#FFFFFF",
                   borderRadius: 100,
                   padding: "14px 32px",
@@ -176,9 +176,9 @@ export default function AISection() {
             <div className="sr-ai-visual" ref={mockupRef}>
               <div
                 style={{
-                  background: "var(--sr-bg)",
+                  background: "var(--db-bg)",
                   borderRadius: 16,
-                  border: "1px solid var(--sr-border)",
+                  border: "1px solid var(--db-border)",
                   boxShadow:
                     "0 24px 48px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
                   overflow: "hidden",
@@ -188,11 +188,11 @@ export default function AISection() {
                 <div
                   style={{
                     padding: "14px 16px",
-                    borderBottom: "1px solid var(--sr-border)",
+                    borderBottom: "1px solid var(--db-border)",
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    background: "var(--sr-surface)",
+                    background: "var(--db-surface)",
                   }}
                 >
                   <div style={{ display: "flex", gap: 6 }}>
@@ -213,15 +213,15 @@ export default function AISection() {
                     style={{
                       flex: 1,
                       marginLeft: 8,
-                      background: "var(--sr-surface-dim)",
+                      background: "var(--db-surface-dim)",
                       borderRadius: 8,
                       padding: "6px 14px",
                       fontFamily: "var(--font-inter), sans-serif",
                       fontSize: 12,
-                      color: "var(--sr-text-muted)",
+                      color: "var(--db-text-muted)",
                     }}
                   >
-                    app.salesroom.com/editor
+                    app.dealbeam.com/editor
                   </div>
                 </div>
 
@@ -242,7 +242,7 @@ export default function AISection() {
                           width: `${w}%`,
                           height: 7,
                           borderRadius: 4,
-                          background: "var(--sr-surface-dim)",
+                          background: "var(--db-surface-dim)",
                         }}
                       />
                     ))}
@@ -382,7 +382,7 @@ export default function AISection() {
                           width: `${w}%`,
                           height: 7,
                           borderRadius: 4,
-                          background: "var(--sr-surface-dim)",
+                          background: "var(--db-surface-dim)",
                         }}
                       />
                     ))}

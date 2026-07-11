@@ -39,7 +39,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   }
 
   const res = NextResponse.redirect(target);
-  res.cookies.set(`sr_ref_${contact.pageId}`, token, {
+  res.cookies.set(`db_ref_${contact.pageId}`, token, {
     httpOnly: true,
     path: "/p/",
     sameSite: "lax",

@@ -6,7 +6,11 @@ import { useState, useEffect, useCallback } from "react";
  *  bootstrap script in src/app/layout.tsx mirrors this key/class/attribute —
  *  change them together. The buyer page + editor doc canvas theme
  *  independently (data-page-theme) and must NOT read this key. */
-export const APP_THEME_STORAGE_KEY = "sr-ds-theme";
+export const APP_THEME_STORAGE_KEY = "db-ds-theme";
+
+/** Legacy key (pre-Dealbeam rebrand). Read as a one-time fallback so existing
+ *  users keep their theme; the layout.tsx bootstrap script mirrors this too. */
+export const LEGACY_APP_THEME_STORAGE_KEY = "sr-ds-theme";
 
 export type AppTheme = "light" | "dark";
 
@@ -24,7 +28,9 @@ export function useAppTheme() {
   const [theme, setTheme] = useState<AppTheme>("light");
 
   useEffect(() => {
-    const stored = localStorage.getItem(APP_THEME_STORAGE_KEY) as AppTheme | null;
+    // Fall back to the legacy key so the pre-rebrand preference survives.
+    const stored = (localStorage.getItem(APP_THEME_STORAGE_KEY) ??
+      localStorage.getItem(LEGACY_APP_THEME_STORAGE_KEY)) as AppTheme | null;
     if (stored === "dark" || stored === "light") setTheme(stored);
   }, []);
 

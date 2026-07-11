@@ -13,9 +13,9 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
   // Note: generateMetadata receives params as a Promise in Next.js 15
   return params.then(({ slug }) => {
     const feature = FEATURES.find((f) => f.slug === slug)
-    if (!feature) return { title: "Feature — SalesRoom" }
+    if (!feature) return { title: "Feature — Dealbeam" }
     return {
-      title: `${feature.title} — SalesRoom`,
+      title: `${feature.title} — Dealbeam`,
       description: feature.description,
     }
   })
@@ -50,10 +50,10 @@ export default async function FeatureDetailPage({
         }
         .sr-highlight-list li {
           padding: 16px 0;
-          border-bottom: 1px solid var(--sr-border);
+          border-bottom: 1px solid var(--db-border);
           font-family: var(--font-inter), sans-serif;
           font-size: 16px;
-          color: var(--sr-text-secondary);
+          color: var(--db-text-secondary);
           line-height: 1.6;
           display: flex;
           align-items: center;
@@ -64,7 +64,7 @@ export default async function FeatureDetailPage({
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: var(--sr-text);
+          background: var(--db-text);
           flex-shrink: 0;
         }
         .sr-feature-detail-grid {
@@ -104,7 +104,7 @@ export default async function FeatureDetailPage({
                 style={{
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 17,
-                  color: "var(--sr-text-secondary)",
+                  color: "var(--db-text-secondary)",
                   lineHeight: 1.8,
                   margin: "0 0 40px",
                 }}
@@ -119,7 +119,7 @@ export default async function FeatureDetailPage({
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 15,
                   fontWeight: 500,
-                  background: "var(--sr-text)",
+                  background: "var(--db-text)",
                   color: "#FFFFFF",
                   borderRadius: 100,
                   padding: "14px 32px",
@@ -140,7 +140,7 @@ export default async function FeatureDetailPage({
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "var(--sr-text-muted)",
+                  color: "var(--db-text-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
                   marginBottom: 16,
@@ -166,7 +166,7 @@ export default async function FeatureDetailPage({
       <section
         style={{
           padding: "80px 0",
-          borderTop: "1px solid var(--sr-border)",
+          borderTop: "1px solid var(--db-border)",
         }}
       >
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
@@ -175,7 +175,7 @@ export default async function FeatureDetailPage({
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 12,
               fontWeight: 500,
-              color: "var(--sr-text-muted)",
+              color: "var(--db-text-muted)",
               textTransform: "uppercase",
               letterSpacing: "0.1em",
               marginBottom: 16,
@@ -190,7 +190,7 @@ export default async function FeatureDetailPage({
               fontFamily: "var(--font-serif), serif",
               fontSize: 32,
               fontWeight: 400,
-              color: "var(--sr-text)",
+              color: "var(--db-text)",
               textDecoration: "none",
               lineHeight: 1.2,
             }}

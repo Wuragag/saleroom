@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { APP_NAME } from "@/lib/constants";
 
 interface TourWelcomeDialogProps {
   onStart: () => void;
@@ -48,7 +49,7 @@ export function TourWelcomeDialog({ onStart, onSkip }: TourWelcomeDialogProps) {
           id="tour-welcome-title"
           className="text-xl font-bold text-foreground mb-2"
         >
-          Welcome to SalesRoom!
+          Welcome to {APP_NAME}!
         </h2>
 
         {/* Subtitle */}

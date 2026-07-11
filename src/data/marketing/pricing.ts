@@ -13,12 +13,12 @@ export const PRICING_TIERS: PricingTier[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Perfect for trying SalesRoom on your next deal.",
+    description: "Perfect for trying Dealbeam on your next deal.",
     features: [
       "1 page",
       "Up to 3 tabs per page",
       "Basic analytics",
-      "SalesRoom branding",
+      "Dealbeam branding",
       "Email support",
     ],
     cta: "Start free",
@@ -66,7 +66,7 @@ export const PRICING_TIERS: PricingTier[] = [
 
 export const FAQ: { question: string; answer: string }[] = [
   {
-    question: "Can I try SalesRoom before paying?",
+    question: "Can I try Dealbeam before paying?",
     answer:
       "Yes. The Free plan is yours forever with no credit card required. When you're ready for more, Pro comes with a 14-day free trial.",
   },

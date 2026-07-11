@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { OnboardingRole } from "./onboarding-flow";
 import { Button } from "@/components/ui/button";
+import { APP_NAME } from "@/lib/constants";
 
 const ROLES: {
   id: OnboardingRole;
@@ -81,7 +82,7 @@ export function StepRole({ userName, selected, onSelect, onComplete }: Props) {
           Hi {firstName} — let’s set the scene
         </h1>
         <p className="text-muted-foreground mt-2 text-body leading-relaxed">
-          One quick question so we can tailor SalesRoom to you.
+          One quick question so we can tailor {APP_NAME} to you.
           <br />
           What best describes your role?
         </p>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
@@ -129,11 +130,11 @@ export function AppShell({
     <div className="flex min-h-screen flex-col gap-3 bg-background p-3 md:flex-row md:gap-4 md:p-4">
       {/* ── Mobile top bar (<md) ── */}
       <header className="flex h-11 shrink-0 items-center justify-between md:hidden">
-        <Link href="/dashboard" className="flex items-center gap-2" aria-label="SalesRoom">
+        <Link href="/dashboard" className="flex items-center gap-2" aria-label={APP_NAME}>
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary font-display text-base text-primary-foreground">
-            S
+            {APP_NAME[0]}
           </span>
-          <span className="font-display text-heading text-foreground">SalesRoom</span>
+          <span className="font-display text-heading text-foreground">{APP_NAME}</span>
         </Link>
         <IconButton
           aria-label="Open menu"
@@ -153,7 +154,7 @@ export function AppShell({
           />
           <nav className="absolute bottom-0 right-0 top-0 flex w-72 flex-col border-l border-border bg-card p-4 shadow-elevation-3 animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between">
-              <span className="font-display text-heading text-foreground">SalesRoom</span>
+              <span className="font-display text-heading text-foreground">{APP_NAME}</span>
               <IconButton aria-label="Close menu" onClick={() => setMobileOpen(false)}>
                 <X className="h-4 w-4" />
               </IconButton>
@@ -223,10 +224,10 @@ export function AppShell({
         <Link
           href="/dashboard"
           className="flex h-10 items-center gap-2.5 px-1.5"
-          aria-label="SalesRoom"
+          aria-label={APP_NAME}
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary font-display text-base text-primary-foreground">
-            S
+            {APP_NAME[0]}
           </span>
           <span
             className={cn(
@@ -234,7 +235,7 @@ export function AppShell({
               expanded ? "opacity-100" : "pointer-events-none opacity-0"
             )}
           >
-            SalesRoom
+            {APP_NAME}
           </span>
         </Link>
 

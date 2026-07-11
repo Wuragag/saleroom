@@ -3,7 +3,7 @@ import { PageHero, FeatureCard, CTABanner } from "@/components/marketing/shared"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
 
 export const metadata = {
-  title: "Features — SalesRoom",
+  title: "Features — Dealbeam",
   description: "Everything you need to create, share, and track winning proposals.",
 }
 
@@ -17,7 +17,7 @@ export default function FeaturesPage() {
           gap: 20px;
         }
         .sr-feature-card:hover {
-          border-color: var(--sr-border-hover) !important;
+          border-color: var(--db-border-hover) !important;
           box-shadow: 0 8px 24px rgba(0,0,0,0.04);
         }
         @media (max-width: 900px) {
@@ -32,7 +32,7 @@ export default function FeaturesPage() {
         label="Features"
         heading="Everything you need to"
         headingAccent="close with confidence"
-        subtitle="From building beautiful proposals to tracking every buyer interaction — SalesRoom gives you the tools to win."
+        subtitle="From building beautiful proposals to tracking every buyer interaction — Dealbeam gives you the tools to win."
       />
 
       <section style={{ padding: "0 0 120px" }}>
