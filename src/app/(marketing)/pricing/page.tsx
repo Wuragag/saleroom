@@ -28,8 +28,8 @@ function PricingCard({
       className="sr-pricing-card"
       style={{
         padding: 36,
-        background: highlighted ? "var(--db-text)" : "var(--db-surface)",
-        border: `1px solid ${highlighted ? "var(--db-text)" : "var(--db-border)"}`,
+        background: highlighted ? "var(--db-accent)" : "var(--db-surface)",
+        border: `1px solid ${highlighted ? "var(--db-accent)" : "var(--db-border)"}`,
         borderRadius: 16,
         display: "flex",
         flexDirection: "column",
@@ -41,7 +41,7 @@ function PricingCard({
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 12,
           fontWeight: 600,
-          color: highlighted ? "rgba(255,255,255,0.5)" : "var(--db-text-muted)",
+          color: highlighted ? "color-mix(in srgb, var(--db-on-accent) 50%, transparent)" : "var(--db-text-muted)",
           textTransform: "uppercase",
           letterSpacing: "0.08em",
           marginBottom: 16,
@@ -55,7 +55,7 @@ function PricingCard({
             fontFamily: "var(--font-serif), serif",
             fontSize: 48,
             fontWeight: 400,
-            color: highlighted ? "#FFFFFF" : "var(--db-text)",
+            color: highlighted ? "var(--db-on-accent)" : "var(--db-text)",
             lineHeight: 1,
           }}
         >
@@ -65,7 +65,7 @@ function PricingCard({
           style={{
             fontFamily: "var(--font-inter), sans-serif",
             fontSize: 14,
-            color: highlighted ? "rgba(255,255,255,0.5)" : "var(--db-text-muted)",
+            color: highlighted ? "color-mix(in srgb, var(--db-on-accent) 50%, transparent)" : "var(--db-text-muted)",
             marginLeft: 8,
           }}
         >
@@ -76,7 +76,7 @@ function PricingCard({
         style={{
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 15,
-          color: highlighted ? "rgba(255,255,255,0.6)" : "var(--db-text-secondary)",
+          color: highlighted ? "color-mix(in srgb, var(--db-on-accent) 60%, transparent)" : "var(--db-text-secondary)",
           lineHeight: 1.6,
           margin: "0 0 28px",
         }}
@@ -90,8 +90,8 @@ function PricingCard({
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: 15,
           fontWeight: 500,
-          background: highlighted ? "#FFFFFF" : "var(--db-text)",
-          color: highlighted ? "var(--db-text)" : "#FFFFFF",
+          background: highlighted ? "var(--db-on-accent)" : "var(--db-accent)",
+          color: highlighted ? "var(--db-accent)" : "var(--db-on-accent)",
           borderRadius: 100,
           padding: "14px 0",
           textDecoration: "none",
@@ -113,7 +113,7 @@ function PricingCard({
               padding: "10px 0",
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: 14,
-              color: highlighted ? "rgba(255,255,255,0.75)" : "var(--db-text-secondary)",
+              color: highlighted ? "color-mix(in srgb, var(--db-on-accent) 75%, transparent)" : "var(--db-text-secondary)",
               lineHeight: 1.5,
               display: "flex",
               alignItems: "center",
@@ -129,7 +129,7 @@ function PricingCard({
             >
               <path
                 d="M4 8L7 11L12 5"
-                stroke={highlighted ? "rgba(255,255,255,0.6)" : "var(--db-text-muted)"}
+                stroke={highlighted ? "color-mix(in srgb, var(--db-on-accent) 60%, transparent)" : "var(--db-text-muted)"}
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"

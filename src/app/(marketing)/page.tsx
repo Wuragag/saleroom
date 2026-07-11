@@ -1,27 +1,25 @@
 /**
- * Dealbeam — Marketing Landing Page
+ * Dealbeam — Marketing Landing Page ("Website" design)
  *
  * Route: / (via the (marketing) route group)
  */
 
-import HeroSection from "@/components/marketing/HeroSection"
-import ProblemSection from "@/components/marketing/ProblemSection"
-import ComparisonSection from "@/components/marketing/ComparisonSection"
-import SolutionSection from "@/components/marketing/SolutionSection"
-import AISection from "@/components/marketing/AISection"
-import DemoSection from "@/components/marketing/DemoSection"
-import SocialProofSection from "@/components/marketing/SocialProofSection"
+import Hero from "@/components/marketing/Hero"
+import HowItWorks from "@/components/marketing/HowItWorks"
+import FeatureBento from "@/components/marketing/FeatureBento"
+import PhilosophySection from "@/components/marketing/PhilosophySection"
+import PricingSection from "@/components/marketing/PricingSection"
+import FinalCTA from "@/components/marketing/FinalCTA"
 
 export default function MarketingPage() {
   return (
     <>
-      <HeroSection />
-      <ProblemSection />
-      <ComparisonSection />
-      <SolutionSection />
-      <AISection />
-      <DemoSection />
-      <SocialProofSection />
+      <Hero />
+      <HowItWorks />
+      <FeatureBento />
+      <PhilosophySection />
+      <PricingSection />
+      <FinalCTA />
     </>
   )
 }
