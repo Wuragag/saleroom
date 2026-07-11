@@ -80,7 +80,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       stripeSubscriptionId: subscriptionId,
       stripePriceId: priceId ?? null,
       plan,
-      status: "ACTIVE",
+      // Reflect the subscription's real status (e.g. incomplete/trialing) rather
+      // than assuming ACTIVE — payment may not have fully cleared at checkout.
+      status: STRIPE_STATUS_MAP[sub.status] ?? "ACTIVE",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentPeriodStart: new Date(((sub as any).current_period_start ?? 0) * 1000),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,9 +144,16 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subId = (invoice as any).subscription as string;
   if (!subId) return;
-  // Only reactivate if the subscription is not already canceled
+
+  // Webhooks can be replayed and delivered out of order (Stripe retries), so a
+  // stale `invoice.paid` must NOT blindly flip an unpaid/past_due subscription
+  // back to ACTIVE. Read the subscription's authoritative current status from
+  // Stripe and mirror that, rather than trusting the event's mere occurrence.
+  const sub = await getWebhookStripe().subscriptions.retrieve(subId);
+  const mappedStatus = STRIPE_STATUS_MAP[sub.status] ?? "INCOMPLETE";
+
   await prisma.subscription.updateMany({
     where: { stripeSubscriptionId: subId, status: { not: "CANCELED" } },
-    data: { status: "ACTIVE" },
+    data: { status: mappedStatus },
   });
 }

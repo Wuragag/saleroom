@@ -32,13 +32,15 @@ export const POST = withErrorHandler(async (
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    // Verify the page exists and requires email
+    // Only accept gate submissions for a published page that actually uses the
+    // email gate. Without this, any pageId could be spammed with fabricated
+    // contacts — including on unpublished/private pages that never show a gate.
     const page = await prisma.page.findUnique({
       where: { id: pageId },
-      select: { id: true, requireEmail: true },
+      select: { id: true, requireEmail: true, published: true },
     });
 
-    if (!page) {
+    if (!page || !page.published || !page.requireEmail) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 

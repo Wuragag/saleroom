@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
@@ -12,6 +11,12 @@ import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
+import {
+  refCookieName,
+  passwordCookieName,
+  isValidRefToken,
+  isValidPasswordToken,
+} from "@/lib/page-gate";
 
 // ISR: serve cached pages, revalidate in background every 60s.
 // Analytics tracking moved client-side so this page can be cached.
@@ -43,25 +48,21 @@ export default async function PublishedPage({
 
   // Read existing ref cookie (set by /api/ref on a prior visit)
   const cookieStore = await cookies();
-  const refToken: string | null = cookieStore.get(`sr_ref_${page.id}`)?.value ?? null;
+  const refToken: string | null =
+    cookieStore.get(refCookieName(page.id))?.value ?? null;
 
   // ── Email gate ──
-  if (page.requireEmail && !refToken) {
-    // No valid ref → show email gate
+  // Validate the ref token against a real PageContact — a bare cookie value is
+  // not enough, or the lead-capture gate could be bypassed by setting any cookie.
+  if (page.requireEmail && !(await isValidRefToken(page.id, refToken))) {
     const { EmailGate } = await import("@/components/email-gate");
     return <EmailGate pageId={page.id} slug={page.slug} />;
   }
 
   // Password gate — HMAC with server secret so DB leak alone can't forge tokens
   if (page.password) {
-    const token = cookieStore.get(`page_auth_${page.id}`)?.value;
-    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-    if (!secret) throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be set");
-    const expected = crypto
-      .createHmac("sha256", secret)
-      .update(`${page.id}:${page.password}`)
-      .digest("hex");
-    if (token !== expected) {
+    const token = cookieStore.get(passwordCookieName(page.id))?.value;
+    if (!isValidPasswordToken(page.id, page.password, token)) {
       redirect(`/p/${page.slug}/password`);
     }
   }

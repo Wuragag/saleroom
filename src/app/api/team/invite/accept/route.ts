@@ -55,7 +55,9 @@ export const POST = withErrorHandler(async (request: Request) => {
   }
 
   // ── Plan limit check ──
-  const limitCheck = await canAddTeamMember(invite.teamId);
+  // Exclude this invite from the count — it's still PENDING but is being
+  // converted into the member we're about to add.
+  const limitCheck = await canAddTeamMember(invite.teamId, invite.id);
   if (!limitCheck.allowed) {
     return NextResponse.json(
       { error: limitCheck.reason, code: "PLAN_LIMIT", current: limitCheck.current, limit: limitCheck.limit },
@@ -90,7 +92,7 @@ export const POST = withErrorHandler(async (request: Request) => {
     // Serialize concurrent accepts for this team so the seat cap can't be raced,
     // and re-check the limit authoritatively inside the locked transaction.
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`team:${invite.teamId}:members`})::bigint)`;
-    await assertCanAddTeamMemberTx(tx, invite.teamId);
+    await assertCanAddTeamMemberTx(tx, invite.teamId, invite.id);
 
     const oldMembership = await tx.teamMember.findFirst({
       where: { userId: session.user.id },

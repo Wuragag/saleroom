@@ -89,8 +89,18 @@ async function extractPdf(buffer: Buffer): Promise<string> {
 
 async function extractDocx(buffer: Buffer): Promise<string> {
   // Guard against zip bombs before handing the buffer to mammoth (which would
-  // otherwise inflate it unbounded).
-  loadCheckedZip(buffer);
+  // otherwise inflate it unbounded). The header-size check in loadCheckedZip is
+  // necessary but not sufficient — those sizes are attacker-controlled — so also
+  // force-inflate every entry through a running byte counter, matching the
+  // second-line defense extractPptx already applies.
+  const zip = loadCheckedZip(buffer);
+  let inflated = 0;
+  for (const entry of zip.getEntries() as Array<{ getData: () => Buffer }>) {
+    inflated += entry.getData().length;
+    if (inflated > MAX_DECOMPRESSED) {
+      throw new Error(TOO_LARGE_MESSAGE);
+    }
+  }
   const mammoth = await import("mammoth");
   const result = await mammoth.extractRawText({ buffer });
   return result.value;

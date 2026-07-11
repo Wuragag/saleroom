@@ -120,7 +120,10 @@ export async function canCreateTab(
 
 /** Can this team add another member (or send an invite)? */
 export async function canAddTeamMember(
-  teamId: string
+  teamId: string,
+  // When redeeming an invite, that invite is still PENDING and would otherwise
+  // be counted as both a pending seat and the about-to-be member — exclude it.
+  excludeInviteId?: string
 ): Promise<LimitCheckResult> {
   const { maxTeamMembers, plan } = await getTeamPlanLimits(teamId);
   if (maxTeamMembers === -1) return { allowed: true, current: 0, limit: -1 };
@@ -128,7 +131,12 @@ export async function canAddTeamMember(
   const [memberCount, pendingInviteCount] = await Promise.all([
     prisma.teamMember.count({ where: { teamId } }),
     prisma.teamInvite.count({
-      where: { teamId, status: "PENDING", expiresAt: { gt: new Date() } },
+      where: {
+        teamId,
+        status: "PENDING",
+        expiresAt: { gt: new Date() },
+        ...(excludeInviteId ? { id: { not: excludeInviteId } } : {}),
+      },
     }),
   ]);
   const total = memberCount + pendingInviteCount;
@@ -279,14 +287,23 @@ export async function assertCanCreateSyncedBlockTx(
 /** Atomic team-member-limit assert (members + still-pending invites). */
 export async function assertCanAddTeamMemberTx(
   tx: Prisma.TransactionClient,
-  teamId: string
+  teamId: string,
+  // The invite being redeemed is still PENDING; exclude it so it isn't counted
+  // as both a pending seat and the new member (which made a PRO team's last seat
+  // unfillable).
+  excludeInviteId?: string
 ): Promise<void> {
   const { maxTeamMembers, plan } = await getTeamPlanLimits(teamId);
   if (maxTeamMembers === -1) return;
   const [memberCount, pendingInviteCount] = await Promise.all([
     tx.teamMember.count({ where: { teamId } }),
     tx.teamInvite.count({
-      where: { teamId, status: "PENDING", expiresAt: { gt: new Date() } },
+      where: {
+        teamId,
+        status: "PENDING",
+        expiresAt: { gt: new Date() },
+        ...(excludeInviteId ? { id: { not: excludeInviteId } } : {}),
+      },
     }),
   ]);
   const total = memberCount + pendingInviteCount;

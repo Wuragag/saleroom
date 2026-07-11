@@ -44,9 +44,6 @@ export const PATCH = withErrorHandler(async (
     const {
       duration: rawDuration = 0,
       tabViews: rawTabViews = [] as TabViewInput[],
-      ctaClicked = false,
-      pricingTabViewed = false,
-      fileDownloaded = false,
     } = body;
 
     // Clamp duration and limit tabViews to prevent abuse
@@ -62,6 +59,26 @@ export const PATCH = withErrorHandler(async (
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
+
+    // Derive the high-value engagement signals from server-recorded rows rather
+    // than trusting client-declared booleans — otherwise a visitor could PATCH
+    // {ctaClicked, fileDownloaded, pricingTabViewed}=true and self-report a
+    // maxed 100 "High Intent" score, poisoning the buyer-intelligence data.
+    // (Anonymous analytics can't be made fully tamper-proof, but this ties the
+    // score to the recorded, auditable event stream instead of one request.)
+    const [ctaEventCount, fileEventCount, pricingTabRow] = await Promise.all([
+      prisma.buyerEvent.count({ where: { sessionId, type: "CTA_CLICK" } }),
+      prisma.buyerEvent.count({ where: { sessionId, type: "FILE_DOWNLOAD" } }),
+      prisma.buyerTabView.findFirst({
+        where: { sessionId, tabName: { contains: "pricing", mode: "insensitive" } },
+        select: { id: true },
+      }),
+    ]);
+    const ctaClicked = ctaEventCount > 0;
+    const fileDownloaded = fileEventCount > 0;
+    const pricingTabViewed =
+      !!pricingTabRow ||
+      tabViews.some((tv) => /pricing/i.test(String(tv?.tabName ?? "")));
 
     const uniqueTabsViewed = tabViews.length;
 

@@ -139,19 +139,27 @@ export function rateLimit(config: RateLimitConfig): RateLimiter {
 }
 
 /**
- * Extract client IP from request headers.
- * Works with Vercel (x-forwarded-for), Cloudflare (cf-connecting-ip),
- * and falls back to "unknown".
+ * Extract the client IP for rate-limit keying.
+ *
+ * SECURITY: never trust the *leftmost* `x-forwarded-for` entry — a client can
+ * send `x-forwarded-for: <spoofed>` and the platform only *appends* the real
+ * client IP, so the leftmost value is attacker-controlled. Rotating it would
+ * defeat every per-IP limiter. Prefer the headers the trusted proxy sets
+ * directly (Cloudflare `cf-connecting-ip`, Vercel/nginx `x-real-ip`), and only
+ * fall back to the *rightmost* XFF hop (the one added closest to us).
  */
 export function getClientIp(request: Request): string {
+  const trusted =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-real-ip");
+  if (trusted) return trusted.trim();
+
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
-    // x-forwarded-for can contain multiple IPs; first is the client
-    return forwarded.split(",")[0].trim();
+    const hops = forwarded.split(",").map((h) => h.trim()).filter(Boolean);
+    // Rightmost hop is appended by the closest trusted proxy; the leftmost is
+    // whatever the client claimed and must not be used as the key.
+    if (hops.length > 0) return hops[hops.length - 1];
   }
-  return (
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-real-ip") ||
-    "unknown"
-  );
+  return "unknown";
 }
