@@ -361,6 +361,7 @@ export function EditorHeader({
                       onPasswordChange={onPasswordChange ?? (() => {})}
                       passwordProtection={passwordProtection}
                       hasCover={hasCover}
+                      pageId={pageId}
                     />
                   </PopoverContent>
                 </Popover>

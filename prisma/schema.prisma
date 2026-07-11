@@ -78,8 +78,29 @@ model Team {
   templates    Template[]
   subscription Subscription?
   aiCredits    TeamAiCredits?
+  brandKit     BrandKit?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+}
+
+// Team brand kit — the brand styles every NEW page starts from (and the
+// "Apply brand kit" action in the editor). Null = not configured; existing
+// pages keep the style they own.
+model BrandKit {
+  id              String   @id @default(cuid())
+  teamId          String   @unique
+  team            Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  primaryColor    String   @default("#17171a")
+  secondaryColors String   @default("[]") // JSON array of up to 6 hex swatches
+  logoUrl         String   @default("") // Vercel Blob URL
+  font            String   @default("dmsans")
+  headingFont     String   @default("") // "" = same as body
+  background      String   @default("white")
+  themeRadius     String   @default("default")
+  themeDepth      String   @default("default")
+  hideBranding    Boolean  @default(false) // effective only when plan allows
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Subscription {

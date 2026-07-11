@@ -28,10 +28,14 @@ interface StylePanelProps {
   passwordProtection?: boolean;
   /** Whether the page currently has a cover image (shows the Cover controls) */
   hasCover?: boolean;
+  /** Enables Blob logo upload via /api/pages/[id]/logo */
+  pageId?: string;
 }
 
-export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true, hasCover = false }: StylePanelProps) {
+export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true, hasCover = false, pageId }: StylePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   // Color picker state
   const currentHex = getAccentColor(style.accentColor);
@@ -44,15 +48,43 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
     setHexInput(getAccentColor(style.accentColor).replace("#", "").toUpperCase());
   }, [style.accentColor]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    setLogoError(null);
+
+    // Upload to Blob storage; the URL persists through the normal style PUT.
+    // (Logos used to be inlined as base64 data URLs — old values still render.)
+    if (pageId) {
+      setLogoUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch(`/api/pages/${pageId}/logo`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setLogoError(data?.error ?? `Upload failed (${res.status})`);
+          return;
+        }
+        onChange({ logoUrl: data.url });
+      } catch {
+        setLogoError("Network error. Please try again.");
+      } finally {
+        setLogoUploading(false);
+      }
+      return;
+    }
+
+    // Fallback (no pageId in this context): inline data URL
     const reader = new FileReader();
     reader.onload = () => {
       onChange({ logoUrl: reader.result as string });
     };
     reader.readAsDataURL(file);
-    e.target.value = "";
   };
 
   return (
@@ -132,16 +164,18 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         ) : (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs rounded border border-dashed border-border hover:bg-accent/50 transition-colors text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            disabled={logoUploading}
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs rounded border border-dashed border-border hover:bg-accent/50 transition-colors text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
           >
             <ImagePlus className="h-3.5 w-3.5" />
-            Upload logo
+            {logoUploading ? "Uploading…" : "Upload logo"}
           </button>
         )}
+        {logoError && <p className="mt-1 text-3xs text-destructive">{logoError}</p>}
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
           className="hidden"
           onChange={handleFileUpload}
         />
