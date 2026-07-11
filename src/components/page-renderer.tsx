@@ -110,7 +110,7 @@ function createCTAButtonNode(accentColor: string) {
             href: safeUrl,
             target: "_blank",
             rel: "noopener noreferrer",
-            style: `display:inline-block;padding:13px 28px;background:${accentColor};color:#ffffff;border-radius:9px;font-weight:700;text-decoration:none;font-size:15px;letter-spacing:-0.01em;`,
+            style: `display:inline-block;padding:13px 28px;background:var(--pub-accent, ${accentColor});color:var(--pub-accent-ink, #ffffff);border-radius:var(--pub-radius-sm, 9px);font-weight:700;text-decoration:none;font-size:15px;letter-spacing:-0.01em;`,
           },
           safeLabel,
         ],
@@ -241,13 +241,9 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
           ? JSON.parse(HTMLAttributes["data-fields"])
           : HTMLAttributes.fields || [];
 
-      const inputStyle = isDark
-        ? `width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:15px;background:rgba(255,255,255,0.06);color:#f0efe9;font-family:inherit;box-sizing:border-box;`
-        : `width:100%;padding:10px 14px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;font-size:15px;background:#ffffff;color:#0f172a;font-family:inherit;box-sizing:border-box;`;
+      const inputStyle = `width:100%;padding:10px 14px;border:1px solid var(--pub-divider, rgba(0,0,0,0.1));border-radius:var(--pub-radius-sm, 8px);font-size:15px;background:${isDark ? "rgba(255,255,255,0.06)" : "#ffffff"};color:var(--pub-heading-color, #0f172a);font-family:inherit;box-sizing:border-box;`;
 
-      const labelStyle = isDark
-        ? `display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#f0efe9;letter-spacing:0.01em;`
-        : `display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;letter-spacing:0.01em;`;
+      const labelStyle = `display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--pub-heading-color, #0f172a);letter-spacing:0.01em;`;
 
       const fieldElements = fields.map(
         (field: { id: string; type: string; label: string; required?: boolean }) => [
@@ -279,7 +275,7 @@ function createFormBlockNode(isDark: boolean, accentColor: string) {
         ]
       );
 
-      const btnStyle = `margin-top:8px;padding:12px 28px;background:${accentColor};color:#ffffff;border:none;border-radius:9px;font-weight:700;font-size:15px;cursor:pointer;letter-spacing:-0.01em;transition:filter 0.2s ease,transform 0.18s ease;`;
+      const btnStyle = `margin-top:8px;padding:12px 28px;background:var(--pub-accent, ${accentColor});color:var(--pub-accent-ink, #ffffff);border:none;border-radius:var(--pub-radius-sm, 9px);font-weight:700;font-size:15px;cursor:pointer;letter-spacing:-0.01em;transition:filter 0.2s ease,transform 0.18s ease;`;
 
       return [
         "div",
@@ -391,17 +387,11 @@ function createContactCardNode(isDark: boolean, accentColor: string) {
           ? "display:grid;grid-template-columns:1fr;gap:16px;padding:1.5rem 0;"
           : "display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;padding:1.5rem 0;";
 
-      const cardBg = isDark
-        ? "rgba(255,255,255,0.045)"
-        : "rgba(255,255,255,0.9)";
-      const cardBorder = isDark
-        ? "1px solid rgba(255,255,255,0.08)"
-        : "1px solid rgba(0,0,0,0.075)";
-      const namColor = isDark ? "#f0efe9" : "#0f172a";
-      const titleColor = isDark ? "#a8a8b3" : "#64748b";
-      const shadow = isDark
-        ? "0 2px 16px rgba(0,0,0,0.35)"
-        : "0 1px 8px rgba(0,0,0,0.07)";
+      const cardBg = isDark ? "var(--pub-card-bg, rgba(255,255,255,0.045))" : "rgba(255,255,255,0.9)";
+      const cardBorder = "1px solid var(--pub-divider, rgba(0,0,0,0.075))";
+      const namColor = "var(--pub-heading-color, #0f172a)";
+      const titleColor = "var(--pub-muted-color, #64748b)";
+      const shadow = "var(--pub-shadow-sm, 0 1px 8px rgba(0,0,0,0.07))";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cardEls: any[] = contacts.map((contact) => {
@@ -441,7 +431,7 @@ function createContactCardNode(isDark: boolean, accentColor: string) {
             "a",
             {
               href: `mailto:${emailDigits}`,
-              style: `display:flex;align-items:center;gap:6px;font-size:13px;color:${accentColor};text-decoration:none;margin-top:5px;`,
+              style: `display:flex;align-items:center;gap:6px;font-size:13px;color:var(--pub-accent-safe, ${accentColor});text-decoration:none;margin-top:5px;`,
             },
             `✉  ${safeEmail}`,
           ]);
@@ -451,7 +441,7 @@ function createContactCardNode(isDark: boolean, accentColor: string) {
             "a",
             {
               href: `tel:${contact.phone.replace(/\D/g, "")}`,
-              style: `display:flex;align-items:center;gap:6px;font-size:13px;color:${accentColor};text-decoration:none;margin-top:5px;`,
+              style: `display:flex;align-items:center;gap:6px;font-size:13px;color:var(--pub-accent-safe, ${accentColor});text-decoration:none;margin-top:5px;`,
             },
             `☎  ${safePhone}`,
           ]);
@@ -460,7 +450,7 @@ function createContactCardNode(isDark: boolean, accentColor: string) {
         return [
           "div",
           {
-            style: `display:flex;align-items:flex-start;gap:16px;padding:20px;background:${cardBg};border:${cardBorder};border-radius:16px;box-shadow:${shadow};transition:transform 0.2s ease,box-shadow 0.2s ease;`,
+            style: `display:flex;align-items:flex-start;gap:16px;padding:20px;background:${cardBg};border:${cardBorder};border-radius:var(--pub-radius-md, 16px);box-shadow:${shadow};transition:transform 0.2s ease,box-shadow 0.2s ease;`,
           },
           avatarEl,
           [
@@ -526,8 +516,8 @@ function createBannerNode(accentColor: string) {
         bgStyle === "warning"
           ? "background:#fef3c7;color:#92400e;"
           : bgStyle === "subtle"
-          ? `background:color-mix(in srgb, ${accentColor} 10%, transparent);color:${accentColor};`
-          : `background:${accentColor};color:#ffffff;`;
+          ? `background:color-mix(in srgb, ${accentColor} 10%, transparent);color:var(--pub-accent-safe, ${accentColor});`
+          : `background:var(--pub-accent, ${accentColor});color:var(--pub-accent-ink, #ffffff);`;
 
       const innerContent = link
         ? [
@@ -558,7 +548,7 @@ function createBannerNode(accentColor: string) {
             "data-link":       HTMLAttributes["data-link"]        || HTMLAttributes.link       || "",
             "data-link-label": HTMLAttributes["data-link-label"]  || HTMLAttributes.linkLabel  || "Learn more →",
           },
-          { style: `${bgCss}border-radius:12px;padding:14px 20px;margin:8px 0;` }
+          { style: `${bgCss}border-radius:var(--pub-radius-md, 12px);padding:14px 20px;margin:8px 0;` }
         ),
         innerContent,
       ];
@@ -592,10 +582,10 @@ function createTestimonialNode(isDark: boolean, accentColor: string) {
       const safeRole   = escapeHtml(HTMLAttributes["data-role"]   || HTMLAttributes.role   || "");
       const safeAvatar = sanitizeUrl(HTMLAttributes["data-avatar"] || HTMLAttributes.avatar || "");
 
-      const cardBg = isDark ? "rgba(255,255,255,0.04)" : "#ffffff";
-      const cardBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-      const textColor = isDark ? "#e2e8f0" : "#1e293b";
-      const mutedColor = isDark ? "#94a3b8" : "#64748b";
+      const cardBg = isDark ? "var(--pub-card-bg, rgba(255,255,255,0.04))" : "#ffffff";
+      const cardBorder = "var(--pub-divider, rgba(0,0,0,0.06))";
+      const textColor = "var(--pub-heading-color, #1e293b)";
+      const mutedColor = "var(--pub-muted-color, #64748b)";
 
       const initials = safeAuthor
         .split(" ")
@@ -616,7 +606,7 @@ function createTestimonialNode(isDark: boolean, accentColor: string) {
         : [
             "div",
             {
-              style: `width:40px;height:40px;border-radius:50%;background:${accentColor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;`,
+              style: `width:40px;height:40px;border-radius:50%;background:var(--pub-accent, ${accentColor});display:flex;align-items:center;justify-content:center;color:var(--pub-accent-ink, #fff);font-weight:700;font-size:14px;flex-shrink:0;`,
             },
             initials,
           ];
@@ -652,7 +642,7 @@ function createTestimonialNode(isDark: boolean, accentColor: string) {
             "data-avatar": HTMLAttributes["data-avatar"] || HTMLAttributes.avatar || "",
           },
           {
-            style: `background:${cardBg};border:1px solid ${cardBorder};border-left:4px solid ${accentColor};border-radius:12px;padding:24px;margin:12px 0;`,
+            style: `background:${cardBg};border:1px solid ${cardBorder};border-left:4px solid var(--pub-accent, ${accentColor});border-radius:var(--pub-radius-md, 12px);padding:24px;margin:12px 0;box-shadow:var(--pub-shadow-sm, 0 0 0 0 rgba(0,0,0,0));`,
           }
         ),
         ...children,
@@ -694,16 +684,16 @@ function createMetricsNode(isDark: boolean, accentColor: string) {
           ? JSON.parse(HTMLAttributes["data-metrics"])
           : HTMLAttributes.metrics || [];
 
-      const cellBg = isDark ? "rgba(255,255,255,0.04)" : `color-mix(in srgb, ${accentColor} 8%, transparent)`;
-      const valueColor = accentColor;
-      const labelColor = isDark ? "#94a3b8" : "#64748b";
+      const cellBg = isDark ? "var(--pub-surface-strong, rgba(255,255,255,0.04))" : "rgba(255,255,255,0.85)";
+      const valueColor = `var(--pub-accent-safe, ${accentColor})`;
+      const labelColor = "var(--pub-muted-color, #64748b)";
 
       const cols = metrics.length || 3;
 
       const cells = metrics.map(
         (m: { value: string; label: string }) => [
           "div",
-          { style: `text-align:center;padding:24px 16px;border-radius:10px;background:${cellBg};` },
+          { style: `text-align:center;padding:24px 16px;border-radius:var(--pub-radius-md, 10px);background:${cellBg};box-shadow:var(--pub-shadow-sm, 0 0 0 0 rgba(0,0,0,0));` },
           ["div", { style: `font-size:28px;font-weight:800;letter-spacing:-0.02em;color:${valueColor};margin-bottom:6px;` }, escapeHtml(m.value)],
           ["div", { style: `font-size:13px;font-weight:500;color:${labelColor};` }, escapeHtml(m.label)],
         ]
@@ -715,7 +705,7 @@ function createMetricsNode(isDark: boolean, accentColor: string) {
           { "data-type": "metrics" },
           {
             "data-metrics": JSON.stringify(metrics),
-            style: `display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;padding:12px 0;`,
+            style: `display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;padding:14px;margin:12px 0;border-radius:var(--pub-radius-lg, 16px);background:var(--pub-wash, transparent);`,
           }
         ),
         ...cells,

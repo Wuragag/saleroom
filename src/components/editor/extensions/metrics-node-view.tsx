@@ -90,8 +90,11 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
             style={{
               display: "grid",
               gridTemplateColumns: `repeat(${(node.attrs.metrics as Metric[]).length}, 1fr)`,
-              gap: "8px",
-              padding: "12px 0",
+              gap: "10px",
+              padding: "14px",
+              margin: "12px 0",
+              borderRadius: "var(--pub-radius-lg, 16px)",
+              background: "var(--node-wash, transparent)",
             }}
           >
             {(node.attrs.metrics as Metric[]).map((metric, i) => (
@@ -100,9 +103,10 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
                 style={{
                   textAlign: "center",
                   padding: "24px 16px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--pub-radius-md, 10px)",
                   background:
                     "var(--metric-cell-bg, color-mix(in srgb, var(--page-accent, #003B22) 8%, transparent))",
+                  boxShadow: "var(--pub-shadow-sm, 0 0 0 0 rgba(0,0,0,0))",
                 }}
               >
                 <div
@@ -110,7 +114,7 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
                     fontSize: "28px",
                     fontWeight: 800,
                     letterSpacing: "-0.02em",
-                    color: "var(--page-accent, #003B22)",
+                    color: "var(--node-accent-safe, var(--page-accent, #003B22))",
                     marginBottom: "6px",
                   }}
                 >

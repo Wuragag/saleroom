@@ -41,7 +41,9 @@ function getShadowVars(themeDepth: string | null | undefined, accentColor: strin
   const ink = isDark ? "rgba(0,0,0,0.5)" : "rgba(23,23,26,0.07)";
   const inkStrong = isDark ? "rgba(0,0,0,0.6)" : "rgba(23,23,26,0.11)";
   if (depth === "flat") {
-    return { sm: "none", md: "none", lg: "none" };
+    // Valid no-op shadow so the vars stay composable in comma-separated lists
+    const none = "0 0 0 0 rgba(0,0,0,0)";
+    return { sm: none, md: none, lg: none };
   }
   if (depth === "elevated") {
     const tint = hexAlpha(accentColor, isDark ? 0.28 : 0.12);
@@ -150,6 +152,7 @@ export function getEditorNodeVars(accentColor: string, background?: string | nul
     "--node-accent-safe": ramp.accentSafe,
     "--node-accent-ink":  ramp.accentInk,
     "--node-wash":        `linear-gradient(135deg, ${ramp.washA} 0%, ${ramp.washB} 100%)`,
-    "--metric-cell-bg":   isDark ? ramp.surfaceStrong : hexAlpha(accentColor, 0.08),
+    // Metrics render as solid stat chips on the wash (see page-renderer.tsx)
+    "--metric-cell-bg":   isDark ? ramp.surfaceStrong : "rgba(255,255,255,0.85)",
   } as CSSProperties;
 }

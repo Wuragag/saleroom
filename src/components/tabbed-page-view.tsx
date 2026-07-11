@@ -77,7 +77,7 @@ export function TabbedPageView({
           className="flex items-center gap-1.5 text-sm font-medium transition-all"
           style={{
             color: accentColor,
-            fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
+            fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
           }}
         >
           <ExternalLink className="h-3.5 w-3.5 opacity-60 flex-shrink-0" />
@@ -120,7 +120,7 @@ export function TabbedPageView({
                   onClick={() => handleTabChange(tab.id)}
                   className="text-left px-3 py-2.5 text-sm rounded-lg transition-all w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{
-                    fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
+                    fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
                     fontWeight: isActive ? 600 : 500,
                     color: isActive
                       ? "var(--pub-heading-color)"
@@ -147,7 +147,7 @@ export function TabbedPageView({
                     className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
                     style={{
                       color: accentColor,
-                      fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
+                      fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
                     }}
                   >
                     <ExternalLink className="h-3.5 w-3.5 opacity-60 flex-shrink-0" />
@@ -193,7 +193,7 @@ export function TabbedPageView({
                 onClick={() => handleTabChange(tab.id)}
                 className="relative flex-shrink-0 px-1 mr-6 py-4 text-[0.9375rem] transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 style={{
-                  fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
+                  fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
                   fontWeight: isActive ? 600 : 500,
                   color: isActive
                     ? "var(--pub-heading-color)"
@@ -228,7 +228,7 @@ export function TabbedPageView({
                   className="flex items-center gap-1.5 py-3.5 text-sm font-medium transition-colors whitespace-nowrap"
                   style={{
                     color: accentColor,
-                    fontFamily: "var(--font-dm-sans, var(--font-montserrat), sans-serif)",
+                    fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
                   }}
                 >
                   <ExternalLink className="h-3.5 w-3.5 opacity-60" />
