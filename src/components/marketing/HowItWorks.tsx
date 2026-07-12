@@ -319,25 +319,30 @@ export default function HowItWorks() {
       <style>{`
         .mk-step-tab {
           font-family: inherit;
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 10px 20px;
-          font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
-          border-radius: 999px;
+          display: inline-flex; align-items: baseline; gap: 10px;
+          padding: 14px 2px;
+          font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
           cursor: pointer;
-          color: var(--db-text-secondary);
+          color: var(--db-text-muted);
           background: transparent;
-          border: 1px solid var(--db-border);
-          transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+          border: none;
+          border-bottom: 1px solid transparent;
+          margin-bottom: -1px;
+          transition: color .15s ease, border-color .15s ease;
         }
-        .mk-step-tab:hover { background: var(--db-surface); border-color: var(--db-border-hover); }
+        .mk-step-tab:hover { color: var(--db-text-secondary); }
         .mk-step-tab[aria-selected="true"] {
-          color: var(--db-on-accent);
-          background: var(--db-cta-grad);
-          border-color: transparent;
-          box-shadow: var(--db-cta-shadow);
+          color: var(--db-text);
+          border-bottom: 1px solid var(--db-text);
         }
-        .mk-step-tab[aria-selected="true"]:hover { background: var(--db-cta-grad); }
+        .mk-step-num {
+          font-family: var(--font-mk-mono), ui-monospace, monospace;
+          font-size: 11px;
+          letter-spacing: 0.1em;
+        }
         @media (max-width: 900px) {
+          .mk-step-row { flex-direction: column !important; align-items: flex-start !important; }
+          .mk-step-body { text-align: left !important; max-width: 100% !important; }
           .mk-strip-mock { aspect-ratio: auto !important; height: 300px; padding: 20px 20px 24px !important; }
           .mk-strip-caption {
             position: static !important;
@@ -350,44 +355,58 @@ export default function HowItWorks() {
         }
       `}</style>
 
-      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px 40px" }}>
-        <div role="tablist" aria-label="How it works" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-          {LANDING_STEPS.map((s, i) => (
-            <button
-              key={s.title}
-              role="tab"
-              aria-selected={i === active}
-              className="mk-step-tab"
-              onClick={() => setActive(i)}
-            >
-              <span style={{ fontFamily: "var(--font-serif), Georgia, serif", fontSize: 15, opacity: 0.55 }}>
-                {s.numeral}
-              </span>
-              <span>{s.title}</span>
-            </button>
-          ))}
+      <section id="product" style={{ maxWidth: 1120, margin: "0 auto", padding: "64px 24px 104px" }}>
+        <div className="mk-chapter">
+          <span className="mk-eyebrow">01 &mdash; Method</span>
+          <span className="mk-eyebrow">Four moves, in order</span>
         </div>
-        <p
+
+        <div
+          className="mk-step-row"
           style={{
-            textAlign: "center",
-            fontSize: 14,
-            color: "var(--db-text-muted)",
-            margin: "16px auto 0",
-            maxWidth: 480,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 24,
+            padding: "28px 0 20px",
           }}
         >
-          {step.body}
-        </p>
-      </section>
+          <div role="tablist" aria-label="How it works" style={{ display: "flex", flexWrap: "wrap", gap: 28 }}>
+            {LANDING_STEPS.map((s, i) => (
+              <button
+                key={s.title}
+                role="tab"
+                aria-selected={i === active}
+                className="mk-step-tab"
+                onClick={() => setActive(i)}
+              >
+                <span className="mk-step-num">{String(i + 1).padStart(2, "0")}</span>
+                <span>{s.title}</span>
+              </button>
+            ))}
+          </div>
+          <p
+            className="mk-step-body"
+            style={{
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: "var(--db-text-secondary)",
+              margin: 0,
+              maxWidth: 340,
+              textAlign: "right",
+            }}
+          >
+            {step.body}
+          </p>
+        </div>
 
-      <section id="product" style={{ maxWidth: 1120, margin: "0 auto", padding: "16px 24px 96px" }}>
         <div
           style={{
             position: "relative",
             border: "1px solid var(--db-border)",
-            borderRadius: 20,
+            borderRadius: 8,
             background: "var(--db-surface)",
-            boxShadow: "var(--db-shadow-3)",
+            boxShadow: "var(--db-shadow-1)",
             overflow: "hidden",
           }}
         >

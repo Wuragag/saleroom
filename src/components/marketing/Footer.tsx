@@ -29,17 +29,41 @@ export default function Footer() {
           .mk-foot-cols { flex-direction: column !important; gap: 32px !important; }
         }
       `}</style>
-      <footer style={{ borderTop: "1px solid var(--db-border)" }}>
+      <footer style={{ borderTop: "1px solid var(--db-border)", overflow: "hidden" }}>
+        <div
+          aria-hidden="true"
+          style={{
+            maxWidth: 1120,
+            margin: "0 auto",
+            padding: "40px 24px 0",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-serif), Georgia, serif",
+              fontWeight: 400,
+              fontSize: "clamp(88px, 15.5vw, 218px)",
+              lineHeight: 0.94,
+              letterSpacing: "-0.03em",
+              color: "var(--db-text)",
+              whiteSpace: "nowrap",
+              marginBottom: "-0.05em",
+            }}
+          >
+            {APP_NAME}
+          </div>
+        </div>
         <div
           className="mk-foot-cols"
           style={{
             maxWidth: 1120,
             margin: "0 auto",
-            padding: "48px 24px",
+            padding: "32px 24px 48px",
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
             gap: 24,
+            borderTop: "1px solid var(--db-border)",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

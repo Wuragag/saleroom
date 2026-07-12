@@ -5,8 +5,9 @@
  */
 
 import Hero from "@/components/marketing/Hero"
+import Ticker from "@/components/marketing/Ticker"
 import HowItWorks from "@/components/marketing/HowItWorks"
-import FeatureGrid from "@/components/marketing/FeatureGrid"
+import FeatureIndex from "@/components/marketing/FeatureIndex"
 import PhilosophySection from "@/components/marketing/PhilosophySection"
 import PricingSection from "@/components/marketing/PricingSection"
 import FinalCTA from "@/components/marketing/FinalCTA"
@@ -15,8 +16,9 @@ export default function MarketingPage() {
   return (
     <>
       <Hero />
+      <Ticker />
       <HowItWorks />
-      <FeatureGrid />
+      <FeatureIndex />
       <PhilosophySection />
       <PricingSection />
       <FinalCTA />

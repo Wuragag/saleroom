@@ -43,11 +43,12 @@ export default function FinalCTA() {
             gap: 24,
           }}
         >
+          <span className="mk-eyebrow">05 &mdash; Begin</span>
           <h2
             style={{
               fontFamily: "var(--font-serif), Georgia, serif",
               fontWeight: 400,
-              fontSize: 52,
+              fontSize: "clamp(40px, 5.6vw, 64px)",
               lineHeight: 1.05,
               letterSpacing: "-0.015em",
               margin: 0,

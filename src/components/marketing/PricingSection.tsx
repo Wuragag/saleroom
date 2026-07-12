@@ -1,114 +1,112 @@
 import Link from "next/link"
 import { PRICING_TIERS } from "@/data/marketing/pricing"
 
-/** Landing-page pricing — the real tiers from src/data/marketing/pricing.ts. */
+/**
+ * "Terms" — pricing as a ruled table, not floating cards. Real tiers from
+ * src/data/marketing/pricing.ts; the highlighted tier gets a surface fill.
+ */
 export default function PricingSection() {
   return (
     <>
       <style>{`
-        .mk-plan-cta-ghost {
-          align-self: flex-start; margin-top: auto;
-          font-size: 14px; font-weight: 500;
-          color: var(--db-text);
-          background: var(--db-surface);
-          border: 1px solid var(--db-border-hover);
-          border-radius: 999px;
-          padding: 11px 24px;
-          text-decoration: none;
-          transition: background .15s ease;
+        .mk-plan-col {
+          display: flex;
+          flex-direction: column;
+          padding: 32px 28px 28px;
+          border-left: 1px solid var(--db-border);
         }
-        .mk-plan-cta-ghost:hover { background: var(--db-surface-dim); }
+        .mk-plan-col:first-child { border-left: none; }
+        .mk-plan-link {
+          font-family: var(--font-mk-mono), ui-monospace, monospace;
+          font-size: 12px; font-weight: 500;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          color: var(--db-text);
+          text-decoration: none;
+        }
+        .mk-plan-link:hover { text-decoration: underline; text-underline-offset: 4px; }
         @media (max-width: 900px) {
           .mk-plans { grid-template-columns: 1fr !important; }
+          .mk-plan-col { border-left: none !important; border-top: 1px solid var(--db-border); padding: 28px 20px !important; }
+          .mk-plan-col:first-child { border-top: none; }
         }
       `}</style>
-      <section id="pricing" style={{ maxWidth: 1120, margin: "0 auto", padding: "112px 24px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 40, maxWidth: 560 }}>
-          <span className="mk-eyebrow">Pricing</span>
-          <h2 className="mk-h2">
-            Three plans. No <em>tiers of tiers</em>.
-          </h2>
+      <section id="pricing" style={{ maxWidth: 1120, margin: "0 auto", padding: "88px 24px 104px" }}>
+        <div className="mk-chapter">
+          <span className="mk-eyebrow">04 &mdash; Terms</span>
+          <span className="mk-eyebrow">Nothing to negotiate</span>
         </div>
-        <div className="mk-plans" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+
+        <h2 className="mk-h2" style={{ padding: "28px 0 36px", maxWidth: 640 }}>
+          Three plans. No <em>tiers of tiers</em>.
+        </h2>
+
+        <div
+          className="mk-plans"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            borderTop: "1px solid var(--db-text)",
+            borderBottom: "1px solid var(--db-border)",
+          }}
+        >
           {PRICING_TIERS.map((tier) => (
             <div
               key={tier.name}
-              style={{
-                background: "var(--db-surface)",
-                border: `1px solid ${tier.highlighted ? "var(--db-border-hover)" : "var(--db-border)"}`,
-                borderRadius: 16,
-                padding: 28,
-                boxShadow: tier.highlighted ? "var(--db-shadow-2)" : "var(--db-shadow-1)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-              }}
+              className="mk-plan-col"
+              style={tier.highlighted ? { background: "var(--db-surface)" } : undefined}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>{tier.name}</span>
-                <span style={{ fontSize: 14, color: "var(--db-text-secondary)" }}>{tier.description}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span className="mk-eyebrow" style={{ color: "var(--db-text)" }}>
+                {tier.name}
+                {tier.highlighted && (
+                  <span style={{ color: "var(--db-text-muted)" }}> &mdash; most chosen</span>
+                )}
+              </span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "22px 0 6px" }}>
                 <span
                   style={{
                     fontFamily: "var(--font-serif), Georgia, serif",
-                    fontSize: 44,
-                    letterSpacing: "-0.01em",
+                    fontSize: 60,
+                    letterSpacing: "-0.02em",
                     lineHeight: 1,
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   {tier.price}
                 </span>
-                <span style={{ fontSize: 13, color: "var(--db-text-muted)" }}>{tier.period}</span>
+                <span className="mk-eyebrow">{tier.period}</span>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  borderTop: "1px solid var(--db-border)",
-                  paddingTop: 18,
-                }}
-              >
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--db-text-secondary)", margin: "0 0 22px" }}>
+                {tier.description}
+              </p>
+              <div style={{ borderTop: "1px solid var(--db-border)", marginBottom: 24 }}>
                 {tier.features.map((point) => (
-                  <span
+                  <div
                     key={point}
                     style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      gap: 10,
-                      fontSize: 14,
+                      fontSize: 13.5,
                       lineHeight: 1.5,
                       color: "var(--db-text-secondary)",
+                      padding: "9px 0",
+                      borderBottom: "1px solid var(--db-border)",
                     }}
                   >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      style={{ flexShrink: 0, position: "relative", top: 1 }}
-                    >
-                      <path d="M2 6.5L4.8 9L10 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span>{point}</span>
-                  </span>
+                    {point}
+                  </div>
                 ))}
               </div>
               {tier.highlighted ? (
-                <Link href="/auth/signup" className="mk-cta" style={{ alignSelf: "flex-start", marginTop: "auto", padding: "11px 24px" }}>
+                <Link href="/auth/signup" className="mk-cta" style={{ alignSelf: "flex-start", marginTop: "auto" }}>
                   {tier.cta}
                 </Link>
               ) : (
-                <Link href="/auth/signup" className="mk-plan-cta-ghost">
-                  {tier.cta}
+                <Link href="/auth/signup" className="mk-plan-link" style={{ marginTop: "auto", paddingBottom: 10 }}>
+                  {tier.cta} &rarr;
                 </Link>
               )}
             </div>
           ))}
         </div>
-        <span style={{ display: "block", marginTop: 20, fontSize: 13, color: "var(--db-text-muted)" }}>
+        <span className="mk-eyebrow" style={{ display: "block", marginTop: 16 }}>
           Prices are final. There is nothing to negotiate.
         </span>
       </section>

@@ -1,7 +1,16 @@
 import type { Metadata } from "next"
+import { IBM_Plex_Mono } from "next/font/google"
 import Navbar from "@/components/marketing/Navbar"
 import Footer from "@/components/marketing/Footer"
 import { APP_NAME } from "@/lib/constants"
+
+// Mono is the marketing site's metadata voice (chapter numbers, labels,
+// captions) — loaded here so it doesn't weigh down the app chrome.
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mk-mono",
+})
 
 // All marketing pages are fully static — no server-side data fetching needed.
 export const dynamic = "force-static";
@@ -93,15 +102,28 @@ export default function MarketingLayout({
         .mk-cta:hover { background: var(--db-cta-grad-hover); box-shadow: var(--db-cta-shadow-hover); }
         .mk-cta:active { transform: scale(0.97); }
         .mk-cta-lg { font-size: 15px; padding: 14px 30px; }
+
+        /* Metadata voice: mono, uppercase, hairline-adjacent. */
         .mk-eyebrow {
-          font-size: 12px; font-weight: 500;
-          letter-spacing: 0.14em; text-transform: uppercase;
+          font-family: var(--font-mk-mono), ui-monospace, monospace;
+          font-size: 11px; font-weight: 500;
+          letter-spacing: 0.16em; text-transform: uppercase;
           color: var(--db-text-muted);
         }
         .mk-h2 {
           font-family: var(--font-serif), Georgia, serif;
-          font-weight: 400; font-size: 44px; line-height: 1.08;
-          letter-spacing: -0.01em; margin: 0;
+          font-weight: 400; font-size: clamp(36px, 4.6vw, 52px); line-height: 1.05;
+          letter-spacing: -0.015em; margin: 0;
+        }
+
+        /* Chapter header: full-width rule, mono label left, note right. */
+        .mk-chapter {
+          border-top: 1px solid var(--db-border);
+          padding-top: 16px;
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 16px;
         }
 
         /* Animated wireframe graphics (feature cards + product mocks). */
@@ -119,7 +141,7 @@ export default function MarketingLayout({
       `}</style>
 
       <div
-        className="mk-root"
+        className={`mk-root ${mono.variable}`}
         style={{
           minHeight: "100vh",
           background: "var(--db-bg)",
