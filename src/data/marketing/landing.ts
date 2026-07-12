@@ -9,53 +9,67 @@ export function indexLabel(i: number): string {
   return String(i + 1).padStart(2, "0")
 }
 
-/** Maxims scrolled through the ticker strip under the hero. */
-export const LANDING_MAXIMS = [
-  "Remove the unnecessary",
-  "Send one link",
-  "Control what you can",
-  "Judge by evidence",
-  "Say less, close more",
-  "Waste no time arguing",
+/** Compact metric strip under the hero. */
+export const LANDING_METRICS = [
+  { value: "4 min", label: "to a sent page" },
+  { value: "18k+", label: "buyer sessions read" },
+  { value: "100%", label: "of reads, tracked" },
+  { value: "$0", label: "to your first close" },
 ]
 
-export interface LandingStep {
+export interface LandingTemplate {
   title: string
-  body: string
-  /** Which CSS-drawn product mock the strip renders for this step. */
-  mock: "assemble" | "send" | "observe" | "close"
-  shotTitle: string
-  shotCaption: string
+  kind: string
+  /** two-stop cover gradient (CSS var names) */
+  from: string
+  to: string
 }
 
-export const LANDING_STEPS: LandingStep[] = [
+/** Cover cards for the "Start from a proven page" gallery. */
+export const LANDING_TEMPLATES: LandingTemplate[] = [
+  { title: "Q3 Partnership Proposal", kind: "Proposal", from: "--mk-indigo", to: "--mk-violet" },
+  { title: "Mutual Action Plan", kind: "MAP", from: "--mk-sky", to: "--mk-cyan" },
+  { title: "Onboarding Hub", kind: "Onboarding", from: "--mk-emerald", to: "--mk-cyan" },
+  { title: "Renewal & Expansion", kind: "Renewal", from: "--mk-amber", to: "--mk-rose" },
+  { title: "Executive Sales Deck", kind: "Deck", from: "--mk-rose", to: "--mk-violet" },
+  { title: "Security & Legal Room", kind: "Vault", from: "--mk-violet", to: "--mk-indigo" },
+]
+
+export interface FeatureRow {
+  kicker: string
+  title: string
+  titleAccent: string
+  body: string
+  href: string
+  /** which product visual the row renders */
+  visual: "analytics" | "editor" | "buyer"
+}
+
+/** Alternating visual feature rows. */
+export const FEATURE_ROWS: FeatureRow[] = [
   {
-    title: "Assemble",
-    body: "Drop in proposal, pricing and files. AI Write drafts; you cut.",
-    mock: "assemble",
-    shotTitle: "Start from your notes.",
-    shotCaption: "AI Write drafts the page; you keep what is true.",
+    kicker: "Buyer analytics",
+    title: "Watch the deal",
+    titleAccent: "read itself.",
+    body: "Who opened, which section held them, when they went quiet. Every read scored into intent — signal, not vanity metrics.",
+    href: "/features/analytics",
+    visual: "analytics",
   },
   {
-    title: "Send",
-    body: "One link. No attachments, no decks, no versions.",
-    mock: "send",
-    shotTitle: "What the buyer sees.",
-    shotCaption: "One current page, in order, with a clear next step.",
+    kicker: "AI Write",
+    title: "A first draft",
+    titleAccent: "in one line.",
+    body: "Describe the deal; AI Write assembles proposal, pricing and next steps. You cut it down to what is true.",
+    href: "/features/ai-content",
+    visual: "editor",
   },
   {
-    title: "Observe",
-    body: "See who read what, and for how long.",
-    mock: "observe",
-    shotTitle: "Judge by evidence.",
-    shotCaption: "Reads, time on section, and drop-off — per recipient.",
-  },
-  {
-    title: "Close",
-    body: "Approvals and signatures happen on the page.",
-    mock: "close",
-    shotTitle: "Every deal, in order.",
-    shotCaption: "Pages, analytics and activity in one place.",
+    kicker: "The buyer view",
+    title: "One link,",
+    titleAccent: "always current.",
+    body: "Your brand, your domain, no badge of ours. Approvals and signatures happen on the page — never a stale attachment.",
+    href: "/features/page-builder",
+    visual: "buyer",
   },
 ]
 
