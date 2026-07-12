@@ -94,6 +94,8 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
     try {
       await navigator.clipboard.writeText(publicLink);
       flashCopied(PAGE_LINK_ID);
+      // Log the share event (previously done by the editor header's Copy Link)
+      fetch(`/api/pages/${pageId}/share`, { method: "POST" }).catch(() => {});
     } catch {
       toast.error("Failed to copy link to clipboard");
     }

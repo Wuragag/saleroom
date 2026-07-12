@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   ExternalLink,
-  Copy,
   Check,
   Circle,
   Globe,
@@ -56,7 +55,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
@@ -123,7 +122,6 @@ export function EditorHeader({
   hideDesign,
 }: EditorHeaderProps) {
   const router = useRouter();
-  const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [lockLoading, setLockLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -140,31 +138,6 @@ export function EditorHeader({
   const [templateCategory, setTemplateCategory] = useState("post-call");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Clear copy timer on unmount
-  useEffect(() => {
-    return () => {
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    };
-  }, []);
-
-  const pageUrl = `/p/${slug}`;
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        `${window.location.origin}${pageUrl}`
-      );
-    } catch {
-      return; // Clipboard API not available
-    }
-    setCopied(true);
-    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
-    fetch(`/api/pages/${pageId}/share`, { method: "POST" });
-  };
-
   const handlePreview = async () => {
     await onForceSave();
     window.open(`/preview/${pageId}`, "_blank");
@@ -386,28 +359,9 @@ export function EditorHeader({
                 className="rounded-lg gap-1.5"
                 onClick={handlePreview}
                 aria-label="Preview"
+                title="Preview"
               >
                 <ExternalLink className="h-3 w-3" />
-                <span className="hidden sm:inline">Preview</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className={`rounded-lg gap-1.5 transition-all duration-200 ${copied ? "bg-success-subtle border-success/30 text-success-subtle-foreground animate-success-pulse" : ""}`}
-                onClick={copyLink}
-                aria-label="Copy link"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-3 w-3 animate-dopamine-bounce" />
-                    <span className="hidden sm:inline">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3 w-3" />
-                    <span className="hidden sm:inline">Copy Link</span>
-                  </>
-                )}
               </Button>
               <Button
                 variant="outline"
