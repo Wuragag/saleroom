@@ -29,6 +29,11 @@ import {
   BarChart3,
   SeparatorHorizontal,
   MessageSquareQuote,
+  Grid3x3,
+  HelpCircle,
+  DollarSign,
+  GitCommitVertical,
+  Images,
 } from "lucide-react";
 import type { SlashCommandItem } from "./slash-command-suggestion";
 
@@ -53,6 +58,11 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   SeparatorHorizontal,
   MessageSquareQuote,
+  Grid3x3,
+  HelpCircle,
+  DollarSign,
+  GitCommitVertical,
+  Images,
 };
 
 interface SlashCommandListProps {

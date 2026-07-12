@@ -796,6 +796,38 @@ div[data-type="cta-button"] a:focus-visible {
   border-radius: 4px;
 }
 
+/* ── FAQ accordion (native details/summary, zero JS) ── */
+.pub-content [data-type="faq"] summary { list-style: none; }
+.pub-content [data-type="faq"] summary::-webkit-details-marker { display: none; }
+.pub-content [data-type="faq"] summary::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--pub-accent-safe, #64748b);
+  border-bottom: 2px solid var(--pub-accent-safe, #64748b);
+  transform: translateY(-60%) rotate(45deg);
+  transition: transform 0.2s ease;
+}
+.pub-content [data-type="faq"] details[open] summary::after {
+  transform: translateY(-40%) rotate(225deg);
+}
+
+/* ── Gallery: neutralize the global .pub-content img treatment inside grids ── */
+.pub-content [data-type="gallery"] img { margin: 0; box-shadow: none; }
+.pub-content [data-type="gallery"] img:hover { transform: none; }
+
+/* ── Mobile stacking for multi-column blocks ── */
+@media (max-width: 640px) {
+  .pub-content [data-type="feature-grid"],
+  .pub-content [data-type="pricing"],
+  .pub-content [data-type="gallery"] > div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ── Mobile ── */
 @media (max-width: 640px) {
   .pub-content h1 { font-size: 2.125rem; }

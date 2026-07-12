@@ -312,6 +312,60 @@ const COMMANDS: SlashCommandItem[] = [
     },
   },
   {
+    title: "Quote Hero",
+    description: "Oversized editorial pull-quote",
+    icon: "Quote",
+    aliases: ["quote", "hero", "pull", "highlight"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent({ type: "quoteHero" }).run();
+    },
+  },
+  {
+    title: "Feature Grid",
+    description: "Grid of value propositions",
+    icon: "Grid3x3",
+    aliases: ["feature", "grid", "bento", "values", "benefits"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent({ type: "featureGrid" }).run();
+    },
+  },
+  {
+    title: "Pricing",
+    description: "Plan comparison cards",
+    icon: "DollarSign",
+    aliases: ["pricing", "plans", "price", "packages", "tiers"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent({ type: "pricing" }).run();
+    },
+  },
+  {
+    title: "FAQ",
+    description: "Expandable questions & answers",
+    icon: "HelpCircle",
+    aliases: ["faq", "questions", "accordion", "qa"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent({ type: "faq" }).run();
+    },
+  },
+  {
+    title: "Timeline",
+    description: "Steps, roadmap or process",
+    icon: "GitCommitVertical",
+    aliases: ["timeline", "steps", "roadmap", "process", "milestones"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent({ type: "timeline" }).run();
+    },
+  },
+  {
+    title: "Gallery",
+    description: "Grid of images",
+    icon: "Images",
+    aliases: ["gallery", "images", "photos", "grid"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent({ type: "gallery" }).run();
+    },
+  },
+  {
     title: "Synced Block",
     description: "Insert a reusable content block",
     icon: "Blocks",

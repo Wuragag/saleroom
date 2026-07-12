@@ -39,6 +39,12 @@ import {
   Quote as QuoteIcon,
   BarChart3,
   SeparatorHorizontal,
+  Quote as QuoteHeroIcon,
+  Grid3x3,
+  HelpCircle,
+  DollarSign,
+  GitCommitVertical,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 import { detectProvider } from "./extensions/embed-utils";
@@ -266,6 +272,60 @@ const BLOCKS: BlockDef[] = [
           attrs: { height: "md" },
         })
         .run();
+    },
+  },
+  {
+    id: "quoteHero",
+    label: "Quote hero",
+    description: "Oversized pull-quote",
+    icon: QuoteHeroIcon,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "quoteHero" }).run();
+    },
+  },
+  {
+    id: "featureGrid",
+    label: "Feature grid",
+    description: "Grid of value props",
+    icon: Grid3x3,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "featureGrid" }).run();
+    },
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    description: "Plan comparison cards",
+    icon: DollarSign,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "pricing" }).run();
+    },
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    description: "Expandable Q&A list",
+    icon: HelpCircle,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "faq" }).run();
+    },
+  },
+  {
+    id: "timeline",
+    label: "Timeline",
+    description: "Steps or roadmap",
+    icon: GitCommitVertical,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "timeline" }).run();
+    },
+  },
+  {
+    id: "gallery",
+    label: "Gallery",
+    description: "Image grid",
+    icon: Images,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "gallery" }).run();
     },
   },
 ];
