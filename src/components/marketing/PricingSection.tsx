@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { PRICING_TIERS } from "@/data/marketing/pricing"
+import ScrollReveal from "@/components/marketing/ScrollReveal"
 
 /**
  * "Terms" — pricing as a ruled table, not floating cards. Real tiers from
@@ -40,6 +41,7 @@ export default function PricingSection() {
           Three plans. No <em>tiers of tiers</em>.
         </h2>
 
+        <ScrollReveal distance={24}>
         <div
           className="mk-plans"
           style={{
@@ -106,6 +108,7 @@ export default function PricingSection() {
             </div>
           ))}
         </div>
+        </ScrollReveal>
         <span className="mk-eyebrow" style={{ display: "block", marginTop: 16 }}>
           Prices are final. There is nothing to negotiate.
         </span>

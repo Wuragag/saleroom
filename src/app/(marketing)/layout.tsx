@@ -8,7 +8,7 @@ import { APP_NAME } from "@/lib/constants"
 // captions) — loaded here so it doesn't weigh down the app chrome.
 const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: "500", // the only mono weight the site renders
   variable: "--font-mk-mono",
 })
 
@@ -50,6 +50,9 @@ export default function MarketingLayout({
           --db-accent:        #17171A;
           --db-accent-subtle: #F1F1F2;
           --db-on-accent:     #FFFFFF;
+          --db-ink-muted: color-mix(in srgb, var(--db-on-accent) 62%, transparent);
+          --db-ink-faint: color-mix(in srgb, var(--db-on-accent) 38%, transparent);
+          --db-ink-rule:  color-mix(in srgb, var(--db-on-accent) 18%, transparent);
           --db-shadow-1: 0 1px 2px rgba(20,20,24,0.06);
           --db-shadow-2: 0 4px 14px rgba(20,20,24,0.08);
           --db-shadow-3: 0 16px 40px rgba(20,20,24,0.14);
@@ -83,6 +86,8 @@ export default function MarketingLayout({
         body { background: var(--db-bg); }
 
         .mk-root ::selection { background: var(--db-accent); color: var(--db-on-accent); }
+        /* Inverted (ink) surfaces need the opposite pair or selection is invisible. */
+        .mk-ink ::selection { background: var(--db-on-accent); color: var(--db-accent); }
 
         /* Background artwork: line art stays legible in both themes. */
         .mk-art { filter: grayscale(1) invert(1) contrast(1.04); }
@@ -126,10 +131,9 @@ export default function MarketingLayout({
           gap: 16px;
         }
 
-        /* Animated wireframe graphics (feature cards + product mocks). */
+        /* Looping animations for the product mocks (HowItWorks, HeroVisual) and the maxim Ticker. */
         @keyframes wg-grow { 0%,100% { transform: scaleY(0.28); } 50% { transform: scaleY(1); } }
         @keyframes wg-type { 0% { width: 0; } 55%,100% { width: 100%; } }
-        @keyframes wg-caret { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
         @keyframes wg-pulse { 0% { transform: scale(0.5); opacity: 0.7; } 100% { transform: scale(2.4); opacity: 0; } }
         @keyframes wg-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         @keyframes wg-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }

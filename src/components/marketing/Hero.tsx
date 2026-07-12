@@ -1,10 +1,10 @@
 import Link from "next/link"
-
-/* eslint-disable @next/next/no-img-element -- decorative full-bleed art, not a content image */
+import Image from "next/image"
+import HeroVisual from "./HeroVisual"
 
 /**
- * Editorial hero: left-aligned display type under a mono metadata row,
- * doorway engraving held back to a faint wash.
+ * Editorial hero: left-aligned display type under a mono metadata row, the
+ * product visual layered below, doorway engraving held back to a faint wash.
  */
 export default function Hero() {
   return (
@@ -21,46 +21,38 @@ export default function Hero() {
         .mk-hero-h1 {
           font-family: var(--font-serif), Georgia, serif;
           font-weight: 400;
-          font-size: clamp(58px, 9vw, 124px);
+          font-size: clamp(44px, 8.6vw, 118px);
           line-height: 0.98;
           letter-spacing: -0.02em;
           margin: 0;
           text-wrap: balance;
         }
+        .mk-art-wrap img { object-fit: cover; }
         @media (max-width: 900px) {
-          .mk-hero { padding: 56px 24px 56px !important; }
-          .mk-hero-foot { flex-direction: column !important; align-items: flex-start !important; gap: 28px !important; }
+          .mk-hero { padding: 48px 0 40px !important; }
+          .mk-hero-foot { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
           .mk-hero-foot p { max-width: 100% !important; text-align: left !important; }
-          .mk-hero-meta span:last-child { display: none; }
+          .mk-hero-note-right { display: none; }
         }
       `}</style>
-      <section
-        id="top"
-        className="mk-hero"
-        style={{ position: "relative", overflow: "hidden", padding: "72px 24px 80px" }}
-      >
-        <img
-          src="/redesign/hero-doorway.jpg"
-          alt=""
-          className="mk-art"
+      <section id="top" className="mk-hero" style={{ position: "relative", overflow: "hidden", padding: "64px 0 72px" }}>
+        <div
+          className="mk-art mk-art-wrap"
           style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
             opacity: 0.07,
             pointerEvents: "none",
-            WebkitMaskImage: "linear-gradient(105deg, transparent 38%, black 82%)",
-            maskImage: "linear-gradient(105deg, transparent 38%, black 82%)",
+            WebkitMaskImage: "linear-gradient(105deg, transparent 42%, black 85%)",
+            maskImage: "linear-gradient(105deg, transparent 42%, black 85%)",
           }}
-        />
-        <div
-          className="mk-hero-inner"
-          style={{ position: "relative", zIndex: 2, maxWidth: 1120, margin: "0 auto" }}
         >
+          <Image src="/redesign/hero-doorway.jpg" alt="" fill sizes="100vw" quality={45} priority={false} />
+        </div>
+
+        <div className="mk-hero-inner" style={{ position: "relative", zIndex: 2, maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <div
-            className="mk-hero-meta mk-eyebrow"
+            className="mk-eyebrow"
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -70,10 +62,10 @@ export default function Hero() {
             }}
           >
             <span>&sect; 00 &mdash; For deals that deserve clarity</span>
-            <span>No decks &middot; No attachments &middot; One link</span>
+            <span className="mk-hero-note-right">No decks &middot; No attachments &middot; One link</span>
           </div>
 
-          <h1 className="mk-hero-h1" style={{ padding: "56px 0 48px", maxWidth: 980 }}>
+          <h1 className="mk-hero-h1" style={{ padding: "48px 0 44px", maxWidth: 980 }}>
             One page.
             <br />
             Every deal, <em>in order</em>.
@@ -87,7 +79,7 @@ export default function Hero() {
               justifyContent: "space-between",
               gap: 32,
               borderTop: "1px solid var(--db-border)",
-              paddingTop: 28,
+              paddingTop: 26,
             }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
@@ -103,20 +95,23 @@ export default function Hero() {
             </div>
             <p
               style={{
-                fontSize: 16,
+                fontSize: 15.5,
                 lineHeight: 1.65,
                 color: "var(--db-text-secondary)",
-                maxWidth: 400,
+                maxWidth: 380,
                 margin: 0,
                 textAlign: "right",
                 textWrap: "pretty",
               }}
             >
-              Stop sending proposals into silence. Proposal, pricing and next
-              steps become one link your buyer actually reads &mdash; and you
-              know the moment they do.
+              Stop sending proposals into silence. One link your buyer actually
+              reads &mdash; and you know the moment they do.
             </p>
           </div>
+        </div>
+
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <HeroVisual />
         </div>
       </section>
     </>

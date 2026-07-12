@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { APP_NAME } from "@/lib/constants"
+import ScrollReveal from "@/components/marketing/ScrollReveal"
 
 const FOOTER_LINKS = [
   { label: "Product", href: "/#product" },
@@ -38,20 +39,24 @@ export default function Footer() {
             padding: "40px 24px 0",
           }}
         >
-          <div
-            style={{
-              fontFamily: "var(--font-serif), Georgia, serif",
-              fontWeight: 400,
-              fontSize: "clamp(88px, 15.5vw, 218px)",
-              lineHeight: 0.94,
-              letterSpacing: "-0.03em",
-              color: "var(--db-text)",
-              whiteSpace: "nowrap",
-              marginBottom: "-0.05em",
-            }}
-          >
-            {APP_NAME}
-          </div>
+          <ScrollReveal distance={40} duration={800}>
+            <div
+              style={{
+                fontFamily: "var(--font-serif), Georgia, serif",
+                fontWeight: 400,
+                // vw-driven with no px floor so the wordmark never outgrows
+                // narrow phones (nowrap + overflow:hidden would clip it).
+                fontSize: "min(15.5vw, 218px)",
+                lineHeight: 0.94,
+                letterSpacing: "-0.03em",
+                color: "var(--db-text)",
+                whiteSpace: "nowrap",
+                marginBottom: "-0.05em",
+              }}
+            >
+              {APP_NAME}
+            </div>
+          </ScrollReveal>
         </div>
         <div
           className="mk-foot-cols"
