@@ -1,7 +1,11 @@
 import Link from "next/link"
+import Image from "next/image"
+import HeroVisual from "./HeroVisual"
 
-/* eslint-disable @next/next/no-img-element -- decorative full-bleed art, not a content image */
-
+/**
+ * Editorial hero: left-aligned display type under a mono metadata row, the
+ * product visual layered below, doorway engraving held back to a faint wash.
+ */
 export default function Hero() {
   return (
     <>
@@ -14,100 +18,100 @@ export default function Hero() {
         @media (prefers-reduced-motion: reduce) {
           .mk-hero-inner { animation: none; }
         }
+        .mk-hero-h1 {
+          font-family: var(--font-serif), Georgia, serif;
+          font-weight: 400;
+          font-size: clamp(44px, 8.6vw, 118px);
+          line-height: 0.98;
+          letter-spacing: -0.02em;
+          margin: 0;
+          text-wrap: balance;
+        }
+        .mk-art-wrap img { object-fit: cover; }
         @media (max-width: 900px) {
-          .mk-hero h1 { font-size: 52px !important; }
-          .mk-hero { padding: 96px 24px 72px !important; }
+          .mk-hero { padding: 48px 0 40px !important; }
+          .mk-hero-foot { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
+          .mk-hero-foot p { max-width: 100% !important; text-align: left !important; }
+          .mk-hero-note-right { display: none; }
         }
       `}</style>
-      <section
-        id="top"
-        className="mk-hero"
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          padding: "140px 24px 100px",
-          textAlign: "center",
-        }}
-      >
-        <img
-          src="/redesign/hero-doorway.jpg"
-          alt=""
-          className="mk-art"
+      <section id="top" className="mk-hero" style={{ position: "relative", overflow: "hidden", padding: "64px 0 72px" }}>
+        <div
+          className="mk-art mk-art-wrap"
           style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            opacity: 0.09,
+            opacity: 0.1,
             pointerEvents: "none",
-            WebkitMaskImage: "linear-gradient(180deg, black 0%, transparent 92%)",
-            maskImage: "linear-gradient(180deg, black 0%, transparent 92%)",
-          }}
-        />
-        <div
-          className="mk-hero-inner"
-          style={{
-            position: "relative",
-            zIndex: 2,
-            maxWidth: 840,
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 28,
+            WebkitMaskImage: "linear-gradient(105deg, transparent 40%, black 85%)",
+            maskImage: "linear-gradient(105deg, transparent 40%, black 85%)",
           }}
         >
-          <span className="mk-eyebrow">For deals that deserve clarity</span>
-          <h1
+          <Image src="/redesign/hero-path.jpg" alt="" fill sizes="100vw" quality={50} priority={false} />
+        </div>
+
+        <div className="mk-hero-inner" style={{ position: "relative", zIndex: 2, maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
+          <div
+            className="mk-eyebrow"
             style={{
-              fontFamily: "var(--font-serif), Georgia, serif",
-              fontWeight: 400,
-              fontSize: 76,
-              lineHeight: 1.02,
-              letterSpacing: "-0.015em",
-              margin: 0,
-              textWrap: "balance",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 16,
+              borderBottom: "1px solid var(--db-border)",
+              paddingBottom: 14,
             }}
           >
+            <span>&sect; 00 &mdash; For deals that deserve clarity</span>
+            <span className="mk-hero-note-right">No decks &middot; No attachments &middot; One link</span>
+          </div>
+
+          <h1 className="mk-hero-h1" style={{ padding: "48px 0 44px", maxWidth: 980 }}>
             One page.
             <br />
             Every deal, <em>in order</em>.
           </h1>
-          <p
-            style={{
-              fontSize: 19,
-              lineHeight: 1.6,
-              color: "var(--db-text-secondary)",
-              maxWidth: 520,
-              margin: 0,
-              textWrap: "pretty",
-            }}
-          >
-            Stop sending proposals into silence. Proposal, pricing and next
-            steps become one link your buyer actually reads — and you know the
-            moment they do.
-          </p>
+
           <div
+            className="mk-hero-foot"
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: 16,
-              marginTop: 8,
-              flexWrap: "wrap",
-              justifyContent: "center",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 32,
+              borderTop: "1px solid var(--db-border)",
+              paddingTop: 26,
             }}
           >
-            <Link href="/auth/signup" className="mk-cta mk-cta-lg">
-              Create your page
-            </Link>
-            <span style={{ fontSize: 13, color: "var(--db-text-muted)" }}>
-              <strong style={{ fontWeight: 500, color: "var(--db-text-secondary)" }}>
-                Free while you close your first deal.
-              </strong>{" "}
-              No credit card required.
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
+              <Link href="/auth/signup" className="mk-cta mk-cta-lg">
+                Create your page
+              </Link>
+              <span style={{ fontSize: 13, color: "var(--db-text-muted)" }}>
+                <strong style={{ fontWeight: 500, color: "var(--db-text-secondary)" }}>
+                  Free while you close your first deal.
+                </strong>{" "}
+                No credit card required.
+              </span>
+            </div>
+            <p
+              style={{
+                fontSize: 15.5,
+                lineHeight: 1.65,
+                color: "var(--db-text-secondary)",
+                maxWidth: 380,
+                margin: 0,
+                textAlign: "right",
+                textWrap: "pretty",
+              }}
+            >
+              Stop sending proposals into silence. One link your buyer actually
+              reads &mdash; and you know the moment they do.
+            </p>
           </div>
+        </div>
+
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <HeroVisual />
         </div>
       </section>
     </>

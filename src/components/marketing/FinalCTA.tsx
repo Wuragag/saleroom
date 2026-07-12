@@ -1,36 +1,32 @@
 import Link from "next/link"
-
-/* eslint-disable @next/next/no-img-element -- decorative full-bleed art, not a content image */
+import Image from "next/image"
 
 export default function FinalCTA() {
   return (
     <>
       <style>{`
+        .mk-cta-final-art img { object-fit: cover; }
         @media (max-width: 900px) {
           .mk-cta-final { padding: 72px 24px !important; }
-          .mk-cta-final h2 { font-size: 40px !important; }
         }
       `}</style>
       <section
         className="mk-cta-final"
         style={{ position: "relative", overflow: "hidden", textAlign: "center", padding: "128px 24px" }}
       >
-        <img
-          src="/redesign/hero-astronaut.jpg"
-          alt=""
-          className="mk-art"
+        <div
+          className="mk-art mk-cta-final-art"
           style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            opacity: 0.07,
+            opacity: 0.11,
             pointerEvents: "none",
-            WebkitMaskImage: "linear-gradient(0deg, black 0%, transparent 95%)",
-            maskImage: "linear-gradient(0deg, black 0%, transparent 95%)",
+            WebkitMaskImage: "linear-gradient(0deg, black 30%, transparent 96%)",
+            maskImage: "linear-gradient(0deg, black 30%, transparent 96%)",
           }}
-        />
+        >
+          <Image src="/redesign/maze-sphere.jpg" alt="" fill sizes="100vw" quality={50} />
+        </div>
         <div
           style={{
             position: "relative",
@@ -43,11 +39,12 @@ export default function FinalCTA() {
             gap: 24,
           }}
         >
+          <span className="mk-eyebrow">05 &mdash; Begin</span>
           <h2
             style={{
               fontFamily: "var(--font-serif), Georgia, serif",
               fontWeight: 400,
-              fontSize: 52,
+              fontSize: "clamp(40px, 5.6vw, 64px)",
               lineHeight: 1.05,
               letterSpacing: "-0.015em",
               margin: 0,
