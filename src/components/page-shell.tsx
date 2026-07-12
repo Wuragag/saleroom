@@ -107,19 +107,30 @@ export function PageShell({
 
       {/* ── Footer ── */}
       <footer
-        className="relative z-10 py-10 text-center"
+        className="relative z-10 py-12 flex flex-col items-center gap-3"
         style={{ borderTop: "1px solid var(--pub-header-border)" }}
       >
+        <span
+          aria-hidden="true"
+          style={{
+            width: "26px",
+            height: "3px",
+            borderRadius: "9999px",
+            background: "var(--pub-accent-safe, var(--pub-accent))",
+            opacity: 0.5,
+          }}
+        />
         {showBranding && (
           <span
             className="select-none"
             style={{
-              fontFamily: "var(--font-dm-sans, sans-serif)",
+              fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
               fontSize: "0.6875rem",
               fontWeight: 500,
-              letterSpacing: "0.08em",
+              letterSpacing: "0.06em",
               textTransform: "uppercase",
               color: "var(--pub-muted-color)",
+              opacity: 0.8,
             }}
           >
             Powered by {APP_NAME}

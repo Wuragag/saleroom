@@ -124,8 +124,11 @@ export function TabbedPageView({
                     fontWeight: isActive ? 600 : 500,
                     color: isActive
                       ? "var(--pub-heading-color)"
-                      : "var(--pub-body-color)",
+                      : "var(--pub-muted-color)",
                     background: isActive ? "var(--pub-surface)" : "transparent",
+                    boxShadow: isActive
+                      ? "inset 2px 0 0 var(--pub-accent-safe, var(--pub-heading-color))"
+                      : "none",
                   }}
                 >
                   {tab.name}
@@ -204,8 +207,8 @@ export function TabbedPageView({
                 {/* Prominent active underline (overlaps the bar hairline) */}
                 {isActive && (
                   <span
-                    className="absolute -bottom-px left-0 right-0 h-[2px] rounded-full"
-                    style={{ background: "var(--pub-heading-color)" }}
+                    className="pub-tab-underline absolute -bottom-px left-0 right-0 h-[2px] rounded-full"
+                    style={{ background: "var(--pub-accent-safe, var(--pub-heading-color))" }}
                     aria-hidden="true"
                   />
                 )}

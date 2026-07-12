@@ -8,6 +8,7 @@ import { PageShell } from "@/components/page-shell";
 import { PubCover } from "@/components/pub-cover";
 import { buildPageHero } from "@/components/pub-hero";
 import { PublishedFormHydrator } from "@/components/published-form";
+import { PubReveal } from "@/components/pub-reveal";
 import { getTeamBrandKit } from "@/lib/brand-kit";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 import Link from "next/link";
@@ -164,7 +165,12 @@ export default async function PreviewPage({
       eyebrow={overlayHero ? undefined : hero.eyebrow}
       title={overlayHero ? undefined : hero.title}
       subtitle={overlayHero ? undefined : hero.subtitle}
-      trailing={<PublishedFormHydrator pageId={page.id} accentColor={accentColor} />}
+      trailing={
+        <>
+          <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
+          <PubReveal />
+        </>
+      }
     >
       <TabbedPageView
         tabs={tabs}

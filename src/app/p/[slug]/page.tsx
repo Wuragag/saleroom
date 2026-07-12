@@ -9,6 +9,7 @@ import { PageShell } from "@/components/page-shell";
 import { PubCover } from "@/components/pub-cover";
 import { buildPageHero } from "@/components/pub-hero";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { PubReveal } from "@/components/pub-reveal";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
@@ -240,6 +241,7 @@ export default async function PublishedPage({
             recordingEnabled={page.recordingEnabled}
           />
           <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
+          <PubReveal />
         </>
       }
     >
