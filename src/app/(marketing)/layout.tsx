@@ -60,6 +60,14 @@ export default function MarketingLayout({
           --db-cta-grad-hover: linear-gradient(180deg, #4C4C55 0%, #2E2E34 55%, #202024 100%);
           --db-cta-shadow: inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(255,255,255,0.06), 0 1px 2px rgba(20,20,24,0.35), 0 4px 12px rgba(20,20,24,0.22);
           --db-cta-shadow-hover: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 0 0 1px rgba(255,255,255,0.08), 0 2px 4px rgba(20,20,24,0.35), 0 8px 20px rgba(20,20,24,0.28);
+          /* Product-visual accents — used only inside CSS product mocks and
+             template covers (marketing is exempt from the token linter). */
+          --mk-indigo: #6366F1; --mk-violet: #8B5CF6;
+          --mk-sky: #0EA5E9;    --mk-cyan: #22B8CF;
+          --mk-amber: #F59E0B;  --mk-orange: #FB7185;
+          --mk-emerald: #10B981;--mk-rose: #F43F5E;
+          --mk-tint: #F0F0FF;
+          --mk-glow: radial-gradient(60% 60% at 50% 0%, rgba(99,102,241,0.10), transparent 70%);
         }
         :root[data-mk-theme="dark"] {
           --db-bg:            #101013;
@@ -80,6 +88,8 @@ export default function MarketingLayout({
           --db-cta-grad-hover: linear-gradient(180deg, #FFFFFF 0%, #DADAE0 60%, #C4C4CC 100%);
           --db-cta-shadow: inset 0 1px 0 rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.2), 0 1px 2px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.4);
           --db-cta-shadow-hover: inset 0 1px 0 rgba(255,255,255,1), inset 0 0 0 1px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.45);
+          --mk-tint: #17171F;
+          --mk-glow: radial-gradient(60% 60% at 50% 0%, rgba(99,102,241,0.16), transparent 70%);
         }
 
         html { scroll-behavior: smooth; }
