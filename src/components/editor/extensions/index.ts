@@ -14,3 +14,5 @@ export { FaqNode } from "./faq-node";
 export { PricingNode } from "./pricing-node";
 export { TimelineNode } from "./timeline-node";
 export { GalleryNode } from "./gallery-node";
+export { SectionNode } from "./section-node";
+export { ColumnsNode, ColumnNode } from "./columns-node";

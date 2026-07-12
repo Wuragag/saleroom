@@ -86,6 +86,9 @@ export function getPubCssVars(opts: {
     "--pub-accent-ink":       ramp.accentInk,
     // Soft brand-washed gradient for framed containers (media, cards).
     "--pub-wash":             `linear-gradient(135deg, ${ramp.washA} 0%, ${ramp.washB} 100%)`,
+    // Solid tint + deep ink accent — full-bleed section band variants.
+    "--pub-accent-soft":      ramp.accentSoft,
+    "--pub-accent-deep":      ramp.accentDeep,
     // Metrics stat-chip fill — single source shared with getEditorNodeVars
     // and page-renderer.tsx so editor/published can't drift.
     "--metric-cell-bg":       isDark ? ramp.surfaceStrong : "rgba(255,255,255,0.85)",

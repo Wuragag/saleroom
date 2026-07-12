@@ -366,6 +366,41 @@ const COMMANDS: SlashCommandItem[] = [
     },
   },
   {
+    title: "Section",
+    description: "Full-width brand band",
+    icon: "Layout",
+    aliases: ["section", "band", "full", "bleed", "background"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({ type: "section", attrs: { variant: "wash" }, content: [{ type: "paragraph" }] })
+        .run();
+    },
+  },
+  {
+    title: "Two Columns",
+    description: "Side-by-side content",
+    icon: "Columns2",
+    aliases: ["columns", "column", "two", "split", "side"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "columns",
+          attrs: { ratio: "50-50" },
+          content: [
+            { type: "column", content: [{ type: "paragraph" }] },
+            { type: "column", content: [{ type: "paragraph" }] },
+          ],
+        })
+        .run();
+    },
+  },
+  {
     title: "Synced Block",
     description: "Insert a reusable content block",
     icon: "Blocks",

@@ -162,8 +162,8 @@ export function TabbedPageView({
           </div>
         </nav>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
+        {/* Content — no full-bleed here (sticky sidebar occupies the left) */}
+        <div className="flex-1 min-w-0 pub-no-bleed">
           <div key={contentKey} className="pub-tab-content">
             {activeTab && (
               <PageRenderer content={activeTab.content} isDark={isDark} accentColor={accentColor} />

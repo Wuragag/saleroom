@@ -45,6 +45,8 @@ import {
   DollarSign,
   GitCommitVertical,
   Images,
+  Layout,
+  Columns2,
   type LucideIcon,
 } from "lucide-react";
 import { detectProvider } from "./extensions/embed-utils";
@@ -326,6 +328,35 @@ const BLOCKS: BlockDef[] = [
     icon: Images,
     insert: (editor) => {
       editor.chain().focus().insertContent({ type: "gallery" }).run();
+    },
+  },
+  {
+    id: "section",
+    label: "Section",
+    description: "Full-width brand band",
+    icon: Layout,
+    insert: (editor) => {
+      editor.chain().focus().insertContent({ type: "section", attrs: { variant: "wash" }, content: [{ type: "paragraph" }] }).run();
+    },
+  },
+  {
+    id: "columns",
+    label: "Two columns",
+    description: "Side-by-side content",
+    icon: Columns2,
+    insert: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "columns",
+          attrs: { ratio: "50-50" },
+          content: [
+            { type: "column", content: [{ type: "paragraph" }] },
+            { type: "column", content: [{ type: "paragraph" }] },
+          ],
+        })
+        .run();
     },
   },
 ];

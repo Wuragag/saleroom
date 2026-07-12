@@ -823,10 +823,65 @@ div[data-type="cta-button"] a:focus-visible {
 @media (max-width: 640px) {
   .pub-content [data-type="feature-grid"],
   .pub-content [data-type="pricing"],
-  .pub-content [data-type="gallery"] > div {
+  .pub-content [data-type="gallery"] > div,
+  .pub-content [data-type="columns"],
+  .pub-content .pub-columns-grid {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Contain full-bleed children horizontally without creating a scroll container
+   (clip, not hidden, so sticky tab bar / editor chrome keep working). */
+.pub-main { overflow-x: clip; }
+
+/* ── Full-bleed section: escape the centered column to the viewport edge ── */
+.pub-content .pub-section {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-top: 3.5rem;
+  margin-bottom: 3.5rem;
+}
+/* Consecutive bands touch (alternating-rhythm look) */
+.pub-content .pub-section + .pub-section { margin-top: -3.5rem; }
+.pub-section-inner {
+  max-width: var(--pub-col-max, 720px);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem;
+}
+.pub-section--none { background: transparent; }
+.pub-section--wash { background: var(--pub-wash); }
+.pub-section--tint { background: var(--pub-accent-soft, var(--pub-surface)); }
+.pub-section--ink  { background: var(--pub-accent-deep, #17171a); }
+/* Ink band: fixed light ink for readability regardless of page ramp */
+.pub-section--ink h1, .pub-section--ink h2, .pub-section--ink h3,
+.pub-section--ink h4, .pub-section--ink h5, .pub-section--ink h6 { color: #ffffff; }
+.pub-section--ink p, .pub-section--ink li, .pub-section--ink td,
+.pub-section--ink blockquote p { color: rgba(255,255,255,0.82); }
+.pub-section--ink ul li::before, .pub-section--ink a,
+.pub-section--ink ol li::before { color: rgba(255,255,255,0.95); }
+.pub-section--ink ul li { border-bottom-color: rgba(255,255,255,0.14); }
+.pub-section--ink hr {
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.5) 40%, rgba(255,255,255,0.5) 60%, transparent);
+}
+
+/* Left tab placement can't go edge-to-edge (sticky sidebar) — bleed to the
+   column padding instead. */
+.pub-no-bleed .pub-section {
+  width: auto;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+}
+.pub-no-bleed .pub-section-inner { max-width: none; padding: 2.5rem 1.5rem; }
+
+/* Inside the editor, a true 100vw band would cover the block gutter — bleed to
+   the column edge so the chrome stays usable (published shows full width). */
+.pub-editing .pub-section {
+  width: auto;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+}
+.pub-editing .pub-section-inner { max-width: none; }
 
 /* ── Mobile ── */
 @media (max-width: 640px) {

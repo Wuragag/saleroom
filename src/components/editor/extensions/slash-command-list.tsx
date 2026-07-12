@@ -34,6 +34,8 @@ import {
   DollarSign,
   GitCommitVertical,
   Images,
+  Layout,
+  Columns2,
 } from "lucide-react";
 import type { SlashCommandItem } from "./slash-command-suggestion";
 
@@ -63,6 +65,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   DollarSign,
   GitCommitVertical,
   Images,
+  Layout,
+  Columns2,
 };
 
 interface SlashCommandListProps {

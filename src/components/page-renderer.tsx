@@ -994,6 +994,73 @@ function createGalleryNode() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Layout: full-bleed section + two columns (content-hole nodes)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RATIO_TEMPLATES: Record<string, string> = {
+  "50-50": "1fr 1fr",
+  "60-40": "3fr 2fr",
+  "40-60": "2fr 3fr",
+};
+
+const SectionNodeServer = Node.create({
+  name: "section",
+  group: "block",
+  content: "block+",
+  isolating: true,
+  defining: true,
+  addAttributes() {
+    return { variant: { default: "wash" } };
+  },
+  parseHTML() {
+    return [{ tag: 'section[data-type="section"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    const variant = String(HTMLAttributes["data-variant"] ?? HTMLAttributes.variant ?? "wash");
+    return [
+      "section",
+      mergeAttributes({ "data-type": "section", "data-variant": variant, class: `pub-section pub-section--${variant}` }),
+      ["div", { class: "pub-section-inner" }, 0],
+    ];
+  },
+});
+
+const ColumnNodeServer = Node.create({
+  name: "column",
+  content: "block+",
+  isolating: true,
+  parseHTML() {
+    return [{ tag: 'div[data-type="column"]' }];
+  },
+  renderHTML() {
+    return ["div", { "data-type": "column", style: "min-width:0;" }, 0];
+  },
+});
+
+const ColumnsNodeServer = Node.create({
+  name: "columns",
+  group: "block",
+  content: "column column",
+  isolating: true,
+  defining: true,
+  addAttributes() {
+    return { ratio: { default: "50-50" } };
+  },
+  parseHTML() {
+    return [{ tag: 'div[data-type="columns"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    const ratio = String(HTMLAttributes["data-ratio"] ?? HTMLAttributes.ratio ?? "50-50");
+    const template = RATIO_TEMPLATES[ratio] ?? RATIO_TEMPLATES["50-50"];
+    return [
+      "div",
+      mergeAttributes({ "data-type": "columns", "data-ratio": ratio, class: "pub-columns-grid", style: `display:grid;grid-template-columns:${template};gap:28px;margin:1.5rem 0;` }),
+      0,
+    ];
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PageRenderer
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1033,6 +1100,9 @@ export function PageRenderer({
     createTimelineNode(),
     createPricingNode(),
     createGalleryNode(),
+    SectionNodeServer,
+    ColumnsNodeServer,
+    ColumnNodeServer,
   ];
 
   const rawHtml = generateHTML(
@@ -1074,6 +1144,8 @@ export function PageRenderer({
       "data-plans",
       "data-images",
       "data-layout",
+      "data-variant",
+      "data-ratio",
       "open",
     ],
     ALLOWED_URI_REGEXP:

@@ -65,7 +65,7 @@ export function PageShell({
 }: PageShellProps) {
   return (
     <main
-      className="min-h-screen w-full relative"
+      className="min-h-screen w-full relative pub-main"
       style={{ backgroundColor: bgHex, ...fontStyle, ...cssVars, ...style }}
     >
       {banner}
@@ -84,7 +84,7 @@ export function PageShell({
       {/* ── Main content column ── */}
       <div
         className="relative z-10 mx-auto px-6 pb-16"
-        style={{ maxWidth, paddingTop }}
+        style={{ maxWidth, paddingTop, "--pub-col-max": maxWidth } as CSSProperties}
       >
         {intro}
 
