@@ -28,8 +28,8 @@ interface StylePanelProps {
   passwordProtection?: boolean;
   /** Whether the page currently has a cover image (shows the Cover controls) */
   hasCover?: boolean;
-  /** Enables Blob logo upload via /api/pages/[id]/logo */
-  pageId?: string;
+  /** Target page for Blob logo upload via /api/pages/[id]/logo */
+  pageId: string;
 }
 
 interface TeamBrandKit {
@@ -43,6 +43,27 @@ interface TeamBrandKit {
   themeDepth: string;
 }
 
+// Module-level cache: the Design popover remounts on every open, and the kit
+// changes rarely — avoid refetching /api/team/brand each time (shared with the
+// AI-workspace StylePanel instance too).
+let brandKitCache: { kit: TeamBrandKit | null; at: number } | null = null;
+const BRAND_KIT_TTL_MS = 60_000;
+
+async function fetchTeamBrandKit(): Promise<TeamBrandKit | null> {
+  if (brandKitCache && Date.now() - brandKitCache.at < BRAND_KIT_TTL_MS) {
+    return brandKitCache.kit;
+  }
+  try {
+    const res = await fetch("/api/team/brand");
+    const data = res.ok ? await res.json() : null;
+    const kit = data?.configured && data.kit ? (data.kit as TeamBrandKit) : null;
+    brandKitCache = { kit, at: Date.now() };
+    return kit;
+  } catch {
+    return null;
+  }
+}
+
 export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true, hasCover = false, pageId }: StylePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -52,12 +73,9 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
   const [brandKit, setBrandKit] = useState<TeamBrandKit | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/team/brand")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!cancelled && data?.configured && data.kit) setBrandKit(data.kit);
-      })
-      .catch(() => {});
+    fetchTeamBrandKit().then((kit) => {
+      if (!cancelled && kit) setBrandKit(kit);
+    });
     return () => {
       cancelled = true;
     };
@@ -90,40 +108,30 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (!file || !pageId) return;
     setLogoError(null);
 
     // Upload to Blob storage; the URL persists through the normal style PUT.
     // (Logos used to be inlined as base64 data URLs — old values still render.)
-    if (pageId) {
-      setLogoUploading(true);
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch(`/api/pages/${pageId}/logo`, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setLogoError(data?.error ?? `Upload failed (${res.status})`);
-          return;
-        }
-        onChange({ logoUrl: data.url });
-      } catch {
-        setLogoError("Network error. Please try again.");
-      } finally {
-        setLogoUploading(false);
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/pages/${pageId}/logo`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLogoError(data?.error ?? `Upload failed (${res.status})`);
+        return;
       }
-      return;
+      onChange({ logoUrl: data.url });
+    } catch {
+      setLogoError("Network error. Please try again.");
+    } finally {
+      setLogoUploading(false);
     }
-
-    // Fallback (no pageId in this context): inline data URL
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange({ logoUrl: reader.result as string });
-    };
-    reader.readAsDataURL(file);
   };
 
   return (
@@ -231,7 +239,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={handleFileUpload}
         />

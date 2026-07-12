@@ -23,6 +23,23 @@ export interface BrandKitData {
 
 export const MAX_SECONDARY_COLORS = 6;
 
+/**
+ * Kit shown/used when a team hasn't configured one — the single source of
+ * truth for brand defaults (schema.prisma column defaults mirror this).
+ * Derived from DEFAULT_PAGE_STYLE so page and kit baselines can't diverge.
+ */
+export const DEFAULT_BRAND_KIT: BrandKitData = {
+  primaryColor: DEFAULT_PAGE_STYLE.accentColor,
+  secondaryColors: [],
+  logoUrl: "",
+  font: DEFAULT_PAGE_STYLE.font,
+  headingFont: DEFAULT_PAGE_STYLE.headingFont,
+  background: DEFAULT_PAGE_STYLE.background,
+  themeRadius: DEFAULT_PAGE_STYLE.themeRadius,
+  themeDepth: DEFAULT_PAGE_STYLE.themeDepth,
+  hideBranding: false,
+};
+
 export function isValidHex(v: unknown): v is string {
   return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
 }

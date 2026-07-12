@@ -6,6 +6,7 @@ import { getUserTeamId, requireTeamOwner } from "@/lib/team-auth";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { canHideBranding } from "@/lib/plan-limits";
 import {
+  DEFAULT_BRAND_KIT,
   getTeamBrandKit,
   isValidBackgroundKey,
   isValidDepthKey,
@@ -15,19 +16,6 @@ import {
   MAX_SECONDARY_COLORS,
   type BrandKitData,
 } from "@/lib/brand-kit";
-import { DEFAULT_PAGE_STYLE } from "@/lib/page-styles";
-
-const DEFAULT_KIT: BrandKitData = {
-  primaryColor: DEFAULT_PAGE_STYLE.accentColor,
-  secondaryColors: [],
-  logoUrl: "",
-  font: DEFAULT_PAGE_STYLE.font,
-  headingFont: "",
-  background: DEFAULT_PAGE_STYLE.background,
-  themeRadius: "default",
-  themeDepth: "default",
-  hideBranding: false,
-};
 
 /** Brand kit for the caller's team (defaults when not configured). */
 export const GET = withErrorHandler(async () => {
@@ -39,7 +27,7 @@ export const GET = withErrorHandler(async () => {
   const teamId = await getUserTeamId(session.user.id);
   if (!teamId) {
     return NextResponse.json({
-      kit: DEFAULT_KIT,
+      kit: DEFAULT_BRAND_KIT,
       configured: false,
       isOwner: false,
       hideBrandingAllowed: false,
@@ -56,7 +44,7 @@ export const GET = withErrorHandler(async () => {
   ]);
 
   return NextResponse.json({
-    kit: kit ?? DEFAULT_KIT,
+    kit: kit ?? DEFAULT_BRAND_KIT,
     configured: !!kit,
     isOwner: !!ownership,
     hideBrandingAllowed: hideCheck.allowed,
@@ -65,14 +53,24 @@ export const GET = withErrorHandler(async () => {
 
 /** Update the team brand kit (owner only). */
 export const PATCH = withErrorHandler(async (request: Request) => {
-  const owner = await requireTeamOwner();
-  if (!owner.authorized || !owner.teamId) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Resolve the same team GET shows (earliest membership), THEN require
+  // ownership of that team — otherwise a user who owns a different team
+  // would read team A but write team B.
+  const teamId = await getUserTeamId(session.user.id);
+  if (!teamId) {
+    return NextResponse.json({ error: "No team found" }, { status: 404 });
+  }
+  const owner = await requireTeamOwner(teamId);
+  if (!owner.authorized) {
     return NextResponse.json(
       { error: owner.reason ?? "Not a team owner" },
       { status: owner.session ? 403 : 401 }
     );
   }
-  const teamId = owner.teamId;
 
   const body = await safeJson<Partial<BrandKitData>>(request);
   if (!body) {

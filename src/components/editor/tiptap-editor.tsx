@@ -30,8 +30,9 @@ import type { ComposerOp, ComposerMapItemInput } from "@/types/ai-composer";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle, getBgHex } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground, getEditorNodeVars, getCoverHeight } from "@/lib/pub-theme";
-import { PageShell, PUB_LOGO_STYLE, PUB_TITLE_STYLE, PUB_EYEBROW_STYLE, PUB_SUBTITLE_STYLE } from "@/components/page-shell";
-import { PubCover, PUB_OVERLAY_TEXT_STYLE, PUB_OVERLAY_SUBTITLE_STYLE, PUB_OVERLAY_EYEBROW_STYLE } from "@/components/pub-cover";
+import { PageShell, PUB_LOGO_STYLE } from "@/components/page-shell";
+import { PubCover } from "@/components/pub-cover";
+import { buildPageHero } from "@/components/pub-hero";
 import { EditableHeroText } from "./editable-hero-text";
 import { CoverImageEditor } from "./cover-image-editor";
 import { MapPanel } from "./map-panel";
@@ -102,6 +103,10 @@ export interface EditorPanelState {
   style: PageStyle;
   password: string;
   passwordProtection: boolean;
+  /** Page id + cover presence so external StylePanel hosts (AI workspace)
+   *  can enable Blob logo upload and the Cover controls. */
+  pageId: string;
+  hasCover: boolean;
 }
 
 export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, aiBridgeRef, aiBusy = false, onEditorStateChange, hideDesign = false }: TiptapEditorProps) {
@@ -568,12 +573,14 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       style: pageStyle,
       password,
       passwordProtection,
+      pageId: page.id,
+      hasCover: Boolean(coverImage),
     };
     const key = JSON.stringify(snapshot);
     if (key === lastPanelStateRef.current) return;
     lastPanelStateRef.current = key;
     onEditorStateChange?.(snapshot);
-  }, [tabs, activeTabId, pageStyle, password, passwordProtection, onEditorStateChange]);
+  }, [tabs, activeTabId, pageStyle, password, passwordProtection, page.id, coverImage, onEditorStateChange]);
 
   // ── WYSIWYG canvas: derive the published-page shell from the live style ──
   const accent = getAccentColor(pageStyle.accentColor);
@@ -727,35 +734,25 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
                 coverLayout={pageStyle.coverLayout}
                 maxWidth={maxWidth}
                 overlayContent={
-                  overlayHero ? (
-                    <>
-                      {pageStyle.logoUrl ? (
-                        <NextImage
-                          src={pageStyle.logoUrl}
-                          alt="Logo"
-                          width={180}
-                          height={36}
-                          style={PUB_LOGO_STYLE}
-                        />
-                      ) : undefined}
-                      {eyebrow ? (
-                        <span style={{ ...PUB_EYEBROW_STYLE, ...PUB_OVERLAY_EYEBROW_STYLE }}>
-                          {eyebrow}
-                        </span>
-                      ) : undefined}
-                      <h1
-                        className="pub-title"
-                        style={{ ...PUB_TITLE_STYLE, ...PUB_OVERLAY_TEXT_STYLE }}
-                      >
-                        {title}
-                      </h1>
-                      {subtitle ? (
-                        <p style={{ ...PUB_SUBTITLE_STYLE, ...PUB_OVERLAY_SUBTITLE_STYLE }}>
-                          {subtitle}
-                        </p>
-                      ) : undefined}
-                    </>
-                  ) : undefined
+                  overlayHero
+                    ? (() => {
+                        const hero = buildPageHero({
+                          title,
+                          eyebrow,
+                          subtitle,
+                          logoUrl: pageStyle.logoUrl,
+                          overlay: true,
+                        });
+                        return (
+                          <>
+                            {hero.logo}
+                            {hero.eyebrow}
+                            {hero.title}
+                            {hero.subtitle}
+                          </>
+                        );
+                      })()
+                    : undefined
                 }
               />
             ) : undefined
@@ -769,9 +766,9 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
             />
           )
         }
-        // Published pages use 72px without a cover; when editable, the
-        // "Add cover" ghost strip above already adds ~32px of chrome height.
-        paddingTop={coverImage ? "40px" : readOnly ? "72px" : "40px"}
+        // Published pages use 72px without a cover (56px in overlay mode);
+        // when editable, the "Add cover" ghost strip adds ~32px of chrome.
+        paddingTop={coverImage ? (overlayHero ? "56px" : "40px") : readOnly ? "72px" : "40px"}
         logo={
           !overlayHero && pageStyle.logoUrl ? (
             <NextImage

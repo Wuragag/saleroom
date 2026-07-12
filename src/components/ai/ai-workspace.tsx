@@ -755,6 +755,8 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
                   password={editorState.password}
                   onPasswordChange={(v) => bridgeRef.current?.setPagePassword(v)}
                   passwordProtection={editorState.passwordProtection}
+                  pageId={editorState.pageId}
+                  hasCover={editorState.hasCover}
                 />
               </div>
             ) : (

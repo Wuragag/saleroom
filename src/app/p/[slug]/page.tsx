@@ -2,23 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground } from "@/lib/pub-theme";
-import {
-  PageShell,
-  PUB_TITLE_STYLE,
-  PUB_LOGO_STYLE,
-  PUB_EYEBROW_STYLE,
-  PUB_SUBTITLE_STYLE,
-} from "@/components/page-shell";
-import {
-  PubCover,
-  PUB_OVERLAY_TEXT_STYLE,
-  PUB_OVERLAY_SUBTITLE_STYLE,
-  PUB_OVERLAY_EYEBROW_STYLE,
-} from "@/components/pub-cover";
+import { PageShell } from "@/components/page-shell";
+import { PubCover } from "@/components/pub-cover";
+import { buildPageHero } from "@/components/pub-hero";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
@@ -135,27 +124,13 @@ export default async function PublishedPage({
 
   // Hero elements — rendered on the cover in overlay layout, in the column otherwise
   const overlayHero = Boolean(page.coverImage) && page.coverLayout === "overlay";
-  const heroLogo = page.logoUrl ? (
-    <Image src={page.logoUrl} alt="Logo" width={180} height={36} style={PUB_LOGO_STYLE} />
-  ) : undefined;
-  const heroEyebrow = page.eyebrow ? (
-    <span style={{ ...PUB_EYEBROW_STYLE, ...(overlayHero ? PUB_OVERLAY_EYEBROW_STYLE : {}) }}>
-      {page.eyebrow}
-    </span>
-  ) : undefined;
-  const heroTitle = (
-    <h1
-      className="pub-title"
-      style={{ ...PUB_TITLE_STYLE, ...(overlayHero ? PUB_OVERLAY_TEXT_STYLE : {}) }}
-    >
-      {page.title}
-    </h1>
-  );
-  const heroSubtitle = page.subtitle ? (
-    <p style={{ ...PUB_SUBTITLE_STYLE, ...(overlayHero ? PUB_OVERLAY_SUBTITLE_STYLE : {}) }}>
-      {page.subtitle}
-    </p>
-  ) : undefined;
+  const hero = buildPageHero({
+    title: page.title,
+    eyebrow: page.eyebrow,
+    subtitle: page.subtitle,
+    logoUrl: page.logoUrl,
+    overlay: overlayHero,
+  });
 
   return (
     <PageShell
@@ -177,10 +152,10 @@ export default async function PublishedPage({
             overlayContent={
               overlayHero ? (
                 <>
-                  {heroLogo}
-                  {heroEyebrow}
-                  {heroTitle}
-                  {heroSubtitle}
+                  {hero.logo}
+                  {hero.eyebrow}
+                  {hero.title}
+                  {hero.subtitle}
                 </>
               ) : undefined
             }
@@ -250,10 +225,10 @@ export default async function PublishedPage({
           </div>
         ) : undefined
       }
-      logo={overlayHero ? undefined : heroLogo}
-      eyebrow={overlayHero ? undefined : heroEyebrow}
-      title={overlayHero ? undefined : heroTitle}
-      subtitle={overlayHero ? undefined : heroSubtitle}
+      logo={overlayHero ? undefined : hero.logo}
+      eyebrow={overlayHero ? undefined : hero.eyebrow}
+      title={overlayHero ? undefined : hero.title}
+      subtitle={overlayHero ? undefined : hero.subtitle}
       trailing={
         <>
           <AnalyticsTracker pageId={page.id} />

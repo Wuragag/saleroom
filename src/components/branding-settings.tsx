@@ -350,12 +350,12 @@ export function BrandingSettings() {
         <input
           ref={fileRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={handleLogoUpload}
         />
         <p className="text-xs text-muted-foreground">
-          PNG, JPEG, WebP or SVG, up to 2 MB. Placed at the top of new pages.
+          PNG, JPEG or WebP, up to 2 MB. Placed at the top of new pages.
         </p>
       </Card>
 

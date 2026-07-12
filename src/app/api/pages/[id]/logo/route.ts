@@ -6,7 +6,9 @@ import { put, del } from "@vercel/blob";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+// No SVG: next/image can't serve remote SVGs without dangerouslyAllowSVG,
+// which this app deliberately keeps off (public bucket + optimizer surface).
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 const logoLimiter = rateLimit({ limit: 20, window: "60s", prefix: "logo" });
@@ -57,7 +59,7 @@ export const POST = withErrorHandler(async (
   }
   if (!ALLOWED_TYPES.includes(file.type)) {
     return NextResponse.json(
-      { error: "Only JPEG, PNG, WebP and SVG images are allowed" },
+      { error: "Only JPEG, PNG and WebP images are allowed" },
       { status: 400 }
     );
   }
@@ -65,19 +67,28 @@ export const POST = withErrorHandler(async (
     return NextResponse.json({ error: "File size must be under 2 MB" }, { status: 400 });
   }
 
-  const ext =
-    file.type === "image/jpeg" ? "jpg" : file.type === "image/svg+xml" ? "svg" : file.type.split("/")[1];
+  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
   const filename = `logos/${id}-${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const blob = await put(filename, buffer, { access: "public", contentType: file.type });
 
-  // Best-effort cleanup of the old logo blob (base64 legacy values are skipped)
+  // Best-effort cleanup of the old logo blob — but ONLY if this page owns it.
+  // logoUrl can point at a shared blob (the team brand kit's logo inherited at
+  // creation, or another page's logo carried over by duplicate); deleting those
+  // would break every other page using them. Base64 legacy values are skipped
+  // by the https check.
   const page = await prisma.page.findUnique({
     where: { id },
     select: { logoUrl: true },
   });
   if (page?.logoUrl?.startsWith("https://")) {
-    del(page.logoUrl).catch(() => {});
+    try {
+      if (new URL(page.logoUrl).pathname.startsWith(`/logos/${id}-`)) {
+        del(page.logoUrl).catch(() => {});
+      }
+    } catch {
+      // unparsable URL — leave it alone
+    }
   }
 
   return NextResponse.json({ url: blob.url });

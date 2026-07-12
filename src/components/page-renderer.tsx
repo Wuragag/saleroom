@@ -684,7 +684,8 @@ function createMetricsNode(isDark: boolean, accentColor: string) {
           ? JSON.parse(HTMLAttributes["data-metrics"])
           : HTMLAttributes.metrics || [];
 
-      const cellBg = isDark ? "var(--pub-surface-strong, rgba(255,255,255,0.04))" : "rgba(255,255,255,0.85)";
+      // Single source: emitted by getPubCssVars/getEditorNodeVars (pub-theme.ts)
+      const cellBg = "var(--metric-cell-bg, rgba(255,255,255,0.85))";
       const valueColor = `var(--pub-accent-safe, ${accentColor})`;
       const labelColor = "var(--pub-muted-color, #64748b)";
 

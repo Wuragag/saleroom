@@ -81,22 +81,20 @@ export function getPubCssVars(opts: {
   return {
     "--pub-accent":           opts.accentColor,
     // Contrast-guarded accent variants — accent-safe is the ONLY accent to
-    // use for text; ink goes on solid accent fills; deep is the inverted-card
-    // / scrim fill.
+    // use for text; ink goes on solid accent fills.
     "--pub-accent-safe":      ramp.accentSafe,
     "--pub-accent-ink":       ramp.accentInk,
-    "--pub-accent-deep":      ramp.accentDeep,
-    "--pub-accent-soft":      ramp.accentSoft,
     // Soft brand-washed gradient for framed containers (media, cards).
     "--pub-wash":             `linear-gradient(135deg, ${ramp.washA} 0%, ${ramp.washB} 100%)`,
-    "--pub-wash-strong":      `linear-gradient(135deg, ${ramp.washA} 0%, ${ramp.accentSoft} 100%)`,
+    // Metrics stat-chip fill — single source shared with getEditorNodeVars
+    // and page-renderer.tsx so editor/published can't drift.
+    "--metric-cell-bg":       isDark ? ramp.surfaceStrong : "rgba(255,255,255,0.85)",
     // Brand-washed neutral ramp derived from the accent (pub-color.ts).
     "--pub-heading-color":    ramp.heading,
     "--pub-subheading-color": ramp.subheading,
     "--pub-body-color":       ramp.body,
     "--pub-muted-color":      ramp.muted,
     "--pub-surface":          ramp.surface,
-    "--pub-surface-strong":   ramp.surfaceStrong,
     "--pub-divider":          ramp.divider,
     "--pub-tab-bg":           ramp.tabBg,
     "--pub-table-header-bg":  ramp.tableHeaderBg,
