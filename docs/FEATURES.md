@@ -107,11 +107,21 @@ web page. Editor: [`/editor/[id]`](../src/app/editor/[id]/page.tsx).
 - **Auto-save** — debounced background saving with a live save-status indicator;
   pending edits are flushed on tab switch and on unmount (via `keepalive` fetch)
   ([`src/hooks/use-auto-save.ts`](../src/hooks/use-auto-save.ts)).
-- **Branding & theming** (per page): font, accent color, layout width, background,
-  tab placement, logo, and cover image. See
+- **Branding & theming** (per page): body + heading font pairing, accent color
+  (drives a derived, contrast-guarded color ramp — see
+  [`src/lib/pub-color.ts`](../src/lib/pub-color.ts)), layout width, background,
+  tab placement, corner radius & depth scales, logo, cover image (with height
+  options and a title-on-cover overlay layout), hero eyebrow and subtitle. See
   [`src/lib/page-styles.ts`](../src/lib/page-styles.ts) and the
   [style panel](../src/components/editor/style-panel.tsx).
-- **Cover image & logo** upload (Vercel Blob, rate-limited).
+- **Team brand kit** (Settings → Branding): primary + secondary brand colors,
+  logo, font pairing, default background, corners/depth, and a PRO+ "hide
+  Dealbeam branding" toggle. New pages inherit the kit; the editor offers brand
+  swatches and a one-click "Apply brand kit"
+  ([`src/lib/brand-kit.ts`](../src/lib/brand-kit.ts),
+  [`src/app/api/team/brand/route.ts`](../src/app/api/team/brand/route.ts)).
+- **Cover image & logo** upload (Vercel Blob, rate-limited); legacy base64
+  page logos still render.
 - **Links editor** — a set of page-level links (e.g. resources, social).
 - **Tags** for organizing pages on the dashboard.
 - **Page visibility**: `TEAM` (any team member can view/edit) or `PRIVATE`

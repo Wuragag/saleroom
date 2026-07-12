@@ -10,6 +10,8 @@ interface CoverImageEditorProps {
   onCoverImageChange: (url: string) => void;
   /** Content-column width — aligns the empty-state button with the page column */
   maxWidth?: string;
+  /** Rendered cover height in px — mirrors the published page (Design → Cover) */
+  height?: number;
 }
 
 export function CoverImageEditor({
@@ -17,6 +19,7 @@ export function CoverImageEditor({
   coverImage,
   onCoverImageChange,
   maxWidth,
+  height = 300,
 }: CoverImageEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,9 +128,9 @@ export function CoverImageEditor({
     );
   }
 
-  /* ── Cover image set: full-bleed, same 300px height as the published page ── */
+  /* ── Cover image set: full-bleed, same height as the published page ── */
   return (
-    <div className="group relative z-10 w-full" style={{ height: "300px" }}>
+    <div className="group relative z-10 w-full" style={{ height: `${height}px` }}>
       <Image
         src={coverImage}
         alt=""

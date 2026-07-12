@@ -50,12 +50,19 @@ export interface PageData {
   userId: string;
   tabs: TabData[];
   font: string;
+  headingFont: string;
   accentColor: string;
   layoutWidth: string;
   background: string;
   tabPlacement: string;
   logoUrl: string;
   coverImage: string;
+  coverLayout: string;
+  coverHeight: string;
+  eyebrow: string;
+  subtitle: string;
+  themeRadius: string;
+  themeDepth: string;
   links: string;
   password?: string | null;
   tags: string;   // JSON-encoded string[]

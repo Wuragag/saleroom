@@ -65,7 +65,8 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
               background: "var(--node-card-bg, #ffffff)",
               border: "1px solid var(--node-card-border, rgba(0,0,0,0.06))",
               borderLeft: "4px solid var(--page-accent, #003B22)",
-              borderRadius: "12px",
+              borderRadius: "var(--pub-radius-md, 12px)",
+              boxShadow: "var(--pub-shadow-sm, 0 0 0 0 rgba(0,0,0,0))",
               padding: "24px",
               margin: "12px 0",
             }}

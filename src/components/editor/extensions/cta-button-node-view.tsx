@@ -50,8 +50,12 @@ export function CTAButtonNodeView({
         ) : (
           <div className="group relative inline-block">
             <a
-              className="inline-block px-8 py-3 rounded-lg font-semibold text-base cursor-default"
-              style={{ backgroundColor: "var(--page-accent, #003B22)", color: "#ffffff" }}
+              className="inline-block px-8 py-3 font-semibold text-base cursor-default"
+              style={{
+                backgroundColor: "var(--page-accent, #003B22)",
+                color: "var(--node-accent-ink, #ffffff)",
+                borderRadius: "var(--pub-radius-sm, 9px)",
+              }}
               onClick={(e) => e.preventDefault()}
             >
               {node.attrs.label}

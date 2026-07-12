@@ -80,13 +80,20 @@ export const POST = withErrorHandler(async (
       contentType: file.type,
     });
 
-    // Best-effort cleanup of old cover image blob
+    // Best-effort cleanup of the old cover blob — only when this page owns it
+    // (guards against shared URLs the way the logo route does)
     const page = await prisma.page.findUnique({
       where: { id },
       select: { coverImage: true },
     });
     if (page?.coverImage && page.coverImage.startsWith("https://")) {
-      del(page.coverImage).catch(() => {});
+      try {
+        if (new URL(page.coverImage).pathname.startsWith(`/covers/${id}-`)) {
+          del(page.coverImage).catch(() => {});
+        }
+      } catch {
+        // unparsable URL — leave it alone
+      }
     }
 
     return NextResponse.json({ url: blob.url });

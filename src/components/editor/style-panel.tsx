@@ -5,10 +5,16 @@ import Image from "next/image";
 import { ImagePlus, Lock, X, Zap } from "lucide-react";
 import {
   FONT_OPTIONS,
+  FONT_PAIRINGS,
   BACKGROUND_OPTIONS,
   WIDTH_OPTIONS,
   THEME_PRESETS,
+  RADIUS_OPTIONS,
+  DEPTH_OPTIONS,
+  COVER_HEIGHTS,
+  COVER_LAYOUTS,
   getAccentColor,
+  getFontStyle,
   type PageStyle,
 } from "@/lib/page-styles";
 import { PRESET_COLORS } from "@/lib/color-palettes";
@@ -20,10 +26,73 @@ interface StylePanelProps {
   password: string;
   onPasswordChange: (value: string) => void;
   passwordProtection?: boolean;
+  /** Whether the page currently has a cover image (shows the Cover controls) */
+  hasCover?: boolean;
+  /** Target page for Blob logo upload via /api/pages/[id]/logo */
+  pageId: string;
 }
 
-export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true }: StylePanelProps) {
+interface TeamBrandKit {
+  primaryColor: string;
+  secondaryColors: string[];
+  logoUrl: string;
+  font: string;
+  headingFont: string;
+  background: string;
+  themeRadius: string;
+  themeDepth: string;
+}
+
+// Module-level cache: the Design popover remounts on every open, and the kit
+// changes rarely — avoid refetching /api/team/brand each time (shared with the
+// AI-workspace StylePanel instance too).
+let brandKitCache: { kit: TeamBrandKit | null; at: number } | null = null;
+const BRAND_KIT_TTL_MS = 60_000;
+
+async function fetchTeamBrandKit(): Promise<TeamBrandKit | null> {
+  if (brandKitCache && Date.now() - brandKitCache.at < BRAND_KIT_TTL_MS) {
+    return brandKitCache.kit;
+  }
+  try {
+    const res = await fetch("/api/team/brand");
+    const data = res.ok ? await res.json() : null;
+    const kit = data?.configured && data.kit ? (data.kit as TeamBrandKit) : null;
+    brandKitCache = { kit, at: Date.now() };
+    return kit;
+  } catch {
+    return null;
+  }
+}
+
+export function StylePanel({ style, onChange, password, onPasswordChange, passwordProtection = true, hasCover = false, pageId }: StylePanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  // Team brand kit — brand swatches + one-click "Apply brand kit"
+  const [brandKit, setBrandKit] = useState<TeamBrandKit | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchTeamBrandKit().then((kit) => {
+      if (!cancelled && kit) setBrandKit(kit);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const applyBrandKit = () => {
+    if (!brandKit) return;
+    onChange({
+      accentColor: brandKit.primaryColor,
+      font: brandKit.font,
+      headingFont: brandKit.headingFont,
+      background: brandKit.background,
+      themeRadius: brandKit.themeRadius,
+      themeDepth: brandKit.themeDepth,
+      ...(brandKit.logoUrl ? { logoUrl: brandKit.logoUrl } : {}),
+    });
+  };
 
   // Color picker state
   const currentHex = getAccentColor(style.accentColor);
@@ -36,20 +105,55 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
     setHexInput(getAccentColor(style.accentColor).replace("#", "").toUpperCase());
   }, [style.accentColor]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange({ logoUrl: reader.result as string });
-    };
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file || !pageId) return;
+    setLogoError(null);
+
+    // Upload to Blob storage; the URL persists through the normal style PUT.
+    // (Logos used to be inlined as base64 data URLs — old values still render.)
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/pages/${pageId}/logo`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLogoError(data?.error ?? `Upload failed (${res.status})`);
+        return;
+      }
+      onChange({ logoUrl: data.url });
+    } catch {
+      setLogoError("Network error. Please try again.");
+    } finally {
+      setLogoUploading(false);
+    }
   };
 
   return (
     <div className="p-3 space-y-4">
       <SectionLabel>Style</SectionLabel>
+
+      {/* Team brand kit */}
+      {brandKit && (
+        <button
+          onClick={applyBrandKit}
+          className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border hover:bg-accent/50 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <span
+              className="h-4 w-4 rounded-full ring-1 ring-border shrink-0"
+              style={{ backgroundColor: brandKit.primaryColor }}
+            />
+            <span className="text-xs font-medium truncate">Apply brand kit</span>
+          </span>
+          <span className="text-3xs text-muted-foreground shrink-0">Team default</span>
+        </button>
+      )}
 
       {/* Theme Presets */}
       <div>
@@ -59,6 +163,7 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             const bg = BACKGROUND_OPTIONS.find((b) => b.value === preset.background);
             const isActive =
               style.font === preset.font &&
+              style.headingFont === preset.headingFont &&
               getAccentColor(style.accentColor) === preset.accentColor &&
               style.background === preset.background;
             return (
@@ -69,8 +174,11 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
                 onClick={() =>
                   onChange({
                     font: preset.font,
+                    headingFont: preset.headingFont,
                     accentColor: preset.accentColor,
                     background: preset.background,
+                    themeRadius: preset.themeRadius,
+                    themeDepth: preset.themeDepth,
                   })
                 }
                 className={`relative flex flex-col items-center gap-1 py-2 px-1 text-3xs rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
@@ -120,25 +228,58 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
         ) : (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs rounded border border-dashed border-border hover:bg-accent/50 transition-colors text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            disabled={logoUploading}
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs rounded border border-dashed border-border hover:bg-accent/50 transition-colors text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
           >
             <ImagePlus className="h-3.5 w-3.5" />
-            Upload logo
+            {logoUploading ? "Uploading…" : "Upload logo"}
           </button>
         )}
+        {logoError && <p className="mt-1 text-3xs text-destructive">{logoError}</p>}
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={handleFileUpload}
         />
       </div>
 
-      {/* Font */}
+      {/* Typography: curated heading/body pairings */}
       <div>
-        <SectionLabel className="mb-1.5">Font</SectionLabel>
-        <div className="grid grid-cols-2 gap-1">
+        <SectionLabel className="mb-1.5">Typography</SectionLabel>
+        <div className="grid grid-cols-2 gap-1 mb-2">
+          {FONT_PAIRINGS.map((pair) => {
+            const isActive = style.font === pair.body && style.headingFont === pair.heading;
+            const headingStyle = getFontStyle(pair.heading || pair.body);
+            return (
+              <button
+                key={pair.id}
+                aria-label={`${pair.label} font pairing`}
+                aria-pressed={isActive}
+                onClick={() => onChange({ font: pair.body, headingFont: pair.heading })}
+                className={`px-2 py-1.5 rounded border transition-colors text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                  isActive
+                    ? "border-foreground bg-accent text-accent-foreground"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                <span className="block text-xs font-semibold truncate" style={headingStyle}>
+                  {pair.label}
+                </span>
+                <span className="block text-3xs text-muted-foreground truncate">
+                  {(FONT_OPTIONS.find((f) => f.value === (pair.heading || pair.body))?.label ?? "") +
+                    " · " +
+                    (FONT_OPTIONS.find((f) => f.value === pair.body)?.label ?? "")}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Body font */}
+        <SectionLabel className="mb-1.5">Body font</SectionLabel>
+        <div className="grid grid-cols-2 gap-1 mb-2">
           {FONT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -156,6 +297,22 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             </button>
           ))}
         </div>
+
+        {/* Heading font */}
+        <SectionLabel className="mb-1.5">Heading font</SectionLabel>
+        <select
+          value={style.headingFont}
+          onChange={(e) => onChange({ headingFont: e.target.value })}
+          aria-label="Heading font"
+          className="w-full px-2 py-1.5 text-xs rounded border border-border bg-card focus:outline-none focus:ring-1 focus:ring-primary/40"
+        >
+          <option value="">Same as body</option>
+          {FONT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Color picker */}
@@ -218,6 +375,33 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
             />
           </div>
         </div>
+
+        {/* Brand swatches from the team brand kit */}
+        {brandKit && (
+          <div className="mb-2.5">
+            <span className="block text-3xs font-medium text-muted-foreground mb-1">Brand</span>
+            <div className="grid grid-cols-6 gap-1.5">
+              {[brandKit.primaryColor, ...brandKit.secondaryColors].map((hex, i) => {
+                const isActive = currentHex.toLowerCase() === hex.toLowerCase();
+                return (
+                  <button
+                    key={`${hex}-${i}`}
+                    title={hex}
+                    aria-label={`Brand color ${hex}`}
+                    aria-pressed={isActive}
+                    onClick={() => onChange({ accentColor: hex })}
+                    style={{ backgroundColor: hex }}
+                    className={`aspect-square rounded-md border transition-all duration-150 hover:scale-110 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                      isActive
+                        ? "ring-2 ring-offset-1 ring-foreground border-transparent scale-110"
+                        : "border-border/30"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Preset swatches — 6×2 grid */}
         <div className="grid grid-cols-6 gap-1.5">
@@ -286,6 +470,96 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
           ))}
         </div>
       </div>
+
+      {/* Corners */}
+      <div>
+        <SectionLabel className="mb-1.5">Corners</SectionLabel>
+        <div className="flex gap-1">
+          {RADIUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              aria-label={`${opt.label} corners`}
+              aria-pressed={style.themeRadius === opt.value}
+              onClick={() => onChange({ themeRadius: opt.value })}
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                style.themeRadius === opt.value
+                  ? "border-foreground bg-accent text-accent-foreground"
+                  : "border-border hover:bg-accent/50"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Depth */}
+      <div>
+        <SectionLabel className="mb-1.5">Depth</SectionLabel>
+        <div className="flex gap-1">
+          {DEPTH_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              aria-label={`${opt.label} depth`}
+              aria-pressed={style.themeDepth === opt.value}
+              onClick={() => onChange({ themeDepth: opt.value })}
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                style.themeDepth === opt.value
+                  ? "border-foreground bg-accent text-accent-foreground"
+                  : "border-border hover:bg-accent/50"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Cover — only when a cover image is set */}
+      {hasCover && (
+        <div>
+          <SectionLabel className="mb-1.5">Cover</SectionLabel>
+          <div className="flex gap-1 mb-1.5">
+            {COVER_LAYOUTS.map((opt) => (
+              <button
+                key={opt.value}
+                aria-label={`${opt.label} cover layout`}
+                aria-pressed={style.coverLayout === opt.value}
+                onClick={() => onChange({ coverLayout: opt.value })}
+                className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                  style.coverLayout === opt.value
+                    ? "border-foreground bg-accent text-accent-foreground"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            {COVER_HEIGHTS.map((opt) => (
+              <button
+                key={opt.value}
+                aria-label={`${opt.label} cover height`}
+                aria-pressed={style.coverHeight === opt.value}
+                onClick={() => onChange({ coverHeight: opt.value })}
+                className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                  style.coverHeight === opt.value
+                    ? "border-foreground bg-accent text-accent-foreground"
+                    : "border-border hover:bg-accent/50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {style.coverLayout === "overlay" && (
+            <p className="mt-1 text-3xs text-muted-foreground/70">
+              Title and subtitle render on the cover on the published page.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Tab placement */}
       <div>

@@ -30,22 +30,69 @@ export const BACKGROUND_OPTIONS = [
   { value: "navy", label: "Navy", bgClass: "bg-[#0f172a]", hex: "#0f172a", dark: true },
 ];
 
+// Curated heading/body font pairings (all from the fonts already loaded in
+// src/app/layout.tsx — no extra font downloads). headingFont "" = same as body.
+export interface FontPairing {
+  id: string;
+  label: string;
+  heading: string;
+  body: string;
+}
+
+export const FONT_PAIRINGS: FontPairing[] = [
+  { id: "uniform", label: "Uniform", heading: "", body: "dmsans" },
+  { id: "editorial", label: "Editorial", heading: "playfair", body: "inter" },
+  { id: "refined", label: "Refined", heading: "instrument", body: "dmsans" },
+  { id: "modern", label: "Modern", heading: "syne", body: "inter" },
+  { id: "warm", label: "Warm", heading: "lora", body: "dmsans" },
+  { id: "classic", label: "Classic", heading: "georgia", body: "inter" },
+];
+
+// Corner-radius scale for cards/tables/media/buttons on the published page.
+export const RADIUS_OPTIONS = [
+  { value: "sharp", label: "Sharp", sm: "3px", md: "5px", lg: "8px" },
+  { value: "default", label: "Default", sm: "8px", md: "12px", lg: "16px" },
+  { value: "soft", label: "Soft", sm: "12px", md: "18px", lg: "28px" },
+];
+
+// Shadow/depth intensity for the same surfaces.
+export const DEPTH_OPTIONS = [
+  { value: "flat", label: "Flat" },
+  { value: "default", label: "Default" },
+  { value: "elevated", label: "Elevated" },
+];
+
+// Cover image heights; overlay layout gets extra room for the title block.
+export const COVER_HEIGHTS = [
+  { value: "compact", label: "Compact", px: 220, overlayPx: 300 },
+  { value: "default", label: "Default", px: 320, overlayPx: 420 },
+  { value: "tall", label: "Tall", px: 460, overlayPx: 560 },
+];
+
+export const COVER_LAYOUTS = [
+  { value: "standard", label: "Standard" },
+  { value: "overlay", label: "Title on cover" },
+];
+
 // Pre-configured theme presets for one-click elegant styling
 export interface ThemePreset {
   id: string;
   label: string;
   font: string;
+  headingFont: string;
   accentColor: string;
   background: string;
+  themeRadius: string;
+  themeDepth: string;
 }
 
 export const THEME_PRESETS: ThemePreset[] = [
-  { id: "classic", label: "Classic", font: "inter", accentColor: "#64748b", background: "white" },
-  { id: "elegant", label: "Elegant", font: "instrument", accentColor: "#0f172a", background: "cream" },
-  { id: "modern", label: "Modern", font: "dmsans", accentColor: "#2563eb", background: "gray" },
-  { id: "bold", label: "Bold", font: "syne", accentColor: "#7c3aed", background: "dark" },
-  { id: "warm", label: "Warm", font: "lora", accentColor: "#d97706", background: "warm" },
-  { id: "editorial", label: "Editorial", font: "playfair", accentColor: "#0f172a", background: "white" },
+  { id: "classic", label: "Classic", font: "inter", headingFont: "", accentColor: "#64748b", background: "white", themeRadius: "default", themeDepth: "default" },
+  { id: "elegant", label: "Elegant", font: "dmsans", headingFont: "instrument", accentColor: "#0f172a", background: "cream", themeRadius: "soft", themeDepth: "flat" },
+  { id: "modern", label: "Modern", font: "inter", headingFont: "syne", accentColor: "#2563eb", background: "gray", themeRadius: "soft", themeDepth: "elevated" },
+  { id: "bold", label: "Bold", font: "syne", headingFont: "", accentColor: "#7c3aed", background: "dark", themeRadius: "default", themeDepth: "elevated" },
+  { id: "warm", label: "Warm", font: "lora", headingFont: "", accentColor: "#d97706", background: "warm", themeRadius: "soft", themeDepth: "default" },
+  { id: "editorial", label: "Editorial", font: "inter", headingFont: "playfair", accentColor: "#0f172a", background: "white", themeRadius: "sharp", themeDepth: "flat" },
 ];
 
 export const WIDTH_OPTIONS = [
@@ -71,11 +118,16 @@ export function getAccentColor(accentColor: string): string {
 
 export interface PageStyle {
   font: string;
+  headingFont: string;
   accentColor: string;
   layoutWidth: string;
   background: string;
   tabPlacement: string;
   logoUrl: string;
+  coverLayout: string;
+  coverHeight: string;
+  themeRadius: string;
+  themeDepth: string;
 }
 
 export const DEFAULT_PAGE_STYLE: PageStyle = {
@@ -84,9 +136,14 @@ export const DEFAULT_PAGE_STYLE: PageStyle = {
   // at page creation (api/pages, api/pages/from-template) — the DB column
   // defaults predate the redesign.
   font: "dmsans",
+  headingFont: "",
   accentColor: "#17171a",
   layoutWidth: "default",
   background: "white",
   tabPlacement: "top",
   logoUrl: "",
+  coverLayout: "standard",
+  coverHeight: "default",
+  themeRadius: "default",
+  themeDepth: "default",
 };

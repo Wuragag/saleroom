@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
-import Image from "next/image";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground } from "@/lib/pub-theme";
-import { PageShell, PUB_TITLE_STYLE, PUB_LOGO_STYLE } from "@/components/page-shell";
+import { PageShell } from "@/components/page-shell";
+import { PubCover } from "@/components/pub-cover";
+import { buildPageHero } from "@/components/pub-hero";
 import { PublishedFormHydrator } from "@/components/published-form";
+import { getTeamBrandKit } from "@/lib/brand-kit";
+import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 
@@ -51,6 +54,29 @@ export default async function PreviewPage({
     accentColor,
     background: page.background,
     font: page.font,
+    headingFont: page.headingFont,
+    themeRadius: page.themeRadius,
+    themeDepth: page.themeDepth,
+  });
+
+  // Mirror the published page's white-label state so the preview is faithful
+  let showBranding = true;
+  if (page.teamId) {
+    const [kit, plan] = await Promise.all([
+      getTeamBrandKit(page.teamId),
+      getTeamPlan(page.teamId),
+    ]);
+    showBranding = !(kit?.hideBranding && PLAN_LIMITS[plan].hideBranding);
+  }
+
+  // Hero elements — rendered on the cover in overlay layout, in the column otherwise
+  const overlayHero = Boolean(page.coverImage) && page.coverLayout === "overlay";
+  const hero = buildPageHero({
+    title: page.title,
+    eyebrow: page.eyebrow,
+    subtitle: page.subtitle,
+    logoUrl: page.logoUrl,
+    overlay: overlayHero,
   });
 
   const previewBanner = (
@@ -112,22 +138,32 @@ export default async function PreviewPage({
       isDark={isDark}
       maxWidth={maxWidth}
       banner={previewBanner}
-      logo={
-        page.logoUrl ? (
-          <Image
-            src={page.logoUrl}
-            alt="Logo"
-            width={180}
-            height={36}
-            style={PUB_LOGO_STYLE}
+      showBranding={showBranding}
+      paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
+      coverImage={
+        page.coverImage ? (
+          <PubCover
+            src={page.coverImage}
+            coverHeight={page.coverHeight}
+            coverLayout={page.coverLayout}
+            maxWidth={maxWidth}
+            overlayContent={
+              overlayHero ? (
+                <>
+                  {hero.logo}
+                  {hero.eyebrow}
+                  {hero.title}
+                  {hero.subtitle}
+                </>
+              ) : undefined
+            }
           />
         ) : undefined
       }
-      title={
-        <h1 className="pub-title" style={PUB_TITLE_STYLE}>
-          {page.title}
-        </h1>
-      }
+      logo={overlayHero ? undefined : hero.logo}
+      eyebrow={overlayHero ? undefined : hero.eyebrow}
+      title={overlayHero ? undefined : hero.title}
+      subtitle={overlayHero ? undefined : hero.subtitle}
       trailing={<PublishedFormHydrator pageId={page.id} accentColor={accentColor} />}
     >
       <TabbedPageView

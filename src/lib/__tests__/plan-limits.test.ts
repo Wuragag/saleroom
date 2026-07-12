@@ -43,6 +43,12 @@ describe("PLAN_LIMITS invariants", () => {
     }
   });
 
+  it("white-label branding removal is paid-only", () => {
+    expect(PLAN_LIMITS.FREE.hideBranding).toBe(false);
+    expect(PLAN_LIMITS.PRO.hideBranding).toBe(true);
+    expect(PLAN_LIMITS.TEAM.hideBranding).toBe(true);
+  });
+
   it("AI credit pools increase strictly with tier", () => {
     expect(PLAN_LIMITS.FREE.aiCreditsPerMonth).toBeLessThan(
       PLAN_LIMITS.PRO.aiCreditsPerMonth

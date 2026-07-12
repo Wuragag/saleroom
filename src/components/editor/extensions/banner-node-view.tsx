@@ -31,10 +31,16 @@ export function BannerNodeView({ node, updateAttributes, selected }: NodeViewPro
   /* ── Preview colours in editor ── */
   const previewStyle: React.CSSProperties =
     bgStyle === "accent"
-      ? { backgroundColor: "var(--page-accent, #003B22)", color: "#fff" }
+      ? {
+          backgroundColor: "var(--page-accent, #003B22)",
+          color: "var(--node-accent-ink, #fff)",
+        }
       : bgStyle === "warning"
       ? { backgroundColor: "#fef3c7", color: "#92400e" }
-      : { backgroundColor: "#f1f5f9", color: "#334155" };
+      : {
+          backgroundColor: "color-mix(in srgb, var(--page-accent, #64748b) 10%, transparent)",
+          color: "var(--node-accent-safe, var(--page-accent, #334155))",
+        };
 
   return (
     <NodeViewWrapper

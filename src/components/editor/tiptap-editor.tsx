@@ -29,8 +29,11 @@ import type { PageData, PageLink, TabData, MutualActionPlanData } from "@/types"
 import type { ComposerOp, ComposerMapItemInput } from "@/types/ai-composer";
 import { DEFAULT_CONTENT } from "@/lib/constants";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle, getBgHex } from "@/lib/page-styles";
-import { getPubCssVars, getMaxWidth, isDarkBackground } from "@/lib/pub-theme";
+import { getPubCssVars, getMaxWidth, isDarkBackground, getEditorNodeVars, getCoverHeight } from "@/lib/pub-theme";
 import { PageShell, PUB_LOGO_STYLE } from "@/components/page-shell";
+import { PubCover } from "@/components/pub-cover";
+import { buildPageHero } from "@/components/pub-hero";
+import { EditableHeroText } from "./editable-hero-text";
 import { CoverImageEditor } from "./cover-image-editor";
 import { MapPanel } from "./map-panel";
 import { useMap } from "@/hooks/use-map";
@@ -100,6 +103,10 @@ export interface EditorPanelState {
   style: PageStyle;
   password: string;
   passwordProtection: boolean;
+  /** Page id + cover presence so external StylePanel hosts (AI workspace)
+   *  can enable Blob logo upload and the Cover controls. */
+  pageId: string;
+  hasCover: boolean;
 }
 
 export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, aiBridgeRef, aiBusy = false, onEditorStateChange, hideDesign = false }: TiptapEditorProps) {
@@ -117,13 +124,20 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
   const [requireEmail, setRequireEmail] = useState<boolean>(!!(page as any).requireEmail);
   const [pageStyle, setPageStyle] = useState<PageStyle>({
     font: page.font ?? DEFAULT_PAGE_STYLE.font,
+    headingFont: page.headingFont ?? DEFAULT_PAGE_STYLE.headingFont,
     accentColor: page.accentColor ?? DEFAULT_PAGE_STYLE.accentColor,
     layoutWidth: page.layoutWidth ?? DEFAULT_PAGE_STYLE.layoutWidth,
     background: page.background ?? DEFAULT_PAGE_STYLE.background,
     tabPlacement: page.tabPlacement ?? DEFAULT_PAGE_STYLE.tabPlacement,
     logoUrl: page.logoUrl ?? DEFAULT_PAGE_STYLE.logoUrl,
+    coverLayout: page.coverLayout ?? DEFAULT_PAGE_STYLE.coverLayout,
+    coverHeight: page.coverHeight ?? DEFAULT_PAGE_STYLE.coverHeight,
+    themeRadius: page.themeRadius ?? DEFAULT_PAGE_STYLE.themeRadius,
+    themeDepth: page.themeDepth ?? DEFAULT_PAGE_STYLE.themeDepth,
   });
   const [coverImage, setCoverImage] = useState<string>(page.coverImage ?? "");
+  const [eyebrow, setEyebrow] = useState<string>(page.eyebrow ?? "");
+  const [subtitle, setSubtitle] = useState<string>(page.subtitle ?? "");
   const [links, setLinks] = useState<PageLink[]>(() => {
     try { return JSON.parse(page.links ?? "[]"); } catch { return []; }
   });
@@ -131,6 +145,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
   const styleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const linksTimerRef = useRef<NodeJS.Timeout | null>(null);
   const passwordTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const heroTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstMount = useRef(true);
   // Wrapper around EditorContent — anchors the hover block-insert handle
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -140,6 +155,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
   const pendingStyleRef = useRef<Partial<PageStyle> | null>(null);
   const pendingLinksRef = useRef<PageLink[] | null>(null);
   const pendingPasswordRef = useRef<string | null>(null);
+  const pendingHeroRef = useRef<{ eyebrow?: string; subtitle?: string } | null>(null);
 
   const {
     tabs,
@@ -283,6 +299,24 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
     }, 800);
   };
 
+  // Hero eyebrow/subtitle: content fields saved through the same debounced
+  // PUT the style/password fields use.
+  const handleHeroTextChange = (field: "eyebrow" | "subtitle", value: string) => {
+    if (field === "eyebrow") setEyebrow(value);
+    else setSubtitle(value);
+    pendingHeroRef.current = { ...pendingHeroRef.current, [field]: value };
+    if (heroTimerRef.current) clearTimeout(heroTimerRef.current);
+    heroTimerRef.current = setTimeout(() => {
+      const payload = pendingHeroRef.current;
+      pendingHeroRef.current = null;
+      fetch(`/api/pages/${page.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => toast.error("Failed to save"));
+    }, 800);
+  };
+
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     pendingPasswordRef.current = value;
@@ -319,10 +353,12 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       if (styleTimerRef.current) clearTimeout(styleTimerRef.current);
       if (passwordTimerRef.current) clearTimeout(passwordTimerRef.current);
       if (linksTimerRef.current) clearTimeout(linksTimerRef.current);
+      if (heroTimerRef.current) clearTimeout(heroTimerRef.current);
 
       // Build a single merged payload from all pending saves
       const payload: Record<string, unknown> = {};
       if (pendingStyleRef.current) Object.assign(payload, pendingStyleRef.current);
+      if (pendingHeroRef.current) Object.assign(payload, pendingHeroRef.current);
       if (pendingPasswordRef.current !== null) payload.password = pendingPasswordRef.current;
       if (pendingLinksRef.current !== null) payload.links = JSON.stringify(pendingLinksRef.current);
 
@@ -537,12 +573,14 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       style: pageStyle,
       password,
       passwordProtection,
+      pageId: page.id,
+      hasCover: Boolean(coverImage),
     };
     const key = JSON.stringify(snapshot);
     if (key === lastPanelStateRef.current) return;
     lastPanelStateRef.current = key;
     onEditorStateChange?.(snapshot);
-  }, [tabs, activeTabId, pageStyle, password, passwordProtection, onEditorStateChange]);
+  }, [tabs, activeTabId, pageStyle, password, passwordProtection, page.id, coverImage, onEditorStateChange]);
 
   // ── WYSIWYG canvas: derive the published-page shell from the live style ──
   const accent = getAccentColor(pageStyle.accentColor);
@@ -554,7 +592,14 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
     accentColor: accent,
     background: pageStyle.background,
     font: pageStyle.font,
+    headingFont: pageStyle.headingFont,
+    themeRadius: pageStyle.themeRadius,
+    themeDepth: pageStyle.themeDepth,
   });
+  const coverHeightPx = getCoverHeight(pageStyle.coverHeight, pageStyle.coverLayout);
+  // Overlay hero parity is exact in read-only mode; while editing, the hero
+  // fields stay in the column so they remain directly editable.
+  const overlayHero = Boolean(coverImage) && pageStyle.coverLayout === "overlay" && !!readOnly;
 
   const editorCanvas = editor ? (
     <div ref={canvasRef} className="relative">
@@ -619,6 +664,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         onRequireEmailChange={setRequireEmail}
         pageStyle={pageStyle}
         onStyleChange={handleStyleChange}
+        hasCover={Boolean(coverImage)}
         hideDesign={hideDesign}
         password={password}
         onPasswordChange={handlePasswordChange}
@@ -673,31 +719,42 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         style={
           {
             "--page-accent": accent,
-            // Editor-only tokens so node views match the published renderer's
-            // dark/light values (node views can't receive isDark as a prop)
-            "--node-card-bg": isDark ? "rgba(255,255,255,0.04)" : "#ffffff",
-            "--node-card-border": isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-            "--node-text": isDark ? "#e2e8f0" : "#1e293b",
-            "--node-muted": isDark ? "#94a3b8" : "#64748b",
-            "--metric-cell-bg": isDark
-              ? "rgba(255,255,255,0.04)"
-              : `color-mix(in srgb, ${accent} 8%, transparent)`,
+            // Editor-only tokens derived from the same ramp as the published
+            // renderer (node views can't receive isDark as a prop)
+            ...getEditorNodeVars(accent, pageStyle.background),
           } as React.CSSProperties
         }
         banner={editingChrome}
         coverImage={
           readOnly ? (
             coverImage ? (
-              <div className="relative z-10 w-full" style={{ height: "300px" }}>
-                <NextImage
-                  src={coverImage}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  priority
-                  style={{ objectFit: "cover" }}
-                />
-              </div>
+              <PubCover
+                src={coverImage}
+                coverHeight={pageStyle.coverHeight}
+                coverLayout={pageStyle.coverLayout}
+                maxWidth={maxWidth}
+                overlayContent={
+                  overlayHero
+                    ? (() => {
+                        const hero = buildPageHero({
+                          title,
+                          eyebrow,
+                          subtitle,
+                          logoUrl: pageStyle.logoUrl,
+                          overlay: true,
+                        });
+                        return (
+                          <>
+                            {hero.logo}
+                            {hero.eyebrow}
+                            {hero.title}
+                            {hero.subtitle}
+                          </>
+                        );
+                      })()
+                    : undefined
+                }
+              />
             ) : undefined
           ) : (
             <CoverImageEditor
@@ -705,14 +762,15 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
               coverImage={coverImage}
               onCoverImageChange={setCoverImage}
               maxWidth={maxWidth}
+              height={coverHeightPx}
             />
           )
         }
-        // Published pages use 72px without a cover; when editable, the
-        // "Add cover" ghost strip above already adds ~32px of chrome height.
-        paddingTop={coverImage ? "40px" : readOnly ? "72px" : "40px"}
+        // Published pages use 72px without a cover (56px in overlay mode);
+        // when editable, the "Add cover" ghost strip adds ~32px of chrome.
+        paddingTop={coverImage ? (overlayHero ? "56px" : "40px") : readOnly ? "72px" : "40px"}
         logo={
-          pageStyle.logoUrl ? (
+          !overlayHero && pageStyle.logoUrl ? (
             <NextImage
               src={pageStyle.logoUrl}
               alt="Logo"
@@ -722,7 +780,33 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
             />
           ) : undefined
         }
-        title={<EditableTitle value={title} onChange={setTitle} readOnly={readOnly} />}
+        eyebrow={
+          overlayHero ? undefined : (
+            <EditableHeroText
+              value={eyebrow}
+              onChange={(v) => handleHeroTextChange("eyebrow", v)}
+              readOnly={readOnly}
+              variant="eyebrow"
+              placeholder="Add an eyebrow label"
+            />
+          )
+        }
+        title={
+          overlayHero ? undefined : (
+            <EditableTitle value={title} onChange={setTitle} readOnly={readOnly} />
+          )
+        }
+        subtitle={
+          overlayHero ? undefined : (
+            <EditableHeroText
+              value={subtitle}
+              onChange={(v) => handleHeroTextChange("subtitle", v)}
+              readOnly={readOnly}
+              variant="subtitle"
+              placeholder="Add a subtitle"
+            />
+          )
+        }
         trailing={<SyncedBlockPicker editor={editor} />}
       >
         {pageStyle.tabPlacement === "left" ? (

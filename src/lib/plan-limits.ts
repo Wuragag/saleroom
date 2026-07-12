@@ -10,6 +10,8 @@ export interface PlanLimits {
   maxSyncedBlocks: number; // -1 = unlimited
   passwordProtection: boolean;
   canInvite: boolean;
+  /** White-label: hide the "Powered by" badge on published pages. */
+  hideBranding: boolean;
   // Flat monthly pool for AI actions (composer plan/build-tab/edit + document
   // import) — -1 = unlimited. See src/lib/ai-credits.ts for enforcement and
   // src/lib/ai-composer.ts / ai-page-generation.ts for the per-action costs.
@@ -25,6 +27,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxSyncedBlocks: 0,
     passwordProtection: false,
     canInvite: false,
+    hideBranding: false,
     aiCreditsPerMonth: 20,
   },
   PRO: {
@@ -34,6 +37,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxSyncedBlocks: 20,
     passwordProtection: true,
     canInvite: true,
+    hideBranding: true,
     aiCreditsPerMonth: 300,
   },
   TEAM: {
@@ -43,6 +47,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxSyncedBlocks: -1,
     passwordProtection: true,
     canInvite: true,
+    hideBranding: true,
     aiCreditsPerMonth: 1000,
   },
 };
@@ -180,6 +185,19 @@ export async function canSetPassword(
     allowed: passwordProtection,
     reason: !passwordProtection
       ? `Password protection is not available on the ${plan} plan. Upgrade to Pro or Team.`
+      : undefined,
+  };
+}
+
+/** Can this team hide the "Powered by" badge on published pages? */
+export async function canHideBranding(
+  teamId: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const { hideBranding, plan } = await getTeamPlanLimits(teamId);
+  return {
+    allowed: hideBranding,
+    reason: !hideBranding
+      ? `Hiding the badge is not available on the ${plan} plan. Upgrade to Pro or Team.`
       : undefined,
   };
 }

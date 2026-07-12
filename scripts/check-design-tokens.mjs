@@ -25,6 +25,9 @@ const ALLOW = [
   "tailwind.config.ts",
   "src/lib/page-styles.ts", // per-page brand preset data (buyer-facing branding)
   "src/lib/pub-theme.ts", // published-page theme CSS vars (buyer-facing, like page-styles.ts)
+  "src/lib/pub-color.ts", // pure color math deriving the buyer-facing ramp from user brand hex
+  "src/lib/__tests__/pub-color.test.ts", // color-math test fixtures are hex by nature
+  "src/lib/__tests__/brand-kit.test.ts", // brand-kit test fixtures are hex by nature
   "src/lib/email.ts", // email HTML: CSS vars/Tailwind don't work in mail clients
   "src/lib/color-palettes.ts", // the swatch options a user picks page colors from
   "src/lib/ai-page-generation.ts", // LLM prompt vocab: hex is an example value shown to the model, not UI
@@ -45,6 +48,8 @@ const EXCLUDE = [
   "src/app/preview/",
   "src/components/page-renderer.tsx",
   "src/components/page-shell.tsx",
+  "src/components/pub-cover.tsx",
+  "src/components/pub-hero.tsx",
   "src/components/published-form.tsx",
   "src/components/tabbed-page-view.tsx",
   "src/components/page-thumbnail.tsx",

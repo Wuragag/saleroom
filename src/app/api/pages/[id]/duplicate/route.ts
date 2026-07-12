@@ -75,11 +75,20 @@ export const POST = withErrorHandler(async (
           userId: access.session.user.id,
           teamId,
           font: original.font,
+          headingFont: original.headingFont,
           accentColor: original.accentColor,
           layoutWidth: original.layoutWidth,
           background: original.background,
           tabPlacement: original.tabPlacement,
           logoUrl: original.logoUrl,
+          // coverImage intentionally not copied: re-uploading a cover deletes
+          // the old blob, which would break a duplicate sharing the same URL
+          coverLayout: original.coverLayout,
+          coverHeight: original.coverHeight,
+          eyebrow: original.eyebrow,
+          subtitle: original.subtitle,
+          themeRadius: original.themeRadius,
+          themeDepth: original.themeDepth,
           links: original.links,
           // Intentionally NOT copying password — duplicates start unprotected
         },
