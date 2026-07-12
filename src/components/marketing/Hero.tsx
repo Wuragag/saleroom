@@ -41,13 +41,13 @@ export default function Hero() {
           style={{
             position: "absolute",
             inset: 0,
-            opacity: 0.07,
+            opacity: 0.1,
             pointerEvents: "none",
-            WebkitMaskImage: "linear-gradient(105deg, transparent 42%, black 85%)",
-            maskImage: "linear-gradient(105deg, transparent 42%, black 85%)",
+            WebkitMaskImage: "linear-gradient(105deg, transparent 40%, black 85%)",
+            maskImage: "linear-gradient(105deg, transparent 40%, black 85%)",
           }}
         >
-          <Image src="/redesign/hero-doorway.jpg" alt="" fill sizes="100vw" quality={45} priority={false} />
+          <Image src="/redesign/hero-path.jpg" alt="" fill sizes="100vw" quality={50} priority={false} />
         </div>
 
         <div className="mk-hero-inner" style={{ position: "relative", zIndex: 2, maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>

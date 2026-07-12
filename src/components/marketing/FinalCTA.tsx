@@ -19,13 +19,13 @@ export default function FinalCTA() {
           style={{
             position: "absolute",
             inset: 0,
-            opacity: 0.07,
+            opacity: 0.11,
             pointerEvents: "none",
-            WebkitMaskImage: "linear-gradient(0deg, black 0%, transparent 95%)",
-            maskImage: "linear-gradient(0deg, black 0%, transparent 95%)",
+            WebkitMaskImage: "linear-gradient(0deg, black 30%, transparent 96%)",
+            maskImage: "linear-gradient(0deg, black 30%, transparent 96%)",
           }}
         >
-          <Image src="/redesign/hero-astronaut.jpg" alt="" fill sizes="100vw" quality={45} />
+          <Image src="/redesign/maze-sphere.jpg" alt="" fill sizes="100vw" quality={50} />
         </div>
         <div
           style={{

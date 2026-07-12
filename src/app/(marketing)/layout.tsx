@@ -92,6 +92,9 @@ export default function MarketingLayout({
         /* Background artwork: line art stays legible in both themes. */
         .mk-art { filter: grayscale(1) invert(1) contrast(1.04); }
         :root[data-mk-theme="dark"] .mk-art { filter: grayscale(1) contrast(1.04); }
+        /* Art on ink (inverted) surfaces flips the other way. */
+        .mk-art-ink { filter: grayscale(1) contrast(1.02); }
+        :root[data-mk-theme="dark"] .mk-art-ink { filter: grayscale(1) invert(1) contrast(1.02); }
 
         /* Primary CTA pill, shared across nav / hero / pricing / final CTA. */
         .mk-cta {

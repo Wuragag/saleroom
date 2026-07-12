@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { LANDING_TENETS, indexLabel } from "@/data/marketing/landing"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
 
@@ -20,8 +21,11 @@ export default function PhilosophySection() {
           margin: 0;
           text-wrap: balance;
         }
+        .mk-phil-plate img { object-fit: cover; object-position: 72% center; }
         @media (max-width: 900px) {
           .mk-phil-grid { grid-template-columns: 1fr !important; }
+          .mk-phil-lead { grid-template-columns: 1fr !important; }
+          .mk-phil-plate { max-width: 420px; }
         }
       `}</style>
       <section
@@ -39,17 +43,59 @@ export default function PhilosophySection() {
             </h2>
           </div>
 
-          <ScrollReveal>
-            <blockquote style={{ margin: 0, padding: "64px 0 72px", maxWidth: 880 }}>
-              <p className="mk-phil-quote">
-                &ldquo;If it is not right, do not do it; if it is not true, do
-                not say it.&rdquo;
-              </p>
-              <footer className="mk-eyebrow" style={{ color: "var(--db-ink-faint)", marginTop: 24 }}>
-                Marcus Aurelius &mdash; Meditations, XII.17
-              </footer>
-            </blockquote>
-          </ScrollReveal>
+          <div
+            className="mk-phil-lead"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "7fr 5fr",
+              gap: 56,
+              alignItems: "center",
+              padding: "56px 0 64px",
+            }}
+          >
+            <ScrollReveal>
+              <blockquote style={{ margin: 0 }}>
+                <p className="mk-phil-quote">
+                  &ldquo;If it is not right, do not do it; if it is not true,
+                  do not say it.&rdquo;
+                </p>
+                <footer className="mk-eyebrow" style={{ color: "var(--db-ink-faint)", marginTop: 24 }}>
+                  Marcus Aurelius &mdash; Meditations, XII.17
+                </footer>
+              </blockquote>
+            </ScrollReveal>
+            <ScrollReveal delay={140} distance={24}>
+              <div
+                className="mk-phil-plate"
+                style={{
+                  position: "relative",
+                  aspectRatio: "5 / 4",
+                  border: "1px solid var(--db-ink-rule)",
+                  overflow: "hidden",
+                }}
+              >
+                <Image
+                  src="/redesign/aurelius.jpg"
+                  alt="Engraved portrait of Marcus Aurelius"
+                  fill
+                  sizes="(max-width: 900px) 90vw, 440px"
+                  quality={60}
+                  className="mk-art-ink"
+                />
+                <span
+                  className="mk-eyebrow"
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    bottom: 10,
+                    color: "var(--db-ink-faint)",
+                  }}
+                >
+                  Fig. 03 &mdash; The examined deal
+                </span>
+              </div>
+            </ScrollReveal>
+          </div>
 
           <div
             className="mk-phil-grid"
