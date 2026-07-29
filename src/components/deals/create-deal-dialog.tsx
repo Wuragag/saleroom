@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Check, ChevronDown } from "lucide-react";
 
 import { apiClient, ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { MemberPicker } from "@/components/deals/member-picker";
-import { DEAL_STAGES } from "@/lib/deals";
+import { DEAL_STAGES, STAGE_LABELS } from "@/lib/deals";
 import type { DealOwnerData, DealStageValue } from "@/types";
 
 export interface CreateDealPrefill {
@@ -62,9 +69,8 @@ export function CreateDealDialog({
     setSaving(true);
     setLimitError(null);
     try {
-      // Accept pasted "$12,500" the same way the detail page does.
-      const parsedValue =
-        value.trim() === "" ? null : Number(value.replace(/[$,\s]/g, ""));
+      // The input only admits digits, so this is already a plain number.
+      const parsedValue = value === "" ? null : Number(value);
       if (parsedValue !== null && (!Number.isFinite(parsedValue) || parsedValue < 0)) {
         toast.error("Enter the deal value as a plain number");
         return;
@@ -140,7 +146,7 @@ export function CreateDealDialog({
               <Input
                 id="deal-value"
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="12500"
                 inputMode="numeric"
               />
@@ -149,21 +155,34 @@ export function CreateDealDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label htmlFor="deal-stage" className="text-xs font-medium text-foreground">
+              <span className="block text-xs font-medium text-foreground">
                 Stage
-              </label>
-              <select
-                id="deal-stage"
-                value={stage}
-                onChange={(e) => setStage(e.target.value as DealStageValue)}
-                className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {DEAL_STAGES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Stage"
+                    className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {STAGE_LABELS[stage]}
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {DEAL_STAGES.map((s) => (
+                    <DropdownMenuItem
+                      key={s.value}
+                      onClick={() => setStage(s.value as DealStageValue)}
+                    >
+                      <span className="w-4">
+                        {s.value === stage && <Check className="h-3.5 w-3.5" />}
+                      </span>
+                      {s.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="space-y-1.5">
               <span className="block text-xs font-medium text-foreground">

@@ -13,12 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { DEAL_STAGES, STAGE_LABELS, formatDealValue } from "@/lib/deals";
-import {
-  DealPulse,
-  formatCloseDate,
-  isOverdue,
-} from "@/components/deals/deal-card";
+import { DEAL_STAGES, STAGE_LABELS, formatDealValue, isOverdue } from "@/lib/deals";
+import { DealPulse, formatCloseDate } from "@/components/deals/deal-card";
 import { memberDisplayName } from "@/components/deals/member-picker";
 import type { DealListItem, DealStageValue } from "@/types";
 

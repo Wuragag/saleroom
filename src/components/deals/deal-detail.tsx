@@ -16,7 +16,7 @@ import {
 
 import { apiClient, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { DEAL_STAGES, STAGE_LABELS } from "@/lib/deals";
+import { DEAL_STAGES, STAGE_LABELS, isOverdue } from "@/lib/deals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -37,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DealPulse, formatCloseDate, isOverdue } from "@/components/deals/deal-card";
+import { DealPulse, formatCloseDate } from "@/components/deals/deal-card";
 import { MemberPicker } from "@/components/deals/member-picker";
 import { DealRoomsCard } from "@/components/deals/deal-rooms-card";
 import { DealStakeholdersCard } from "@/components/deals/deal-stakeholders-card";
@@ -280,7 +280,7 @@ export function DealDetail({ deal, members }: DealDetailProps) {
             id="deal-detail-value"
             ref={valueRef}
             value={valueText}
-            onChange={(e) => setValueText(e.target.value)}
+            onChange={(e) => setValueText(e.target.value.replace(/[^0-9]/g, ""))}
             onBlur={commitValue}
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
             placeholder="—"

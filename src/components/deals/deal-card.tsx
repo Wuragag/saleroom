@@ -5,7 +5,7 @@ import { FileText, CalendarDays } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { formatDealValue } from "@/lib/deals";
+import { formatDealValue, isOverdue } from "@/lib/deals";
 import { formatRelativeTime } from "@/lib/format-utils";
 import { memberDisplayName } from "@/components/deals/member-picker";
 import type { DealListItem, IntentLabel } from "@/types";
@@ -15,17 +15,6 @@ const INTENT_VARIANT: Record<IntentLabel, "success" | "warning" | "neutral"> = {
   Warm: "warning",
   Cold: "neutral",
 };
-
-const DAY_MS = 86_400_000;
-
-/** Overdue starts the day AFTER the close date — "due today" isn't late yet. */
-export function isOverdue(deal: Pick<DealListItem, "expectedCloseDate" | "status">): boolean {
-  return (
-    deal.status === "OPEN" &&
-    !!deal.expectedCloseDate &&
-    new Date(deal.expectedCloseDate).getTime() + DAY_MS < Date.now()
-  );
-}
 
 export function formatCloseDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {

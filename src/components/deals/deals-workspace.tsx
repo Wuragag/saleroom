@@ -4,13 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  CalendarDays,
   Check,
   Columns3,
+  Flame,
   Handshake,
   List,
+  Milestone,
   Plus,
   Search,
   User,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 
 import { apiClient, ApiError } from "@/lib/api-client";
@@ -23,7 +28,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDealValue } from "@/lib/deals";
+import {
+  CLOSE_DATE_FILTERS,
+  DEAL_STAGES,
+  WARMTH_FILTERS,
+  filterDeals,
+  formatDealValue,
+  type CloseDateFilter,
+  type WarmthFilter,
+} from "@/lib/deals";
 import { DealBoard, type DealMovePatch } from "@/components/deals/deal-board";
 import { DealList } from "@/components/deals/deal-list";
 import { CreateDealDialog } from "@/components/deals/create-deal-dialog";
@@ -63,6 +76,55 @@ function Pill({
   );
 }
 
+/** One toolbar filter: a pill trigger + "All …" plus the given options. */
+function FilterDropdown<T extends string>({
+  icon: Icon,
+  allLabel,
+  value,
+  options,
+  onChange,
+}: {
+  icon: LucideIcon;
+  allLabel: string;
+  value: T | null;
+  options: { value: T; label: string }[];
+  onChange: (value: T | null) => void;
+}) {
+  const active = options.find((o) => o.value === value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            active
+              ? "border-primary/50 bg-card text-foreground"
+              : "border-border bg-card text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+          }`}
+        >
+          <Icon className="h-3 w-3" />
+          {active ? active.label : allLabel}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => onChange(null)}>
+          <span className="w-4">
+            {!active && <Check className="h-3.5 w-3.5" />}
+          </span>
+          {allLabel}
+        </DropdownMenuItem>
+        {options.map((option) => (
+          <DropdownMenuItem key={option.value} onClick={() => onChange(option.value)}>
+            <span className="w-4">
+              {option.value === value && <Check className="h-3.5 w-3.5" />}
+            </span>
+            {option.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 interface DealsWorkspaceProps {
   deals: DealListItem[];
   members: DealOwnerData[];
@@ -82,6 +144,9 @@ export function DealsWorkspace({
   const [view, setView] = useState<ViewMode>("board");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("open");
   const [ownerFilter, setOwnerFilter] = useState<string | null>(null);
+  const [warmthFilter, setWarmthFilter] = useState<WarmthFilter | null>(null);
+  const [closeDateFilter, setCloseDateFilter] = useState<CloseDateFilter | null>(null);
+  const [stageFilter, setStageFilter] = useState<DealStageValue | null>(null);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -94,23 +159,45 @@ export function DealsWorkspace({
     localStorage.setItem("deals-view", mode);
   };
 
-  // Search + owner apply everywhere; the status pills only drive the list
-  // (the board shows status as columns).
-  const baseFiltered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return deals.filter((d) => {
-      if (ownerFilter && d.owner.id !== ownerFilter) return false;
-      if (!q) return true;
-      return (
-        d.name.toLowerCase().includes(q) || d.company.toLowerCase().includes(q)
-      );
-    });
-  }, [deals, ownerFilter, search]);
+  // Search, owner, warmth, and close date apply everywhere; the status pills
+  // and stage filter only drive the list (the board shows both as columns).
+  const baseFiltered = useMemo(
+    () =>
+      filterDeals(deals, {
+        query: search,
+        ownerId: ownerFilter,
+        warmth: warmthFilter,
+        closeDate: closeDateFilter,
+      }),
+    [deals, search, ownerFilter, warmthFilter, closeDateFilter]
+  );
 
-  const listFiltered = useMemo(() => {
-    if (statusFilter === "all") return baseFiltered;
-    return baseFiltered.filter((d) => d.status === statusFilter.toUpperCase());
-  }, [baseFiltered, statusFilter]);
+  const listFiltered = useMemo(
+    () =>
+      filterDeals(baseFiltered, {
+        status:
+          statusFilter === "all"
+            ? null
+            : (statusFilter.toUpperCase() as DealListItem["status"]),
+        stage: stageFilter,
+      }),
+    [baseFiltered, statusFilter, stageFilter]
+  );
+
+  const hasActiveFilters =
+    !!search.trim() ||
+    !!ownerFilter ||
+    !!warmthFilter ||
+    !!closeDateFilter ||
+    !!stageFilter;
+
+  const clearFilters = () => {
+    setSearch("");
+    setOwnerFilter(null);
+    setWarmthFilter(null);
+    setCloseDateFilter(null);
+    setStageFilter(null);
+  };
 
   const openDeals = deals.filter((d) => d.status === "OPEN");
   const openValue = openDeals.reduce((sum, d) => sum + (d.value ?? 0), 0);
@@ -142,10 +229,6 @@ export function DealsWorkspace({
       toast.error(err instanceof ApiError ? err.message : "Failed to update deal");
     }
   };
-
-  const ownerName = ownerFilter
-    ? members.find((m) => m.id === ownerFilter)
-    : null;
 
   return (
     <div>
@@ -183,31 +266,53 @@ export function DealsWorkspace({
           </div>
         )}
 
+        {view === "list" && (
+          <FilterDropdown
+            icon={Milestone}
+            allLabel="All stages"
+            value={stageFilter}
+            options={DEAL_STAGES.map((s) => ({ value: s.value, label: s.label }))}
+            onChange={setStageFilter}
+          />
+        )}
+
         {members.length > 1 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground">
-                <User className="h-3 w-3" />
-                {ownerName ? memberDisplayName(ownerName) : "All owners"}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => setOwnerFilter(null)}>
-                <span className="w-4">
-                  {!ownerFilter && <Check className="h-3.5 w-3.5" />}
-                </span>
-                All owners
-              </DropdownMenuItem>
-              {members.map((m) => (
-                <DropdownMenuItem key={m.id} onClick={() => setOwnerFilter(m.id)}>
-                  <span className="w-4">
-                    {ownerFilter === m.id && <Check className="h-3.5 w-3.5" />}
-                  </span>
-                  {memberDisplayName(m)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <FilterDropdown
+            icon={User}
+            allLabel="All owners"
+            value={ownerFilter}
+            options={members.map((m) => ({
+              value: m.id,
+              label: memberDisplayName(m),
+            }))}
+            onChange={setOwnerFilter}
+          />
+        )}
+
+        <FilterDropdown
+          icon={Flame}
+          allLabel="Warmth"
+          value={warmthFilter}
+          options={WARMTH_FILTERS}
+          onChange={setWarmthFilter}
+        />
+
+        <FilterDropdown
+          icon={CalendarDays}
+          allLabel="Close date"
+          value={closeDateFilter}
+          options={CLOSE_DATE_FILTERS}
+          onChange={setCloseDateFilter}
+        />
+
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <X className="h-3 w-3" />
+            Clear
+          </button>
         )}
 
         <div className="relative ml-auto">
@@ -265,7 +370,15 @@ export function DealsWorkspace({
           <EmptyState
             icon={Search}
             title="No deals match"
-            description="Try a different search, owner, or status filter."
+            description="Try different filters, or clear them to see every deal."
+            action={
+              hasActiveFilters ? (
+                <Button variant="outline" onClick={clearFilters}>
+                  <X />
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           <DealList
