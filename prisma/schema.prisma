@@ -45,6 +45,21 @@ enum SubscriptionStatus {
   UNPAID
 }
 
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+// Fixed pipeline stages (deliberately not user-customizable — Deals is a
+// lightweight layer, not a CRM). Order/labels live in src/lib/deals.ts.
+enum DealStage {
+  NEW
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+}
+
 // ──── Models ────
 
 model User {
@@ -64,6 +79,7 @@ model User {
   sentInvites         TeamInvite[] @relation("InvitedBy")
   lockedPages         Page[]       @relation("LockedBy")
   syncedBlocks        SyncedBlock[]
+  ownedDeals          Deal[]       @relation("DealOwner")
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -76,6 +92,7 @@ model Team {
   pages        Page[]
   syncedBlocks SyncedBlock[]
   templates    Template[]
+  deals        Deal[]
   subscription Subscription?
   aiCredits    TeamAiCredits?
   brandKit     BrandKit?
@@ -183,6 +200,10 @@ model Page {
   visibility    PageVisibility @default(TEAM)
   lockedById    String?
   lockedBy      User?          @relation("LockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
+  // Optional link to a Deal (many rooms may share one deal). SetNull so
+  // deleting a deal never breaks its rooms.
+  dealId        String?
+  deal          Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
   tabs          Tab[]
   views         PageView[]
   events        PageEvent[]
@@ -216,6 +237,7 @@ model Page {
 
   @@index([teamId])
   @@index([userId])
+  @@index([dealId])
 }
 
 model Tab {
@@ -334,6 +356,44 @@ model PageContact {
 
   @@unique([pageId, email])
   @@index([pageId])
+}
+
+// ──── Deals (lightweight pipeline on top of rooms — deliberately not a CRM) ────
+
+model Deal {
+  id                String            @id @default(cuid())
+  name              String
+  company           String            @default("")
+  value             Int? // whole currency units (USD display)
+  stage             DealStage         @default(NEW)
+  status            DealStatus        @default(OPEN)
+  expectedCloseDate DateTime?
+  closedAt          DateTime? // set when status becomes WON/LOST, cleared on reopen
+  ownerId           String
+  owner             User              @relation("DealOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  // Nullable + SetNull mirrors Page.teamId (legacy teamless users).
+  teamId            String?
+  team              Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  pages             Page[]
+  stakeholders      DealStakeholder[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([teamId, status])
+  @@index([ownerId])
+}
+
+model DealStakeholder {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  name      String   @default("")
+  email     String // stored lowercased/trimmed; joined to PageContact.email for engagement
+  title     String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([dealId, email])
+  @@index([dealId])
 }
 
 // ──── Buyer Analytics ────

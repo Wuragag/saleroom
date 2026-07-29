@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
@@ -13,8 +14,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, ExternalLink, Eye, MoreVertical, Trash2, Copy, Clock, Link2, Tag as TagIcon } from "lucide-react";
+import { Pencil, ExternalLink, Eye, MoreVertical, Trash2, Copy, Clock, Link2, Tag as TagIcon, Handshake } from "lucide-react";
 import { timeAgo, formatDuration, TagEditor } from "@/components/page-card";
+import { AddToDealDialog } from "@/components/deals/add-to-deal-dialog";
 import { Tag } from "@/components/ui/tag";
 import { Avatar } from "@/components/ui/avatar";
 import { Monogram } from "@/components/ui/monogram";
@@ -31,12 +33,14 @@ interface PageListRowProps {
 }
 
 export function PageListRow({ page, analytics, selected, onToggleSelect, onDeleted, onDuplicated }: PageListRowProps) {
+  const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [tags, setTags] = useState<string[]>(page.tags);
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAddToDeal, setShowAddToDeal] = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -98,6 +102,13 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
           </span>
           <p className="text-2xs text-tertiary mt-0.5 truncate">
             /p/{page.slug} · {timeAgo(page.updatedAt)}
+            {page.dealName && (
+              <span className="inline-flex items-center gap-1">
+                {" · "}
+                <Handshake className="h-2.5 w-2.5" />
+                {page.dealName}
+              </span>
+            )}
           </p>
         </div>
 
@@ -194,6 +205,15 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
                   <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="cursor-pointer gap-2 mx-1 rounded-md">
                     <Copy className="h-4 w-4" />{duplicating ? "Duplicating…" : "Duplicate"}
                   </DropdownMenuItem>
+                  {page.dealId ? (
+                    <DropdownMenuItem onClick={() => router.push(`/deals/${page.dealId}`)} className="cursor-pointer gap-2 mx-1 rounded-md">
+                      <Handshake className="h-4 w-4" />View deal
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => { setMenuOpen(false); setShowAddToDeal(true); }} className="cursor-pointer gap-2 mx-1 rounded-md">
+                      <Handshake className="h-4 w-4" />Add to deal…
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => { setMenuOpen(false); setShowDeleteDialog(true); }} className="text-destructive focus:text-destructive cursor-pointer gap-2 mx-1 rounded-md">
                     <Trash2 className="h-4 w-4" />Delete
@@ -204,6 +224,15 @@ export function PageListRow({ page, analytics, selected, onToggleSelect, onDelet
           </DropdownMenu>
         </div>
       </div>
+
+      {showAddToDeal && (
+        <AddToDealDialog
+          isOpen
+          onClose={() => setShowAddToDeal(false)}
+          pageId={page.id}
+          pageTitle={page.title}
+        />
+      )}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

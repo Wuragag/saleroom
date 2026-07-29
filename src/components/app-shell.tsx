@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutGrid,
+  Handshake,
   BarChart2,
   FileText,
   Blocks,
@@ -44,6 +45,7 @@ const NAV_ITEMS: {
   tourId?: string;
 }[] = [
   { href: "/dashboard", label: "Pages", icon: LayoutGrid },
+  { href: "/deals", label: "Deals", icon: Handshake },
   { href: "/analytics", label: "Analytics", icon: BarChart2, tourId: "nav-analytics" },
   { href: "/submissions", label: "Submissions", icon: FileText },
   { href: "/library", label: "Library", icon: Blocks },
