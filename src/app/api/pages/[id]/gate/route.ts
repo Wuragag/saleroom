@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { upsertContactFromActivity } from "@/lib/contacts";
 import { withErrorHandler } from "@/lib/api-error";
 
 const limiter = rateLimit({ limit: 10, window: "60s" });
@@ -35,11 +36,28 @@ export const POST = withErrorHandler(async (
     // Verify the page exists and requires email
     const page = await prisma.page.findUnique({
       where: { id: pageId },
-      select: { id: true, requireEmail: true },
+      select: {
+        id: true,
+        requireEmail: true,
+        published: true,
+        teamId: true,
+        userId: true,
+      },
     });
 
     if (!page) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
+    // An email-gate signup is a capture moment — mirror it into the canonical
+    // Contacts book (fire-safe, adds no failure mode to this public route).
+    // Only for pages actually serving a gate: this route is unauthenticated,
+    // so an arbitrary page id must not be a write path into a team's book.
+    if (page.requireEmail && page.published) {
+      await upsertContactFromActivity(
+        { teamId: page.teamId, userId: page.userId },
+        { email, name }
+      );
     }
 
     // Upsert the contact

@@ -8,6 +8,7 @@ export interface PlanLimits {
   maxTabsPerPage: number; // -1 = unlimited
   maxTeamMembers: number; // -1 = unlimited
   maxSyncedBlocks: number; // -1 = unlimited
+  maxDeals: number; // -1 = unlimited; counts OPEN deals only (closing frees a slot)
   passwordProtection: boolean;
   canInvite: boolean;
   /** White-label: hide the "Powered by" badge on published pages. */
@@ -25,6 +26,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxTabsPerPage: 3,
     maxTeamMembers: 1,
     maxSyncedBlocks: 0,
+    maxDeals: 5,
     passwordProtection: false,
     canInvite: false,
     hideBranding: false,
@@ -35,6 +37,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxTabsPerPage: -1,
     maxTeamMembers: 3,
     maxSyncedBlocks: 20,
+    maxDeals: -1,
     passwordProtection: true,
     canInvite: true,
     hideBranding: true,
@@ -45,6 +48,7 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     maxTabsPerPage: -1,
     maxTeamMembers: -1,
     maxSyncedBlocks: -1,
+    maxDeals: -1,
     passwordProtection: true,
     canInvite: true,
     hideBranding: true,
@@ -244,6 +248,11 @@ export function pageLockKey(teamId: string | null, userId: string): string {
   return teamId ? `team:${teamId}:pages` : `user:${userId}:pages`;
 }
 
+/** Advisory-lock key for a team's (or teamless user's) open-deal count. */
+export function dealLockKey(teamId: string | null, userId: string): string {
+  return teamId ? `team:${teamId}:deals` : `user:${userId}:deals`;
+}
+
 /**
  * Atomic page-limit assert. Teamless users (teamId === null) fall back to the
  * FREE cap counted against their own pages — closing the "no team => no limit"
@@ -266,6 +275,32 @@ export async function assertCanCreatePageTx(
       `Your ${plan} plan allows ${maxPages} page${maxPages === 1 ? "" : "s"}. Upgrade to create more.`,
       count,
       maxPages
+    );
+  }
+}
+
+/**
+ * Atomic open-deal-limit assert. Counts OPEN deals only, so closing (won/lost)
+ * frees a slot. Teamless users fall back to the FREE cap on their own deals,
+ * mirroring assertCanCreatePageTx.
+ */
+export async function assertCanCreateDealTx(
+  tx: Prisma.TransactionClient,
+  teamId: string | null,
+  userId: string
+): Promise<void> {
+  const { maxDeals, plan } = teamId
+    ? await getTeamPlanLimits(teamId)
+    : { maxDeals: PLAN_LIMITS.FREE.maxDeals, plan: "FREE" as BillingPlan };
+  if (maxDeals === -1) return;
+  const count = teamId
+    ? await tx.deal.count({ where: { teamId, status: "OPEN" } })
+    : await tx.deal.count({ where: { ownerId: userId, status: "OPEN" } });
+  if (count >= maxDeals) {
+    throw new PlanLimitError(
+      `Your ${plan} plan allows ${maxDeals} open deal${maxDeals === 1 ? "" : "s"}. Mark deals won or lost to free a slot, or upgrade for unlimited deals.`,
+      count,
+      maxDeals
     );
   }
 }

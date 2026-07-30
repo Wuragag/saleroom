@@ -45,6 +45,12 @@ enum SubscriptionStatus {
   UNPAID
 }
 
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
 // ──── Models ────
 
 model User {
@@ -64,6 +70,11 @@ model User {
   sentInvites         TeamInvite[] @relation("InvitedBy")
   lockedPages         Page[]       @relation("LockedBy")
   syncedBlocks        SyncedBlock[]
+  ownedDeals          Deal[]       @relation("DealOwner")
+  pipelineStages      PipelineStage[]
+  dealComments        DealComment[]
+  companies           Company[]
+  contacts            Contact[]
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -76,6 +87,10 @@ model Team {
   pages        Page[]
   syncedBlocks SyncedBlock[]
   templates    Template[]
+  deals        Deal[]
+  pipelineStages PipelineStage[]
+  companies    Company[]
+  contacts     Contact[]
   subscription Subscription?
   aiCredits    TeamAiCredits?
   brandKit     BrandKit?
@@ -183,6 +198,10 @@ model Page {
   visibility    PageVisibility @default(TEAM)
   lockedById    String?
   lockedBy      User?          @relation("LockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
+  // Optional link to a Deal (many rooms may share one deal). SetNull so
+  // deleting a deal never breaks its rooms.
+  dealId        String?
+  deal          Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
   tabs          Tab[]
   views         PageView[]
   events        PageEvent[]
@@ -216,6 +235,7 @@ model Page {
 
   @@index([teamId])
   @@index([userId])
+  @@index([dealId])
 }
 
 model Tab {
@@ -334,6 +354,124 @@ model PageContact {
 
   @@unique([pageId, email])
   @@index([pageId])
+}
+
+// ──── Deals (lightweight pipeline on top of rooms — deliberately not a CRM) ────
+
+// User-managed board columns, scoped like TeamAiCredits: teamId when the scope
+// is a team, userId for the teamless-legacy fallback (exactly one is set).
+// Won/Lost are deal STATUSES, not stages — they are never rows here.
+model PipelineStage {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deals     Deal[]
+  createdAt DateTime @default(now())
+
+  @@index([teamId, order])
+  @@index([userId, order])
+}
+
+// Canonical buyer-side entities. Auto-populated from activity the product
+// already captures (room shares, email-gate signups, stakeholder adds) and
+// manually editable. Tracking tables (PageContact/BuyerVisitor) are never
+// rewired — engagement joins by lowercased email.
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  teamId    String?
+  team      Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contacts  Contact[]
+  deals     Deal[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // One unique per scope column — Postgres exempts NULLs, so each guards
+  // exactly its own scope (same trick as TeamAiCredits).
+  @@unique([teamId, name])
+  @@unique([userId, name])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  email     String // stored lowercased
+  name      String   @default("")
+  title     String   @default("")
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, email])
+  @@unique([userId, email])
+  @@index([companyId])
+}
+
+model Deal {
+  id                String            @id @default(cuid())
+  name              String
+  companyId         String?
+  company           Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  value             Int? // whole currency units (USD display)
+  // Restrict: column deletion moves deals to a neighbor first (app-managed).
+  stageId           String
+  stage             PipelineStage     @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  // When the deal entered its current stage — reset on stage change and
+  // reopen, preserved when a column deletion force-moves the deal.
+  stageEnteredAt    DateTime          @default(now())
+  status            DealStatus        @default(OPEN)
+  expectedCloseDate DateTime?
+  closedAt          DateTime? // set when status becomes WON/LOST, cleared on reopen
+  ownerId           String
+  owner             User              @relation("DealOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  // Nullable + SetNull mirrors Page.teamId (legacy teamless users).
+  teamId            String?
+  team              Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  pages             Page[]
+  stakeholders      DealStakeholder[]
+  comments          DealComment[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([teamId, status])
+  @@index([ownerId])
+  @@index([stageId])
+  @@index([companyId])
+}
+
+model DealComment {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([dealId, createdAt])
+}
+
+model DealStakeholder {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  name      String   @default("")
+  email     String // stored lowercased/trimmed; joined to PageContact.email for engagement
+  title     String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([dealId, email])
+  @@index([dealId])
 }
 
 // ──── Buyer Analytics ────

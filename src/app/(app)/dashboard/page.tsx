@@ -30,6 +30,7 @@ export default async function Dashboard() {
     include: {
       user: { select: { name: true } },
       lockedBy: { select: { name: true } },
+      deal: { select: { id: true, name: true, teamId: true } },
     },
   });
 
@@ -83,6 +84,10 @@ export default async function Dashboard() {
     visibility: p.visibility,
     lockedById: p.lockedById,
     lockedByName: p.lockedBy?.name ?? null,
+    // Only surface the deal chip when the viewer can actually open the deal
+    // (deal became teamless after a team deletion ⇒ owner-only).
+    dealId: p.deal && p.deal.teamId === teamId ? p.deal.id : null,
+    dealName: p.deal && p.deal.teamId === teamId ? p.deal.name : null,
   }));
 
   const totalViews = Object.values(analyticsMap).reduce((s, a) => s + a.views, 0);

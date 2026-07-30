@@ -85,6 +85,8 @@ export interface PageListItem {
   visibility?: "TEAM" | "PRIVATE";
   lockedById?: string | null;
   lockedByName?: string | null;
+  dealId?: string | null;
+  dealName?: string | null;
 }
 
 // ──── Synced Block types ────
@@ -249,5 +251,156 @@ export interface ActivityFeedItem {
   actorHash: string | null; // short anonymous visitor hash, if no contact
   detail: Record<string, string | number | boolean>;
   page: { id: string; title: string };
+}
+
+// ──── Deals types ────
+
+export type DealStatusValue = "OPEN" | "WON" | "LOST";
+
+/** A user-managed board column (Won/Lost are statuses, never stages). */
+export interface PipelineStageData {
+  id: string;
+  name: string;
+  order: number;
+}
+
+/** The deal pulse: recency + warmth rolled up from every linked room. */
+export interface DealEngagementRollupData {
+  lastActivityAt: string | null; // ISO; null = no buyer activity yet
+  intent: IntentLabel | null; // null = no buyer activity yet
+  topScore: number;
+}
+
+export interface DealOwnerData {
+  id: string;
+  name: string;
+  lastName: string;
+  avatarUrl: string;
+}
+
+// Deliberately no slug — deal surfaces never link to the public /p page, so a
+// linked PRIVATE room's URL stays behind the page ACL.
+export interface DealRoomSummary {
+  id: string;
+  title: string;
+  published: boolean;
+}
+
+export interface DealListItem {
+  id: string;
+  name: string;
+  company: { id: string; name: string } | null;
+  value: number | null;
+  stage: { id: string; name: string };
+  /** ISO — when the deal entered its current stage. */
+  stageEnteredAt: string;
+  status: DealStatusValue;
+  expectedCloseDate: string | null; // ISO
+  closedAt: string | null; // ISO
+  owner: DealOwnerData;
+  pages: DealRoomSummary[];
+  stakeholderCount: number;
+  engagement: DealEngagementRollupData;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DealCommentData {
+  id: string;
+  body: string;
+  createdAt: string; // ISO
+  author: DealOwnerData;
+}
+
+// ──── Contacts & Companies (canonical buyer-side entities) ────
+
+export interface ContactRow {
+  id: string;
+  email: string;
+  name: string;
+  title: string;
+  company: { id: string; name: string } | null;
+  /** Deals where this email appears as a stakeholder. */
+  dealCount: number;
+  lastSeenAt: string | null; // ISO — engagement matched by email
+  intent: IntentLabel | null;
+}
+
+export interface CompanyRow {
+  id: string;
+  name: string;
+  contactCount: number;
+  contacts: { id: string; name: string; email: string }[];
+  deals: { id: string; name: string; status: DealStatusValue }[];
+  openDealCount: number;
+  openValue: number;
+  engagement: DealEngagementRollupData;
+}
+
+export interface DealRoomDetail extends DealRoomSummary {
+  views: number;
+  visitorCount: number;
+  highIntentCount: number;
+  lastActivityAt: string | null; // ISO
+  /** True when the viewer can't open this room itself (another member's
+   * PRIVATE room) — only the title + engagement summary are shown. */
+  restricted: boolean;
+}
+
+export interface DealStakeholderRow {
+  id: string;
+  name: string;
+  email: string;
+  title: string;
+  /** Engagement matched by email against PageContact rows on linked rooms. */
+  lastSeenAt: string | null; // ISO
+  intent: IntentLabel | null;
+}
+
+/** A room contact not yet on the deal — one-click add candidate. */
+export interface DealStakeholderSuggestion {
+  email: string;
+  name: string | null;
+  company: string | null;
+}
+
+/** Read-only mutual-action-plan summary from a linked room. */
+export interface DealMapSummary {
+  pageId: string;
+  pageTitle: string;
+  title: string;
+  closeDate: string | null; // ISO
+  completedCount: number;
+  totalCount: number;
+  items: {
+    id: string;
+    title: string;
+    ownerType: "seller" | "buyer";
+    ownerName: string;
+    dueDate: string | null; // ISO
+    completed: boolean;
+  }[];
+}
+
+export interface DealDetailData {
+  id: string;
+  name: string;
+  company: { id: string; name: string } | null;
+  value: number | null;
+  stage: { id: string; name: string };
+  /** ISO — when the deal entered its current stage. */
+  stageEnteredAt: string;
+  status: DealStatusValue;
+  expectedCloseDate: string | null; // ISO
+  closedAt: string | null; // ISO
+  owner: DealOwnerData;
+  teamId: string | null;
+  rooms: DealRoomDetail[];
+  stakeholders: DealStakeholderRow[];
+  stakeholderSuggestions: DealStakeholderSuggestion[];
+  actionPlans: DealMapSummary[];
+  comments: DealCommentData[];
+  engagement: DealEngagementRollupData;
+  createdAt: string;
 }
 

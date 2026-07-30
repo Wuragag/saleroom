@@ -92,6 +92,10 @@ canonical example):
   OWNER.
 - Teams have OWNER/MEMBER roles. `requireTeamOwner(teamId?)` and
   `getUserTeamId(userId)` (deterministic: earliest-joined team) are the helpers.
+- **Deal access is centralized in `checkDealAccess(dealId, action)`**
+  (`src/lib/deal-auth.ts`), mirroring the page ACL: deals are team-visible
+  (view/edit any member; delete = deal owner or team OWNER; teamless =
+  owner-only). List scoping via `accessibleDealWhere`.
 - **Admin**: `isAdmin` is enriched into the JWT but **always re-read from the DB**
   for privileged actions (`src/lib/admin-auth.ts`) — never trusted from the token.
 - Impersonation uses HMAC-signed, short-lived, single-use tokens

@@ -30,12 +30,13 @@ rate limiting · Tiptap editor · Anthropic (Claude) for AI · Resend for email.
 11. [Mutual Action Plans](#11-mutual-action-plans)
 12. [Forms & Submissions](#12-forms--submissions)
 13. [Analytics & Buyer Intelligence](#13-analytics--buyer-intelligence)
-14. [Teams & Collaboration](#14-teams--collaboration)
-15. [Billing](#15-billing)
-16. [Admin Console](#16-admin-console)
-17. [Marketing Site](#17-marketing-site)
-18. [Security & Platform](#18-security--platform)
-19. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
+14. [Deals & Pipeline](#14-deals--pipeline)
+15. [Teams & Collaboration](#15-teams--collaboration)
+16. [Billing](#16-billing)
+17. [Admin Console](#17-admin-console)
+18. [Marketing Site](#18-marketing-site)
+19. [Security & Platform](#19-security--platform)
+20. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
 
 ---
 
@@ -51,6 +52,7 @@ every resource-creation point.
 | Tabs per page         | 3    | Unlimited   | Unlimited |
 | Team members          | 1    | 3           | Unlimited |
 | Synced blocks         | 0    | 20          | Unlimited |
+| Deals (open)          | 5    | Unlimited   | Unlimited |
 | Password protection   | —    | ✓           | ✓         |
 | Team invites          | —    | ✓           | ✓         |
 | AI content & import   | ✓    | ✓           | ✓         |
@@ -345,7 +347,98 @@ UI: [`buyer-analytics-panel`](../src/components/buyer-analytics-panel.tsx),
 
 ---
 
-## 14. Teams & Collaboration
+## 14. Deals & Pipeline
+
+A deliberately lightweight deal layer on top of rooms — the first simple place a
+no-CRM team's deals live. **Not a CRM**: no custom fields, no automation, no
+reporting beyond the open-pipeline total, no external logging or integrations.
+
+- **Deal object** (`Deal`) — name, company, optional value (whole USD), a
+  stage, status (open / won / lost with `closedAt`), expected close date, and
+  an owner (a team member). Deals are team-visible; delete is owner/team-OWNER
+  only ([`src/lib/deal-auth.ts`](../src/lib/deal-auth.ts)).
+- **Custom pipeline columns** (`PipelineStage`) — any team member can add,
+  rename, reorder, and delete board columns (max 8, min 1; defaults **New →
+  Qualified → Proposal → Negotiation** seeded on first use). Deleting a column
+  moves its deals to the neighboring one — stated in the confirm, nothing lost.
+  **Won/Lost are fixed status columns**, never customizable. Helpers:
+  [`src/lib/pipeline-stages.ts`](../src/lib/pipeline-stages.ts); API under
+  [`/api/deals/stages`](../src/app/api/deals/stages/route.ts).
+- **Pipeline** ([`/deals`](../src/app/deals/page.tsx)) — a drag-and-drop board
+  (custom columns plus Won/Lost; dnd-kit) with a list/table alternative,
+  warmth/close-date/owner/stage filters, search, and the **total open value**
+  as the only aggregate. Cards show company, value, close date, owner, the
+  **deal pulse** (see below), and **time in stage** (`stageEnteredAt` — resets
+  on stage moves and reopen; no stage-duration history by design).
+- **Comments** (`DealComment`) — team-only notes on the deal detail page (never
+  buyer-visible). Post + delete your own; the deal owner / team OWNER can
+  moderate. No mentions, threads, or edits.
+- **Room linking** — a room belongs to at most one deal (`Page.dealId`,
+  `SetNull`); a deal can hold many rooms. Link/unlink from the deal page, create
+  a deal from a room ("Add to deal…" on the dashboard), or spin up a new room
+  from a deal. Both linking and unlinking require edit access on the page as
+  well as the deal. Rooms and pages are fully unaffected for users who ignore
+  Deals. Rooms the viewer can't open themselves (another member's PRIVATE room)
+  surface only their title + engagement summary on the deal — contacts,
+  action-plan contents, and room links stay behind the page ACL
+  (`canViewLinkedPage` in [`src/lib/deal-auth.ts`](../src/lib/deal-auth.ts)).
+- **Deal-level engagement rollup** — the existing buyer intelligence rolled up
+  across linked rooms (no new tracking): last buyer activity + an intent label
+  reusing `getIntentLabel`/`HIGH_INTENT_VISITOR_WHERE` and the **stored**
+  visitor scores. Pure fold in
+  [`src/lib/deal-engagement.ts`](../src/lib/deal-engagement.ts) (tested), batched
+  queries in [`src/lib/deal-queries.ts`](../src/lib/deal-queries.ts). No
+  deal-level visitor counts by design (visitors are page-scoped rows).
+- **Stakeholders** (`DealStakeholder`) — buyer-side people (name, email,
+  optional title), unique per deal+email. Engagement is matched through
+  `PageContact` email on linked rooms; room contacts are offered as one-click
+  suggestions.
+- **Deal detail** ([`/deals/[id]`](../src/app/deals/[id]/page.tsx)) — header
+  fields (inline editable), linked rooms with per-room engagement, stakeholders,
+  and read-only **mutual action plan** summaries from linked rooms.
+- **Plan limits** — open-deal cap enforced atomically
+  (`assertCanCreateDealTx` + `dealLockKey` in
+  [`src/lib/plan-limits.ts`](../src/lib/plan-limits.ts)); FREE 5 open deals,
+  paid unlimited. Closing a deal frees a slot; reopening re-checks the cap.
+  Ownership reassignment is restricted to the deal owner or a team OWNER (so a
+  member can't self-assign and inherit the owner's delete privilege).
+
+### Contacts & Companies
+
+Canonical buyer-side entities, reachable from the Deals sub-tabs (**Pipeline ·
+Contacts · Companies**). They **auto-populate from activity the product already
+captures** — no list to maintain by hand:
+
+- **Contacts** (`Contact`, [`/deals/contacts`](../src/app/deals/contacts/page.tsx))
+  — name, email (unique per team), role/title, company. Created or enriched
+  whenever a room is shared with someone, a visitor clears an email gate, or a
+  stakeholder is added to a deal
+  (`upsertContactFromActivity` in [`src/lib/contacts.ts`](../src/lib/contacts.ts) —
+  fire-safe and merge-safe: it fills blanks and never overwrites curated
+  values). The table shows deal participation plus **last activity and intent**,
+  matched to the existing buyer intelligence by lowercased email.
+- **Companies** (`Company`, [`/deals/companies`](../src/app/deals/companies/page.tsx))
+  — name (unique per team), with contact count, open deals, **open value**, and
+  warmth rolled up from its deals' rooms. `Deal.companyId` replaces the old
+  free-text company string; typing a new name on a deal creates the company.
+  Deleting a company keeps its deals and contacts (FK `SetNull`).
+
+Tracking tables (`PageContact`, `BuyerVisitor`) are deliberately **not** rewired
+— the canonical layer joins to them by email, so engagement capture is
+untouched. No CSV import, dedup-merge UI, or contact/company detail pages yet.
+
+API: [`/api/deals`](../src/app/api/deals/route.ts), `/api/deals/[id]`,
+`/api/deals/[id]/rooms`, `/api/deals/[id]/stakeholders`,
+`/api/deals/[id]/comments`, `/api/deals/stages`,
+[`/api/deals/contacts`](../src/app/api/deals/contacts/route.ts),
+[`/api/deals/companies`](../src/app/api/deals/companies/route.ts). UI:
+[`src/components/deals/`](../src/components/deals/); queries in
+[`deal-queries.ts`](../src/lib/deal-queries.ts) and
+[`contact-queries.ts`](../src/lib/contact-queries.ts).
+
+---
+
+## 15. Teams & Collaboration
 
 - **Teams** with two roles: **OWNER** and **MEMBER** (`Team`, `TeamMember`).
 - **Email invites** (Pro+) — invite by email with a unique, expiring, single-use
@@ -362,7 +455,7 @@ API: [`/api/team`](../src/app/api/team/route.ts), `/api/team/invite`,
 
 ---
 
-## 15. Billing
+## 16. Billing
 
 Stripe-powered subscriptions, owner-gated.
 
@@ -383,7 +476,7 @@ Subscription statuses tracked: `ACTIVE`, `TRIALING`, `PAST_DUE`, `CANCELED`,
 
 ---
 
-## 16. Admin Console
+## 17. Admin Console
 
 A back-office at [`/admin`](../src/app/admin/page.tsx), gated by a database-backed
 `isAdmin` check on every request.
@@ -401,7 +494,7 @@ API under [`/api/admin/`](../src/app/api/admin/). Helpers:
 
 ---
 
-## 17. Marketing Site
+## 18. Marketing Site
 
 Public, statically-rendered marketing pages under
 [`src/app/(marketing)/`](../src/app/(marketing)/):
@@ -414,7 +507,7 @@ Content is data-driven from [`src/data/marketing/`](../src/data/marketing/).
 
 ---
 
-## 18. Security & Platform
+## 19. Security & Platform
 
 - **Multi-tenant authorization** — page access is centralized in
   `checkPageAccess()` (PRIVATE = creator-only; TEAM = members, with edit-locking);
