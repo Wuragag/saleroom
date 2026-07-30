@@ -125,7 +125,7 @@ export function AddToDealDialog({
                     </p>
                     <p className="truncate text-2xs text-muted-foreground">
                       {[
-                        deal.company,
+                        deal.company?.name,
                         deal.stage.name,
                         deal.value !== null ? formatDealValue(deal.value) : null,
                       ]

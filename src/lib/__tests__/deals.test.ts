@@ -16,7 +16,7 @@ function deal(overrides: Partial<DealListItem> = {}): DealListItem {
   return {
     id: "deal-1",
     name: "Acme Renewal",
-    company: "Acme Inc.",
+    company: { id: "co-acme", name: "Acme Inc." },
     value: 12500,
     stage: { id: "stage-new", name: "New" },
     stageEnteredAt: "2026-07-28T12:00:00.000Z",
@@ -136,7 +136,7 @@ describe("filterDeals", () => {
   const hot = deal({
     id: "hot",
     name: "Globex Pilot",
-    company: "Globex",
+    company: { id: "co-globex", name: "Globex" },
     engagement: { lastActivityAt: daysFromNow(-1), intent: "High Intent", topScore: 80 },
     expectedCloseDate: daysFromNow(10),
   });
@@ -145,7 +145,11 @@ describe("filterDeals", () => {
     engagement: { lastActivityAt: daysFromNow(-20), intent: "Cold", topScore: 10 },
     expectedCloseDate: daysFromNow(-3),
   });
-  const quiet = deal({ id: "quiet", name: "Initech", company: "Initech Corp" });
+  const quiet = deal({
+    id: "quiet",
+    name: "Initech",
+    company: { id: "co-initech", name: "Initech Corp" },
+  });
   const wonAtProposal = deal({
     id: "won",
     status: "WON",

@@ -403,9 +403,38 @@ reporting beyond the open-pipeline total, no external logging or integrations.
   Ownership reassignment is restricted to the deal owner or a team OWNER (so a
   member can't self-assign and inherit the owner's delete privilege).
 
+### Contacts & Companies
+
+Canonical buyer-side entities, reachable from the Deals sub-tabs (**Pipeline ·
+Contacts · Companies**). They **auto-populate from activity the product already
+captures** — no list to maintain by hand:
+
+- **Contacts** (`Contact`, [`/deals/contacts`](../src/app/deals/contacts/page.tsx))
+  — name, email (unique per team), role/title, company. Created or enriched
+  whenever a room is shared with someone, a visitor clears an email gate, or a
+  stakeholder is added to a deal
+  (`upsertContactFromActivity` in [`src/lib/contacts.ts`](../src/lib/contacts.ts) —
+  fire-safe and merge-safe: it fills blanks and never overwrites curated
+  values). The table shows deal participation plus **last activity and intent**,
+  matched to the existing buyer intelligence by lowercased email.
+- **Companies** (`Company`, [`/deals/companies`](../src/app/deals/companies/page.tsx))
+  — name (unique per team), with contact count, open deals, **open value**, and
+  warmth rolled up from its deals' rooms. `Deal.companyId` replaces the old
+  free-text company string; typing a new name on a deal creates the company.
+  Deleting a company keeps its deals and contacts (FK `SetNull`).
+
+Tracking tables (`PageContact`, `BuyerVisitor`) are deliberately **not** rewired
+— the canonical layer joins to them by email, so engagement capture is
+untouched. No CSV import, dedup-merge UI, or contact/company detail pages yet.
+
 API: [`/api/deals`](../src/app/api/deals/route.ts), `/api/deals/[id]`,
-`/api/deals/[id]/rooms`, `/api/deals/[id]/stakeholders`. UI:
-[`src/components/deals/`](../src/components/deals/).
+`/api/deals/[id]/rooms`, `/api/deals/[id]/stakeholders`,
+`/api/deals/[id]/comments`, `/api/deals/stages`,
+[`/api/deals/contacts`](../src/app/api/deals/contacts/route.ts),
+[`/api/deals/companies`](../src/app/api/deals/companies/route.ts). UI:
+[`src/components/deals/`](../src/components/deals/); queries in
+[`deal-queries.ts`](../src/lib/deal-queries.ts) and
+[`contact-queries.ts`](../src/lib/contact-queries.ts).
 
 ---
 

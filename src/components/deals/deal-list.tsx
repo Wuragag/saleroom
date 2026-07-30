@@ -101,7 +101,7 @@ export function DealList({ deals, stages, onStageChange }: DealListProps) {
                 </Link>
                 {deal.company && (
                   <span className="block truncate text-xs text-muted-foreground">
-                    {deal.company}
+                    {deal.company.name}
                   </span>
                 )}
               </span>

@@ -120,7 +120,7 @@ export function filterDeals(
     if (
       q &&
       !deal.name.toLowerCase().includes(q) &&
-      !deal.company.toLowerCase().includes(q)
+      !(deal.company?.name ?? "").toLowerCase().includes(q)
     ) {
       return false;
     }

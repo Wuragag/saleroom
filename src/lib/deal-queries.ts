@@ -133,6 +133,7 @@ export async function listDealsWithRollups(
     include: {
       owner: { select: OWNER_SELECT },
       stage: { select: { id: true, name: true } },
+      company: { select: { id: true, name: true } },
       pages: { select: PAGE_SELECT },
       _count: { select: { stakeholders: true } },
     },
@@ -189,6 +190,7 @@ export async function getDealDetail(
     include: {
       owner: { select: OWNER_SELECT },
       stage: { select: { id: true, name: true } },
+      company: { select: { id: true, name: true } },
       pages: { select: DETAIL_PAGE_SELECT },
       stakeholders: { orderBy: { createdAt: "asc" } },
       comments: {

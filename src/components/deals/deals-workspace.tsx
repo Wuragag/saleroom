@@ -41,6 +41,7 @@ import { DealBoard, type DealMovePatch } from "@/components/deals/deal-board";
 import { DealList } from "@/components/deals/deal-list";
 import { CreateDealDialog } from "@/components/deals/create-deal-dialog";
 import { ManageStagesDialog } from "@/components/deals/manage-stages-dialog";
+import { DealsTabs } from "@/components/deals/deals-tabs";
 import { memberDisplayName } from "@/components/deals/member-picker";
 import type { DealListItem, DealOwnerData, PipelineStageData } from "@/types";
 
@@ -255,7 +256,9 @@ export function DealsWorkspace({
         }
       />
 
-      <p className="mt-3 text-sm text-muted-foreground">
+      <DealsTabs />
+
+      <p className="mt-4 text-sm text-muted-foreground">
         Open pipeline{" "}
         <span className="font-semibold tabular-nums text-foreground">
           {formatDealValue(openValue)}

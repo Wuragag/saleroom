@@ -5,6 +5,7 @@ import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { getDealDetail } from "@/lib/deal-queries";
 import { STATUS_LABELS } from "@/lib/deals";
+import { resolveCompany } from "@/lib/contacts";
 import { cleanString } from "@/lib/validation";
 import {
   assertCanCreateDealTx,
@@ -74,7 +75,16 @@ export const PATCH = withErrorHandler(async (
     if (company === null) {
       return NextResponse.json({ error: "Invalid company" }, { status: 400 });
     }
-    data.company = company;
+    // Clearing the field unlinks; a name resolves to (or creates) a Company.
+    if (!company) {
+      data.company = { disconnect: true };
+    } else {
+      const companyId = await resolveCompany(
+        { teamId: access.deal.teamId, userId: access.deal.ownerId },
+        company
+      );
+      data.company = companyId ? { connect: { id: companyId } } : { disconnect: true };
+    }
   }
 
   if (body.value !== undefined) {

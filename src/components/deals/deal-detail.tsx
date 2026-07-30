@@ -65,7 +65,7 @@ type DealPatch = Partial<{
 export function DealDetail({ deal, members, stages, currentUserId }: DealDetailProps) {
   const router = useRouter();
   const [name, setName] = useState(deal.name);
-  const [company, setCompany] = useState(deal.company);
+  const [company, setCompany] = useState(deal.company?.name ?? "");
   const [valueText, setValueText] = useState(
     deal.value !== null ? String(deal.value) : ""
   );
@@ -82,7 +82,9 @@ export function DealDetail({ deal, members, stages, currentUserId }: DealDetailP
     if (document.activeElement !== nameRef.current) setName(deal.name);
   }, [deal.name]);
   useEffect(() => {
-    if (document.activeElement !== companyRef.current) setCompany(deal.company);
+    if (document.activeElement !== companyRef.current) {
+      setCompany(deal.company?.name ?? "");
+    }
   }, [deal.company]);
   useEffect(() => {
     if (document.activeElement !== valueRef.current) {
@@ -92,7 +94,9 @@ export function DealDetail({ deal, members, stages, currentUserId }: DealDetailP
 
   const resetFields = () => {
     if (document.activeElement !== nameRef.current) setName(deal.name);
-    if (document.activeElement !== companyRef.current) setCompany(deal.company);
+    if (document.activeElement !== companyRef.current) {
+      setCompany(deal.company?.name ?? "");
+    }
     if (document.activeElement !== valueRef.current) {
       setValueText(deal.value !== null ? String(deal.value) : "");
     }
@@ -121,7 +125,10 @@ export function DealDetail({ deal, members, stages, currentUserId }: DealDetailP
   };
 
   const commitCompany = () => {
-    if (company.trim() !== deal.company) patch({ company: company.trim() });
+    // Server resolves the typed name to a Company (creating it when new).
+    if (company.trim() !== (deal.company?.name ?? "")) {
+      patch({ company: company.trim() });
+    }
   };
 
   const commitValue = () => {

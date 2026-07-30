@@ -10,6 +10,7 @@ import {
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { listDealsWithRollups } from "@/lib/deal-queries";
 import { ensurePipelineStages } from "@/lib/pipeline-stages";
+import { resolveCompany } from "@/lib/contacts";
 import { cleanString } from "@/lib/validation";
 
 /** Thrown inside the create transaction when the room got linked concurrently. */
@@ -86,6 +87,11 @@ export const POST = withErrorHandler(async (request: Request) => {
 
   const teamId = await getUserTeamId(userId);
 
+  // A typed company name becomes (or joins) a canonical Company.
+  const companyId = company
+    ? await resolveCompany({ teamId, userId }, company)
+    : null;
+
   // The scope's columns (seeded on first touch); default to the first one.
   const stages = await ensurePipelineStages(userId, teamId);
   let stageId = stages[0]?.id;
@@ -143,7 +149,7 @@ export const POST = withErrorHandler(async (request: Request) => {
       const created = await tx.deal.create({
         data: {
           name,
-          company,
+          companyId,
           value,
           stageId,
           expectedCloseDate,

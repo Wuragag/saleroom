@@ -73,6 +73,8 @@ model User {
   ownedDeals          Deal[]       @relation("DealOwner")
   pipelineStages      PipelineStage[]
   dealComments        DealComment[]
+  companies           Company[]
+  contacts            Contact[]
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -87,6 +89,8 @@ model Team {
   templates    Template[]
   deals        Deal[]
   pipelineStages PipelineStage[]
+  companies    Company[]
+  contacts     Contact[]
   subscription Subscription?
   aiCredits    TeamAiCredits?
   brandKit     BrandKit?
@@ -372,10 +376,52 @@ model PipelineStage {
   @@index([userId, order])
 }
 
+// Canonical buyer-side entities. Auto-populated from activity the product
+// already captures (room shares, email-gate signups, stakeholder adds) and
+// manually editable. Tracking tables (PageContact/BuyerVisitor) are never
+// rewired — engagement joins by lowercased email.
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  teamId    String?
+  team      Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contacts  Contact[]
+  deals     Deal[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // One unique per scope column — Postgres exempts NULLs, so each guards
+  // exactly its own scope (same trick as TeamAiCredits).
+  @@unique([teamId, name])
+  @@unique([userId, name])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  email     String // stored lowercased
+  name      String   @default("")
+  title     String   @default("")
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, email])
+  @@unique([userId, email])
+  @@index([companyId])
+}
+
 model Deal {
   id                String            @id @default(cuid())
   name              String
-  company           String            @default("")
+  companyId         String?
+  company           Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
   value             Int? // whole currency units (USD display)
   // Restrict: column deletion moves deals to a neighbor first (app-managed).
   stageId           String
@@ -400,6 +446,7 @@ model Deal {
   @@index([teamId, status])
   @@index([ownerId])
   @@index([stageId])
+  @@index([companyId])
 }
 
 model DealComment {

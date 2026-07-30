@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { sendSharePageEmail } from "@/lib/email";
 import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
+import { resolveCompany, upsertContactFromActivity } from "@/lib/contacts";
 import { withErrorHandler } from "@/lib/api-error";
 
 /**
@@ -112,9 +113,25 @@ export const POST = withErrorHandler(async (
   const appUrl = req.nextUrl.origin;
   const created: Array<{ id: string; email: string; name: string | null; refToken: string; link: string }> = [];
 
+  // Sharing a room with someone is a capture moment — mirror each recipient
+  // into the canonical Contacts book (fire-safe, never blocks the share).
+  const crmScope = {
+    teamId: access.page.teamId ?? null,
+    userId: access.page.userId as string,
+  };
+
   for (const input of contactInputs) {
     const email = input.email?.trim().toLowerCase();
     if (!email) continue;
+
+    const companyId = input.company
+      ? await resolveCompany(crmScope, input.company)
+      : null;
+    await upsertContactFromActivity(crmScope, {
+      email,
+      name: input.name,
+      companyId,
+    });
 
     const contact = await prisma.pageContact.upsert({
       where: { pageId_email: { pageId: id, email } },

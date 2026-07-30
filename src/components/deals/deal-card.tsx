@@ -75,7 +75,7 @@ export function DealCard({ deal, onClick, overlay, dragging }: DealCardProps) {
       </div>
       {deal.company && (
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {deal.company}
+          {deal.company.name}
         </p>
       )}
 

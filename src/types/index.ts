@@ -289,7 +289,7 @@ export interface DealRoomSummary {
 export interface DealListItem {
   id: string;
   name: string;
-  company: string;
+  company: { id: string; name: string } | null;
   value: number | null;
   stage: { id: string; name: string };
   /** ISO — when the deal entered its current stage. */
@@ -310,6 +310,31 @@ export interface DealCommentData {
   body: string;
   createdAt: string; // ISO
   author: DealOwnerData;
+}
+
+// ──── Contacts & Companies (canonical buyer-side entities) ────
+
+export interface ContactRow {
+  id: string;
+  email: string;
+  name: string;
+  title: string;
+  company: { id: string; name: string } | null;
+  /** Deals where this email appears as a stakeholder. */
+  dealCount: number;
+  lastSeenAt: string | null; // ISO — engagement matched by email
+  intent: IntentLabel | null;
+}
+
+export interface CompanyRow {
+  id: string;
+  name: string;
+  contactCount: number;
+  contacts: { id: string; name: string; email: string }[];
+  deals: { id: string; name: string; status: DealStatusValue }[];
+  openDealCount: number;
+  openValue: number;
+  engagement: DealEngagementRollupData;
 }
 
 export interface DealRoomDetail extends DealRoomSummary {
@@ -360,7 +385,7 @@ export interface DealMapSummary {
 export interface DealDetailData {
   id: string;
   name: string;
-  company: string;
+  company: { id: string; name: string } | null;
   value: number | null;
   stage: { id: string; name: string };
   /** ISO — when the deal entered its current stage. */
