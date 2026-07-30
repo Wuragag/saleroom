@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { sendSharePageEmail } from "@/lib/email";
 import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
-import { resolveCompany, upsertContactFromActivity } from "@/lib/contacts";
+import { upsertContactFromActivity } from "@/lib/contacts";
 import { withErrorHandler } from "@/lib/api-error";
 
 /**
@@ -124,13 +124,12 @@ export const POST = withErrorHandler(async (
     const email = input.email?.trim().toLowerCase();
     if (!email) continue;
 
-    const companyId = input.company
-      ? await resolveCompany(crmScope, input.company)
-      : null;
+    // companyName (not a pre-resolved id) so the company lookup also runs
+    // inside the fire-safe wrapper and can't 500 the share mid-loop.
     await upsertContactFromActivity(crmScope, {
       email,
-      name: input.name,
-      companyId,
+      name: typeof input.name === "string" ? input.name : null,
+      companyName: typeof input.company === "string" ? input.company : null,
     });
 
     const contact = await prisma.pageContact.upsert({

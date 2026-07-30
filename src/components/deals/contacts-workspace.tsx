@@ -20,6 +20,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format-utils";
 import { DealsTabs } from "@/components/deals/deals-tabs";
@@ -187,6 +197,8 @@ export function ContactsWorkspace({ contacts, companies }: ContactsWorkspaceProp
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ContactRow | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<ContactRow | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -202,13 +214,18 @@ export function ContactsWorkspace({ contacts, companies }: ContactsWorkspaceProp
     return [...rows].sort((a, b) => (b.lastSeenAt ?? "").localeCompare(a.lastSeenAt ?? ""));
   }, [contacts, search]);
 
-  const remove = async (contact: ContactRow) => {
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setDeleteBusy(true);
     try {
-      await apiClient.delete(`/api/deals/contacts/${contact.id}`);
+      await apiClient.delete(`/api/deals/contacts/${deleting.id}`);
       toast.success("Contact removed");
+      setDeleting(null);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to remove contact");
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -216,7 +233,7 @@ export function ContactsWorkspace({ contacts, companies }: ContactsWorkspaceProp
     <div>
       <PageHeader
         title="Deals"
-        description="Every deal, its rooms, and how warm the buyer is — in one place."
+        description="The people and companies behind your deals, and how they engage."
         actions={
           <Button onClick={() => setCreating(true)}>
             <Plus />
@@ -329,7 +346,7 @@ export function ContactsWorkspace({ contacts, companies }: ContactsWorkspaceProp
                       <IconButton
                         aria-label={`Remove ${contact.name || contact.email}`}
                         size="sm"
-                        onClick={() => remove(contact)}
+                        onClick={() => setDeleting(contact)}
                       >
                         <Trash2 />
                       </IconButton>
@@ -353,6 +370,34 @@ export function ContactsWorkspace({ contacts, companies }: ContactsWorkspaceProp
           onSaved={() => router.refresh()}
         />
       )}
+
+      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Remove &ldquo;{deleting?.name || deleting?.email}&rdquo;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes them from your contact book. Their room activity and
+              any deal stakeholder entries are kept — and sharing a room with
+              them again will re-add them here.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={deleteBusy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteBusy ? "Removing…" : "Remove contact"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

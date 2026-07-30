@@ -151,6 +151,13 @@ export function DealsWorkspace({
   const [warmthFilter, setWarmthFilter] = useState<WarmthFilter | null>(null);
   const [closeDateFilter, setCloseDateFilter] = useState<CloseDateFilter | null>(null);
   const [stageFilter, setStageFilter] = useState<string | null>(null);
+  // A column can be deleted while its filter is active — drop the dead id so
+  // the toolbar can't claim "All stages" while hiding every deal.
+  useEffect(() => {
+    setStageFilter((current) =>
+      current && !stages.some((s) => s.id === current) ? null : current
+    );
+  }, [stages]);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
@@ -217,18 +224,32 @@ export function DealsWorkspace({
 
   const patchDeal = async (dealId: string, patch: DealMovePatch) => {
     const snapshot = deals;
+    const now = new Date().toISOString();
+    // The patch speaks stageId; the list item carries the resolved stage
+    // object — map it explicitly so the optimistic move actually repartitions
+    // the board instead of adding a stray key.
+    const movedStage = patch.stageId
+      ? stages.find((s) => s.id === patch.stageId)
+      : undefined;
     setDeals((prev) =>
       prev.map((d) =>
         d.id === dealId
           ? {
               ...d,
-              ...patch,
+              ...(patch.status ? { status: patch.status } : {}),
+              ...(movedStage
+                ? { stage: { id: movedStage.id, name: movedStage.name }, stageEnteredAt: now }
+                : {}),
+              // Reopening restarts the stage clock even without a stage change.
+              ...(patch.status === "OPEN" && !movedStage
+                ? { stageEnteredAt: now }
+                : {}),
               closedAt:
                 patch.status === undefined
                   ? d.closedAt
                   : patch.status === "OPEN"
                     ? null
-                    : new Date().toISOString(),
+                    : now,
             }
           : d
       )

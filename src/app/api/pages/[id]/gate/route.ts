@@ -36,7 +36,13 @@ export const POST = withErrorHandler(async (
     // Verify the page exists and requires email
     const page = await prisma.page.findUnique({
       where: { id: pageId },
-      select: { id: true, requireEmail: true, teamId: true, userId: true },
+      select: {
+        id: true,
+        requireEmail: true,
+        published: true,
+        teamId: true,
+        userId: true,
+      },
     });
 
     if (!page) {
@@ -45,10 +51,14 @@ export const POST = withErrorHandler(async (
 
     // An email-gate signup is a capture moment — mirror it into the canonical
     // Contacts book (fire-safe, adds no failure mode to this public route).
-    await upsertContactFromActivity(
-      { teamId: page.teamId, userId: page.userId },
-      { email, name }
-    );
+    // Only for pages actually serving a gate: this route is unauthenticated,
+    // so an arbitrary page id must not be a write path into a team's book.
+    if (page.requireEmail && page.published) {
+      await upsertContactFromActivity(
+        { teamId: page.teamId, userId: page.userId },
+        { email, name }
+      );
+    }
 
     // Upsert the contact
     const contact = await prisma.pageContact.upsert({

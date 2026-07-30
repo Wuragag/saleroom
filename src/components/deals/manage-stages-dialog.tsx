@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
@@ -28,11 +28,13 @@ import {
 import { stageDeleteTarget } from "@/lib/deals";
 import type { PipelineStageData } from "@/types";
 
+const RESERVED_NAMES = ["won", "lost"];
+
 interface ManageStagesDialogProps {
   isOpen: boolean;
   onClose: () => void;
   stages: PipelineStageData[];
-  /** Open-deal count per stage id — shown in the delete confirm. */
+  /** Deals per stage id in every status — what a delete actually moves. */
   dealCounts: Record<string, number>;
   onChanged: () => void;
 }
@@ -41,6 +43,7 @@ function StageRow({
   stage,
   index,
   total,
+  busy,
   onRename,
   onMove,
   onDelete,
@@ -48,15 +51,23 @@ function StageRow({
   stage: PipelineStageData;
   index: number;
   total: number;
+  busy: boolean;
   onRename: (name: string) => void;
   onMove: (direction: -1 | 1) => void;
   onDelete: () => void;
 }) {
   const [name, setName] = useState(stage.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Pick up a teammate's rename on refresh, unless this field is being edited.
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) setName(stage.name);
+  }, [stage.name]);
 
   return (
     <div className="flex items-center gap-2 py-1.5">
       <Input
+        ref={inputRef}
         value={name}
         onChange={(e) => setName(e.target.value)}
         onBlur={() => {
@@ -74,7 +85,7 @@ function StageRow({
       <IconButton
         aria-label={`Move ${stage.name} left`}
         size="sm"
-        disabled={index === 0}
+        disabled={index === 0 || busy}
         onClick={() => onMove(-1)}
       >
         <ArrowUp />
@@ -82,7 +93,7 @@ function StageRow({
       <IconButton
         aria-label={`Move ${stage.name} right`}
         size="sm"
-        disabled={index === total - 1}
+        disabled={index === total - 1 || busy}
         onClick={() => onMove(1)}
       >
         <ArrowDown />
@@ -90,7 +101,7 @@ function StageRow({
       <IconButton
         aria-label={`Delete ${stage.name}`}
         size="sm"
-        disabled={total <= 1}
+        disabled={total <= 1 || busy}
         onClick={onDelete}
       >
         <Trash2 />
@@ -108,6 +119,9 @@ export function ManageStagesDialog({
 }: ManageStagesDialogProps) {
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
+  // One in-flight mutation at a time: rows are re-derived from the refreshed
+  // prop, so a second click before the refresh would send a stale permutation.
+  const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<PipelineStageData | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
@@ -115,24 +129,32 @@ export function ManageStagesDialog({
     toast.error(err instanceof ApiError ? err.message : fallback);
 
   const rename = async (stage: PipelineStageData, name: string) => {
+    if (busy) return;
+    setBusy(true);
     try {
       await apiClient.patch(`/api/deals/stages/${stage.id}`, { name });
       onChanged();
     } catch (err) {
       fail(err, "Failed to rename column");
+    } finally {
+      setBusy(false);
     }
   };
 
   const move = async (index: number, direction: -1 | 1) => {
+    if (busy) return;
     const ids = stages.map((s) => s.id);
     const target = index + direction;
     if (target < 0 || target >= ids.length) return;
     [ids[index], ids[target]] = [ids[target], ids[index]];
+    setBusy(true);
     try {
       await apiClient.put("/api/deals/stages/reorder", { stageIds: ids });
       onChanged();
     } catch (err) {
       fail(err, "Failed to reorder columns");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -140,6 +162,12 @@ export function ManageStagesDialog({
     e.preventDefault();
     const name = newName.trim();
     if (!name || adding) return;
+    // Won/Lost are fixed status columns — a stage by that name would render
+    // twice on the board.
+    if (RESERVED_NAMES.includes(name.toLowerCase())) {
+      toast.error(`"${name}" is a built-in column — pick another name.`);
+      return;
+    }
     setAdding(true);
     try {
       await apiClient.post("/api/deals/stages", { name });
@@ -197,6 +225,7 @@ export function ManageStagesDialog({
                 stage={stage}
                 index={index}
                 total={stages.length}
+                busy={busy}
                 onRename={(name) => rename(stage, name)}
                 onMove={(direction) => move(index, direction)}
                 onDelete={() => setDeleting(stage)}

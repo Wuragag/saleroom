@@ -18,6 +18,7 @@ import {
   companyScopeWhere,
   contactScopeWhere,
   resolveCompany,
+  resolveCompanyInput,
   upsertContactFromActivity,
 } from "@/lib/contacts";
 
@@ -44,6 +45,25 @@ describe("resolveCompany", () => {
     expect(prismaMock.company.create).not.toHaveBeenCalled();
   });
 
+  it("matches case-insensitively so casing variants don't fork the record", async () => {
+    prismaMock.company.findFirst.mockResolvedValue({ id: "co-1" });
+    expect(await resolveCompany(TEAM_SCOPE, "ACME inc.")).toBe("co-1");
+    expect(prismaMock.company.findFirst).toHaveBeenCalledWith({
+      where: {
+        teamId: "team-1",
+        name: { equals: "ACME inc.", mode: "insensitive" },
+      },
+      select: { id: true },
+    });
+    expect(prismaMock.company.create).not.toHaveBeenCalled();
+  });
+
+  it("rethrows non-unique DB errors instead of silently dropping the link", async () => {
+    prismaMock.company.findFirst.mockResolvedValue(null);
+    prismaMock.company.create.mockRejectedValue(new Error("connection reset"));
+    await expect(resolveCompany(TEAM_SCOPE, "Acme")).rejects.toThrow("connection reset");
+  });
+
   it("creates a company when the name is new, in the right scope", async () => {
     prismaMock.company.findFirst.mockResolvedValue(null);
     prismaMock.company.create.mockResolvedValue({ id: "co-new" });
@@ -63,8 +83,43 @@ describe("resolveCompany", () => {
     prismaMock.company.findFirst
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: "co-winner" });
-    prismaMock.company.create.mockRejectedValue(new Error("unique violation"));
+    const p2002 = Object.assign(new Error("unique"), {
+      name: "PrismaClientKnownRequestError",
+      code: "P2002",
+    });
+    prismaMock.company.create.mockRejectedValue(p2002);
     expect(await resolveCompany(TEAM_SCOPE, "Acme")).toBe("co-winner");
+  });
+});
+
+describe("resolveCompanyInput", () => {
+  it("returns null when explicitly cleared", async () => {
+    expect(await resolveCompanyInput(TEAM_SCOPE, null, undefined)).toBeNull();
+  });
+
+  it("rejects wrong-typed ids rather than silently unlinking", async () => {
+    expect(await resolveCompanyInput(TEAM_SCOPE, 123, undefined)).toBe(false);
+    expect(await resolveCompanyInput(TEAM_SCOPE, {}, undefined)).toBe(false);
+    expect(await resolveCompanyInput(TEAM_SCOPE, "", undefined)).toBe(false);
+  });
+
+  it("rejects an id from another scope", async () => {
+    prismaMock.company.findFirst.mockResolvedValue(null);
+    expect(await resolveCompanyInput(TEAM_SCOPE, "co-foreign", undefined)).toBe(false);
+  });
+
+  it("accepts an in-scope id", async () => {
+    prismaMock.company.findFirst.mockResolvedValue({ id: "co-1" });
+    expect(await resolveCompanyInput(TEAM_SCOPE, "co-1", undefined)).toBe("co-1");
+  });
+
+  it("falls back to resolving a typed name", async () => {
+    prismaMock.company.findFirst.mockResolvedValue({ id: "co-2" });
+    expect(await resolveCompanyInput(TEAM_SCOPE, undefined, "Globex")).toBe("co-2");
+  });
+
+  it("treats a blank name as no company", async () => {
+    expect(await resolveCompanyInput(TEAM_SCOPE, undefined, "  ")).toBeNull();
   });
 });
 
@@ -95,6 +150,7 @@ describe("upsertContactFromActivity", () => {
       title: "",
       companyId: null,
     });
+    prismaMock.company.findFirst.mockResolvedValue({ id: "co-1" }); // in scope
     await upsertContactFromActivity(TEAM_SCOPE, {
       email: "jane@acme.com",
       name: "Jane Doe",
@@ -133,6 +189,41 @@ describe("upsertContactFromActivity", () => {
     await expect(
       upsertContactFromActivity(TEAM_SCOPE, { email: "jane@acme.com" })
     ).resolves.toBeUndefined();
+  });
+
+  it("ignores a companyId from another scope", async () => {
+    prismaMock.contact.findFirst.mockResolvedValue(null);
+    prismaMock.company.findFirst.mockResolvedValue(null); // not in scope
+    await upsertContactFromActivity(TEAM_SCOPE, {
+      email: "jane@acme.com",
+      companyId: "co-foreign",
+    });
+    expect(prismaMock.contact.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ companyId: null }),
+    });
+  });
+
+  it("resolves a companyName inside the fire-safe wrapper", async () => {
+    prismaMock.contact.findFirst.mockResolvedValue(null);
+    prismaMock.company.findFirst.mockResolvedValue({ id: "co-3" });
+    await upsertContactFromActivity(TEAM_SCOPE, {
+      email: "jane@acme.com",
+      companyName: "Acme Inc.",
+    });
+    expect(prismaMock.contact.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ companyId: "co-3" }),
+    });
+  });
+
+  it("stays fire-safe when the company lookup itself throws", async () => {
+    prismaMock.company.findFirst.mockRejectedValue(new Error("db down"));
+    await expect(
+      upsertContactFromActivity(TEAM_SCOPE, {
+        email: "jane@acme.com",
+        companyName: "Acme",
+      })
+    ).resolves.toBeUndefined();
+    expect(prismaMock.contact.create).not.toHaveBeenCalled();
   });
 
   it("writes teamless contacts against the user", async () => {

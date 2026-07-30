@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
-import { stageScopeWhere } from "@/lib/pipeline-stages";
+import { withResourceLock } from "@/lib/plan-limits";
+import { stageLockKey, stageScopeWhere } from "@/lib/pipeline-stages";
 
 /**
  * PUT /api/deals/stages/reorder — { stageIds }: the full column order. Must be
@@ -25,27 +25,36 @@ export const PUT = withErrorHandler(async (request: Request) => {
   }
   const stageIds = body.stageIds as string[];
 
-  const existing = await prisma.pipelineStage.findMany({
-    where: stageScopeWhere(session.user.id, teamId),
-    select: { id: true },
-  });
-  const existingIds = new Set(existing.map((s) => s.id));
-  const exactPermutation =
-    stageIds.length === existingIds.size &&
-    stageIds.every((id) => existingIds.has(id)) &&
-    new Set(stageIds).size === stageIds.length;
-  if (!exactPermutation) {
-    return NextResponse.json(
-      { error: "stageIds must include every column exactly once" },
-      { status: 400 }
-    );
-  }
+  // Same lock as create/delete, so a concurrent column change can't turn this
+  // into a P2025 or leave order values non-contiguous.
+  try {
+    await withResourceLock(stageLockKey(session.user.id, teamId), async (tx) => {
+      const existing = await tx.pipelineStage.findMany({
+        where: stageScopeWhere(session.user.id, teamId),
+        select: { id: true },
+      });
+      const existingIds = new Set(existing.map((s) => s.id));
+      const exactPermutation =
+        stageIds.length === existingIds.size &&
+        stageIds.every((id) => existingIds.has(id)) &&
+        new Set(stageIds).size === stageIds.length;
+      if (!exactPermutation) throw new StaleOrderError();
 
-  await prisma.$transaction(
-    stageIds.map((id, index) =>
-      prisma.pipelineStage.update({ where: { id }, data: { order: index } })
-    )
-  );
+      for (const [index, id] of stageIds.entries()) {
+        await tx.pipelineStage.update({ where: { id }, data: { order: index } });
+      }
+    });
+  } catch (err) {
+    if (err instanceof StaleOrderError) {
+      return NextResponse.json(
+        { error: "Your columns changed — reopen the dialog and try again." },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 
   return NextResponse.json({ ok: true });
 });
+
+class StaleOrderError extends Error {}

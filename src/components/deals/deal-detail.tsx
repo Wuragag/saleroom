@@ -50,6 +50,8 @@ interface DealDetailProps {
   members: DealOwnerData[];
   stages: PipelineStageData[];
   currentUserId: string;
+  /** Viewer can delete anyone's comment (deal owner or team OWNER). */
+  canModerate: boolean;
 }
 
 type DealPatch = Partial<{
@@ -62,7 +64,13 @@ type DealPatch = Partial<{
   ownerId: string;
 }>;
 
-export function DealDetail({ deal, members, stages, currentUserId }: DealDetailProps) {
+export function DealDetail({
+  deal,
+  members,
+  stages,
+  currentUserId,
+  canModerate,
+}: DealDetailProps) {
   const router = useRouter();
   const [name, setName] = useState(deal.name);
   const [company, setCompany] = useState(deal.company?.name ?? "");
@@ -344,9 +352,9 @@ export function DealDetail({ deal, members, stages, currentUserId }: DealDetailP
           <DealStakeholdersCard deal={deal} onChanged={() => router.refresh()} />
           <DealCommentsCard
             dealId={deal.id}
-            dealOwnerId={deal.owner.id}
             comments={deal.comments}
             currentUserId={currentUserId}
+            canModerate={canModerate}
             onChanged={() => router.refresh()}
           />
         </div>

@@ -17,21 +17,23 @@ const COMMENT_MAX = 2000;
 
 interface DealCommentsCardProps {
   dealId: string;
-  dealOwnerId: string;
   comments: DealCommentData[];
   currentUserId: string;
+  /** Viewer can delete anyone's comment (deal owner or team OWNER). */
+  canModerate: boolean;
   onChanged: () => void;
 }
 
 export function DealCommentsCard({
   dealId,
-  dealOwnerId,
   comments,
   currentUserId,
+  canModerate,
   onChanged,
 }: DealCommentsCardProps) {
   const [body, setBody] = useState("");
   const [posting, setPosting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const post = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +52,15 @@ export function DealCommentsCard({
   };
 
   const remove = async (comment: DealCommentData) => {
+    if (deletingId) return;
+    setDeletingId(comment.id);
     try {
       await apiClient.delete(`/api/deals/${dealId}/comments/${comment.id}`);
       onChanged();
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to delete comment");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -95,8 +101,7 @@ export function DealCommentsCard({
         <div className="divide-y divide-border">
           {comments.map((comment) => {
             const display = memberDisplayName(comment.author);
-            const canDelete =
-              comment.author.id === currentUserId || dealOwnerId === currentUserId;
+            const canDelete = comment.author.id === currentUserId || canModerate;
             return (
               <div key={comment.id} className="flex gap-3 px-4 py-3">
                 <Avatar
@@ -120,6 +125,7 @@ export function DealCommentsCard({
                     aria-label={`Delete comment by ${display}`}
                     size="sm"
                     className="shrink-0"
+                    disabled={deletingId === comment.id}
                     onClick={() => remove(comment)}
                   >
                     <Trash2 />

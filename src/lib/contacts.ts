@@ -29,17 +29,35 @@ function scopeData(scope: CrmScope) {
     : { teamId: null, userId: scope.userId };
 }
 
-/** Find-or-create a company by name within the scope (race-safe via P2002). */
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    err.name === "PrismaClientKnownRequestError" &&
+    (err as { code?: string }).code === "P2002"
+  );
+}
+
+/**
+ * Find-or-create a company by name within the scope. Matching is
+ * case-insensitive so "Acme" typed twice with different casing joins one
+ * company instead of quietly forking the record; race-safe via P2002.
+ */
 export async function resolveCompany(
   scope: CrmScope,
   name: string
 ): Promise<string | null> {
   const trimmed = name.trim().slice(0, 200);
   if (!trimmed) return null;
-  const existing = await prisma.company.findFirst({
-    where: { ...companyScopeWhere(scope), name: trimmed },
-    select: { id: true },
-  });
+  const findExisting = () =>
+    prisma.company.findFirst({
+      where: {
+        ...companyScopeWhere(scope),
+        name: { equals: trimmed, mode: "insensitive" },
+      },
+      select: { id: true },
+    });
+
+  const existing = await findExisting();
   if (existing) return existing.id;
   try {
     const created = await prisma.company.create({
@@ -47,12 +65,10 @@ export async function resolveCompany(
       select: { id: true },
     });
     return created.id;
-  } catch {
-    // Concurrent create — fetch the winner.
-    const winner = await prisma.company.findFirst({
-      where: { ...companyScopeWhere(scope), name: trimmed },
-      select: { id: true },
-    });
+  } catch (err) {
+    // Only a concurrent create is recoverable — anything else must surface.
+    if (!isUniqueViolation(err)) throw err;
+    const winner = await findExisting();
     return winner?.id ?? null;
   }
 }
@@ -67,14 +83,16 @@ export async function resolveCompanyInput(
   companyId: unknown,
   companyName: unknown
 ): Promise<string | null | false> {
-  if (typeof companyId === "string" && companyId) {
+  if (companyId === null) return null;
+  if (companyId !== undefined) {
+    // Wrong-typed ids must 400, never silently unlink the company.
+    if (typeof companyId !== "string" || !companyId) return false;
     const owned = await prisma.company.findFirst({
       where: { id: companyId, ...companyScopeWhere(scope) },
       select: { id: true },
     });
     return owned ? owned.id : false;
   }
-  if (companyId === null) return null;
   if (companyName === undefined || companyName === null) return null;
   if (typeof companyName !== "string") return false;
   const name = companyName.trim().slice(0, 200);
@@ -88,6 +106,8 @@ export interface ContactActivity {
   title?: string | null;
   /** Direct company link (e.g. the stakeholder's deal company). */
   companyId?: string | null;
+  /** Company by name — resolved (and created) within the scope. */
+  companyName?: string | null;
 }
 
 /**
@@ -105,6 +125,19 @@ export async function upsertContactFromActivity(
     const name = activity.name?.trim().slice(0, 120) ?? "";
     const title = activity.title?.trim().slice(0, 120) ?? "";
 
+    // Verify any passed id belongs to this scope, or resolve a name — both
+    // inside the fire-safe wrapper so callers can't crash on CRM bookkeeping.
+    let companyId: string | null = null;
+    if (activity.companyId) {
+      const owned = await prisma.company.findFirst({
+        where: { id: activity.companyId, ...companyScopeWhere(scope) },
+        select: { id: true },
+      });
+      companyId = owned?.id ?? null;
+    } else if (activity.companyName) {
+      companyId = await resolveCompany(scope, activity.companyName);
+    }
+
     const existing = await prisma.contact.findFirst({
       where: { ...contactScopeWhere(scope), email },
       select: { id: true, name: true, title: true, companyId: true },
@@ -116,7 +149,7 @@ export async function upsertContactFromActivity(
           email,
           name,
           title,
-          companyId: activity.companyId ?? null,
+          companyId,
           ...scopeData(scope),
         },
       });
@@ -127,8 +160,8 @@ export async function upsertContactFromActivity(
     const data: Prisma.ContactUpdateInput = {};
     if (name && !existing.name) data.name = name;
     if (title && !existing.title) data.title = title;
-    if (activity.companyId && !existing.companyId) {
-      data.company = { connect: { id: activity.companyId } };
+    if (companyId && !existing.companyId) {
+      data.company = { connect: { id: companyId } };
     }
     if (Object.keys(data).length > 0) {
       await prisma.contact.update({ where: { id: existing.id }, data });

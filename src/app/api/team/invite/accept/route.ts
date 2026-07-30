@@ -136,6 +136,10 @@ export const POST = withErrorHandler(async (request: Request) => {
         await tx.page.deleteMany({
           where: { teamId: oldMembership.teamId },
         });
+        // Deals must go before the team: deleting the team cascades its
+        // PipelineStage rows, and Deal.stageId is RESTRICT — a surviving deal
+        // (Deal.teamId is SetNull) would abort the whole transaction.
+        await tx.deal.deleteMany({ where: { teamId: oldMembership.teamId } });
         await tx.team.delete({ where: { id: oldMembership.teamId } });
       }
     }

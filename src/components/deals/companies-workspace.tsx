@@ -183,7 +183,7 @@ export function CompaniesWorkspace({ companies }: { companies: CompanyRow[] }) {
     <div>
       <PageHeader
         title="Deals"
-        description="Every deal, its rooms, and how warm the buyer is — in one place."
+        description="The people and companies behind your deals, and how they engage."
         actions={
           <Button onClick={() => setCreating(true)}>
             <Plus />

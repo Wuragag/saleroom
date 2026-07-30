@@ -21,12 +21,21 @@ export default async function DealDetailPage({
   if (!access.authorized) notFound();
 
   const teamId = await getUserTeamId(session.user.id);
-  const [deal, members, stages] = await Promise.all([
-    getDealDetail(id, session.user.id, teamId),
-    getMemberOptions(session.user.id, teamId),
-    ensurePipelineStages(session.user.id, teamId),
-  ]);
+  const deal = await getDealDetail(id, session.user.id, teamId);
   if (!deal) notFound();
+
+  // Stages come from the DEAL's scope, matching what PATCH validates against —
+  // otherwise a legacy teamless deal (owner has since joined a team) would be
+  // offered columns the server rejects.
+  const [members, stages] = await Promise.all([
+    getMemberOptions(session.user.id, teamId),
+    ensurePipelineStages(deal.owner.id, deal.teamId),
+  ]);
+
+  // Mirrors the comment-delete rule the API enforces (author, else deal owner
+  // or team OWNER) so the moderation control isn't hidden from the role it
+  // was built for.
+  const canModerate = (await checkDealAccess(id, "delete")).authorized;
 
   return (
     <AppShell>
@@ -35,6 +44,7 @@ export default async function DealDetailPage({
         members={members}
         stages={stages.map((s) => ({ id: s.id, name: s.name, order: s.order }))}
         currentUserId={session.user.id}
+        canModerate={canModerate}
       />
     </AppShell>
   );
