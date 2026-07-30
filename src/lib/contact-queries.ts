@@ -11,7 +11,7 @@ import {
   rollupDealEngagement,
   type DealPageEngagement,
 } from "@/lib/deal-engagement";
-import type { CompanyRow, ContactRow } from "@/types";
+import type { CompanyOption, CompanyRow, ContactRow } from "@/types";
 
 // Server-only queries for the Contacts and Companies tabs. Engagement joins
 // the canonical rows to tracking data by lowercased email — the same bridge
@@ -77,6 +77,21 @@ async function loadEngagementByEmail(
     byEmail.set(key, entry);
   }
   return byEmail;
+}
+
+/**
+ * Just the names — what the company pickers need. Deliberately separate from
+ * listCompanies, which does the engagement rollups for the Companies tab.
+ */
+export async function listCompanyOptions(
+  userId: string,
+  teamId: string | null
+): Promise<CompanyOption[]> {
+  return prisma.company.findMany({
+    where: companyScopeWhere({ teamId, userId }),
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
 }
 
 /** All canonical contacts in scope, with warmth and deal counts. */

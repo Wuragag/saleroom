@@ -33,7 +33,8 @@ import {
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format-utils";
 import { DealsTabs } from "@/components/deals/deals-tabs";
-import type { ContactRow, IntentLabel } from "@/types";
+import { CompanyPicker } from "@/components/deals/company-picker";
+import type { CompanyOption, ContactRow, IntentLabel } from "@/types";
 
 const INTENT_VARIANT: Record<IntentLabel, "success" | "warning" | "neutral"> = {
   "High Intent": "success",
@@ -46,7 +47,7 @@ const GRID =
 
 interface ContactsWorkspaceProps {
   contacts: ContactRow[];
-  companies: { id: string; name: string }[];
+  companies: CompanyOption[];
 }
 
 function ContactDialog({
@@ -57,14 +58,18 @@ function ContactDialog({
 }: {
   /** Null = create mode. */
   contact: ContactRow | null;
-  companies: { id: string; name: string }[];
+  companies: CompanyOption[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [name, setName] = useState(contact?.name ?? "");
   const [email, setEmail] = useState(contact?.email ?? "");
   const [title, setTitle] = useState(contact?.title ?? "");
-  const [companyName, setCompanyName] = useState(contact?.company?.name ?? "");
+  const [company, setCompany] = useState<CompanyOption | null>(
+    contact?.company ?? null
+  );
+  // Local copy so a company created from the picker appears immediately.
+  const [companyOptions, setCompanyOptions] = useState(companies);
   const [saving, setSaving] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -76,8 +81,7 @@ function ContactDialog({
         name: name.trim(),
         email: email.trim(),
         title: title.trim(),
-        // A typed name creates or joins the company server-side.
-        companyName: companyName.trim(),
+        companyId: company?.id ?? null,
       };
       if (contact) {
         await apiClient.patch(`/api/deals/contacts/${contact.id}`, payload);
@@ -152,21 +156,19 @@ function ContactDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="contact-company" className="text-xs font-medium text-foreground">
+            <span className="block text-xs font-medium text-foreground">
               Company
-            </label>
-            <Input
-              id="contact-company"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Acme Inc."
-              list="contact-company-options"
+            </span>
+            <CompanyPicker
+              companies={companyOptions}
+              value={company}
+              onChange={setCompany}
+              onCompanyCreated={(created) =>
+                setCompanyOptions((prev) =>
+                  [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+                )
+              }
             />
-            <datalist id="contact-company-options">
-              {companies.map((c) => (
-                <option key={c.id} value={c.name} />
-              ))}
-            </datalist>
           </div>
 
           {contact && contact.dealCount > 0 && (

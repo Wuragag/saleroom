@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatDealValue } from "@/lib/deals";
 import { CreateDealDialog } from "@/components/deals/create-deal-dialog";
-import type { DealListItem, PipelineStageData } from "@/types";
+import type { CompanyOption, DealListItem, PipelineStageData } from "@/types";
 
 interface AddToDealDialogProps {
   isOpen: boolean;
@@ -38,6 +38,7 @@ export function AddToDealDialog({
   const router = useRouter();
   const [deals, setDeals] = useState<DealListItem[] | null>(null);
   const [stages, setStages] = useState<PipelineStageData[]>([]);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [mode, setMode] = useState<"pick" | "create">("pick");
   const [linkingId, setLinkingId] = useState<string | null>(null);
 
@@ -47,10 +48,12 @@ export function AddToDealDialog({
     Promise.all([
       apiClient.get<DealListItem[]>("/api/deals"),
       apiClient.get<PipelineStageData[]>("/api/deals/stages").catch(() => []),
+      apiClient.get<CompanyOption[]>("/api/deals/companies").catch(() => []),
     ])
-      .then(([all, stageList]) => {
+      .then(([all, stageList, companyList]) => {
         if (cancelled) return;
         setStages(stageList);
+        setCompanies(companyList.map((c) => ({ id: c.id, name: c.name })));
         const open = all.filter((d) => d.status === "OPEN");
         setDeals(open);
         if (open.length === 0) setMode("create");
@@ -91,6 +94,7 @@ export function AddToDealDialog({
         onClose={onClose}
         members={[]}
         stages={stages}
+        companies={companies}
         currentUserId=""
         prefill={{ pageId, name: pageTitle }}
         onCreated={() => router.refresh()}

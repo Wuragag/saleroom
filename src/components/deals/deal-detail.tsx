@@ -39,16 +39,24 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DealPulse, formatCloseDate } from "@/components/deals/deal-card";
 import { MemberPicker } from "@/components/deals/member-picker";
+import { CompanyPicker } from "@/components/deals/company-picker";
 import { DealRoomsCard } from "@/components/deals/deal-rooms-card";
 import { DealStakeholdersCard } from "@/components/deals/deal-stakeholders-card";
 import { DealMapCard } from "@/components/deals/deal-map-card";
 import { DealCommentsCard } from "@/components/deals/deal-comments-card";
-import type { DealDetailData, DealOwnerData, PipelineStageData } from "@/types";
+import type {
+  CompanyOption,
+  DealDetailData,
+  DealOwnerData,
+  PipelineStageData,
+} from "@/types";
 
 interface DealDetailProps {
   deal: DealDetailData;
   members: DealOwnerData[];
   stages: PipelineStageData[];
+  /** Companies to pick from; the picker can also create one inline. */
+  companies: CompanyOption[];
   currentUserId: string;
   /** Viewer can delete anyone's comment (deal owner or team OWNER). */
   canModerate: boolean;
@@ -56,7 +64,7 @@ interface DealDetailProps {
 
 type DealPatch = Partial<{
   name: string;
-  company: string;
+  companyId: string | null;
   value: number | null;
   stageId: string;
   status: "OPEN" | "WON" | "LOST";
@@ -68,17 +76,18 @@ export function DealDetail({
   deal,
   members,
   stages,
+  companies: initialCompanies,
   currentUserId,
   canModerate,
 }: DealDetailProps) {
   const router = useRouter();
   const [name, setName] = useState(deal.name);
-  const [company, setCompany] = useState(deal.company?.name ?? "");
   const [valueText, setValueText] = useState(
     deal.value !== null ? String(deal.value) : ""
   );
+  // Local copy so a company created from the picker appears immediately.
+  const [companies, setCompanies] = useState(initialCompanies);
   const nameRef = useRef<HTMLInputElement>(null);
-  const companyRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLInputElement>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -90,11 +99,6 @@ export function DealDetail({
     if (document.activeElement !== nameRef.current) setName(deal.name);
   }, [deal.name]);
   useEffect(() => {
-    if (document.activeElement !== companyRef.current) {
-      setCompany(deal.company?.name ?? "");
-    }
-  }, [deal.company]);
-  useEffect(() => {
     if (document.activeElement !== valueRef.current) {
       setValueText(deal.value !== null ? String(deal.value) : "");
     }
@@ -102,9 +106,6 @@ export function DealDetail({
 
   const resetFields = () => {
     if (document.activeElement !== nameRef.current) setName(deal.name);
-    if (document.activeElement !== companyRef.current) {
-      setCompany(deal.company?.name ?? "");
-    }
     if (document.activeElement !== valueRef.current) {
       setValueText(deal.value !== null ? String(deal.value) : "");
     }
@@ -130,13 +131,6 @@ export function DealDetail({
       return;
     }
     if (trimmed !== deal.name) patch({ name: trimmed });
-  };
-
-  const commitCompany = () => {
-    // Server resolves the typed name to a Company (creating it when new).
-    if (company.trim() !== (deal.company?.name ?? "")) {
-      patch({ company: company.trim() });
-    }
   };
 
   const commitValue = () => {
@@ -191,16 +185,20 @@ export function DealDetail({
             aria-label="Deal name"
             className="-mx-1 w-full max-w-xl rounded-lg bg-transparent px-1 font-display text-display text-foreground transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
           />
-          <input
-            ref={companyRef}
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            onBlur={commitCompany}
-            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-            aria-label="Company"
-            placeholder="Add company"
-            className="-mx-1 mt-0.5 w-full max-w-xl rounded-lg bg-transparent px-1 text-body text-muted-foreground transition-colors placeholder:text-muted-foreground/60 hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
-          />
+          <div className="mt-0.5 max-w-xs">
+            <CompanyPicker
+              variant="inline"
+              placeholder="Add company"
+              companies={companies}
+              value={deal.company}
+              onChange={(next) => patch({ companyId: next?.id ?? null })}
+              onCompanyCreated={(created) =>
+                setCompanies((prev) =>
+                  [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+                )
+              }
+            />
+          </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-2">
             <DealPulse deal={deal} />
             {!isOpen && deal.closedAt && (

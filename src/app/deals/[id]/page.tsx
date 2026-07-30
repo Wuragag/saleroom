@@ -5,6 +5,7 @@ import { getUserTeamId } from "@/lib/team-auth";
 import { checkDealAccess } from "@/lib/deal-auth";
 import { getDealDetail, getMemberOptions } from "@/lib/deal-queries";
 import { ensurePipelineStages } from "@/lib/pipeline-stages";
+import { listCompanyOptions } from "@/lib/contact-queries";
 import { DealDetail } from "@/components/deals/deal-detail";
 
 export default async function DealDetailPage({
@@ -27,9 +28,10 @@ export default async function DealDetailPage({
   // Stages come from the DEAL's scope, matching what PATCH validates against —
   // otherwise a legacy teamless deal (owner has since joined a team) would be
   // offered columns the server rejects.
-  const [members, stages] = await Promise.all([
+  const [members, stages, companies] = await Promise.all([
     getMemberOptions(session.user.id, teamId),
     ensurePipelineStages(deal.owner.id, deal.teamId),
+    listCompanyOptions(deal.owner.id, deal.teamId),
   ]);
 
   // Mirrors the comment-delete rule the API enforces (author, else deal owner
@@ -43,6 +45,7 @@ export default async function DealDetailPage({
         deal={deal}
         members={members}
         stages={stages.map((s) => ({ id: s.id, name: s.name, order: s.order }))}
+        companies={companies}
         currentUserId={session.user.id}
         canModerate={canModerate}
       />

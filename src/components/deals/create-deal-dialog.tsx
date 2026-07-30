@@ -23,7 +23,8 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { MemberPicker } from "@/components/deals/member-picker";
-import type { DealOwnerData, PipelineStageData } from "@/types";
+import { CompanyPicker } from "@/components/deals/company-picker";
+import type { CompanyOption, DealOwnerData, PipelineStageData } from "@/types";
 
 export interface CreateDealPrefill {
   /** Room to link to the new deal on creation. */
@@ -39,6 +40,8 @@ interface CreateDealDialogProps {
   members: DealOwnerData[];
   /** The scope's pipeline columns; the first is the default stage. */
   stages: PipelineStageData[];
+  /** Companies to pick from; the picker can also create one inline. */
+  companies: CompanyOption[];
   currentUserId: string;
   prefill?: CreateDealPrefill;
   /** Called with the new deal id after a successful create. */
@@ -50,12 +53,16 @@ export function CreateDealDialog({
   onClose,
   members,
   stages,
+  companies: initialCompanies,
   currentUserId,
   prefill,
   onCreated,
 }: CreateDealDialogProps) {
   const [name, setName] = useState(prefill?.name ?? "");
-  const [company, setCompany] = useState("");
+  // Local copy so a company created from the picker shows up immediately,
+  // before the parent's router.refresh() lands.
+  const [companies, setCompanies] = useState(initialCompanies);
+  const [company, setCompany] = useState<CompanyOption | null>(null);
   const [value, setValue] = useState("");
   const [stageId, setStageId] = useState<string | undefined>(stages[0]?.id);
   const [closeDate, setCloseDate] = useState<Date | null>(
@@ -79,7 +86,7 @@ export function CreateDealDialog({
       }
       const deal = await apiClient.post<{ id: string }>("/api/deals", {
         name: name.trim(),
-        company: company.trim(),
+        companyId: company?.id ?? null,
         value: parsedValue,
         stageId,
         expectedCloseDate: closeDate ? closeDate.toISOString() : null,
@@ -131,14 +138,18 @@ export function CreateDealDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label htmlFor="deal-company" className="text-xs font-medium text-foreground">
+              <span className="block text-xs font-medium text-foreground">
                 Company
-              </label>
-              <Input
-                id="deal-company"
+              </span>
+              <CompanyPicker
+                companies={companies}
                 value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Acme Inc."
+                onChange={setCompany}
+                onCompanyCreated={(created) =>
+                  setCompanies((prev) =>
+                    [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+                  )
+                }
               />
             </div>
             <div className="space-y-1.5">

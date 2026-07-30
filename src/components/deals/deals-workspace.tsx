@@ -43,7 +43,12 @@ import { CreateDealDialog } from "@/components/deals/create-deal-dialog";
 import { ManageStagesDialog } from "@/components/deals/manage-stages-dialog";
 import { DealsTabs } from "@/components/deals/deals-tabs";
 import { memberDisplayName } from "@/components/deals/member-picker";
-import type { DealListItem, DealOwnerData, PipelineStageData } from "@/types";
+import type {
+  CompanyOption,
+  DealListItem,
+  DealOwnerData,
+  PipelineStageData,
+} from "@/types";
 
 type ViewMode = "board" | "list";
 type StatusFilter = "all" | "open" | "won" | "lost";
@@ -131,6 +136,8 @@ interface DealsWorkspaceProps {
   deals: DealListItem[];
   stages: PipelineStageData[];
   members: DealOwnerData[];
+  /** Companies for the create-deal picker. */
+  companies: CompanyOption[];
   currentUserId: string;
 }
 
@@ -138,6 +145,7 @@ export function DealsWorkspace({
   deals: initialDeals,
   stages,
   members,
+  companies,
   currentUserId,
 }: DealsWorkspaceProps) {
   const router = useRouter();
@@ -444,6 +452,7 @@ export function DealsWorkspace({
           onClose={() => setCreateOpen(false)}
           members={members}
           stages={stages}
+          companies={companies}
           currentUserId={currentUserId}
           onCreated={() => router.refresh()}
         />

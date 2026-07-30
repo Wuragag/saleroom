@@ -5,7 +5,7 @@ import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { getDealDetail } from "@/lib/deal-queries";
 import { STATUS_LABELS } from "@/lib/deals";
-import { resolveCompany } from "@/lib/contacts";
+import { resolveCompanyInput } from "@/lib/contacts";
 import { cleanString } from "@/lib/validation";
 import {
   assertCanCreateDealTx,
@@ -24,6 +24,9 @@ const OWNER_INCLUDE = {
 
 interface PatchDealBody {
   name?: unknown;
+  /** Picked from the company picker. */
+  companyId?: unknown;
+  /** Legacy/name-based path. */
   company?: unknown;
   value?: unknown;
   stageId?: unknown;
@@ -70,21 +73,19 @@ export const PATCH = withErrorHandler(async (
     data.name = name;
   }
 
-  if (body.company !== undefined) {
-    const company = cleanString(body.company, 200);
-    if (company === null) {
+  if (body.companyId !== undefined || body.company !== undefined) {
+    // companyId comes from the picker; a name still resolves (or creates) one.
+    const companyId = await resolveCompanyInput(
+      { teamId: access.deal.teamId, userId: access.deal.ownerId },
+      body.companyId,
+      body.company
+    );
+    if (companyId === false) {
       return NextResponse.json({ error: "Invalid company" }, { status: 400 });
     }
-    // Clearing the field unlinks; a name resolves to (or creates) a Company.
-    if (!company) {
-      data.company = { disconnect: true };
-    } else {
-      const companyId = await resolveCompany(
-        { teamId: access.deal.teamId, userId: access.deal.ownerId },
-        company
-      );
-      data.company = companyId ? { connect: { id: companyId } } : { disconnect: true };
-    }
+    data.company = companyId
+      ? { connect: { id: companyId } }
+      : { disconnect: true };
   }
 
   if (body.value !== undefined) {

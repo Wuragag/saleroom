@@ -10,7 +10,7 @@ import {
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { listDealsWithRollups } from "@/lib/deal-queries";
 import { ensurePipelineStages } from "@/lib/pipeline-stages";
-import { resolveCompany } from "@/lib/contacts";
+import { resolveCompanyInput } from "@/lib/contacts";
 import { cleanString } from "@/lib/validation";
 
 /** Thrown inside the create transaction when the room got linked concurrently. */
@@ -18,6 +18,9 @@ class RoomAlreadyLinkedError extends Error {}
 
 interface CreateDealBody {
   name?: unknown;
+  /** Picked from the company picker. */
+  companyId?: unknown;
+  /** Legacy/name-based path (create-from-room, API callers). */
   company?: unknown;
   value?: unknown;
   stageId?: unknown;
@@ -59,10 +62,6 @@ export const POST = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "Deal name is required" }, { status: 400 });
   }
 
-  const company = body.company === undefined ? "" : cleanString(body.company, 200);
-  if (company === null) {
-    return NextResponse.json({ error: "Invalid company" }, { status: 400 });
-  }
 
   const value = parseValue(body.value ?? null);
   if (value === undefined) {
@@ -87,10 +86,16 @@ export const POST = withErrorHandler(async (request: Request) => {
 
   const teamId = await getUserTeamId(userId);
 
-  // A typed company name becomes (or joins) a canonical Company.
-  const companyId = company
-    ? await resolveCompany({ teamId, userId }, company)
-    : null;
+  // The form sends a picked companyId; a name is still accepted (create-from-
+  // room, API callers) and resolves to — or creates — the canonical Company.
+  const companyId = await resolveCompanyInput(
+    { teamId, userId },
+    body.companyId,
+    body.company
+  );
+  if (companyId === false) {
+    return NextResponse.json({ error: "Invalid company" }, { status: 400 });
+  }
 
   // The scope's columns (seeded on first touch); default to the first one.
   const stages = await ensurePipelineStages(userId, teamId);

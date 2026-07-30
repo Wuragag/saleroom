@@ -326,6 +326,12 @@ export interface ContactRow {
   intent: IntentLabel | null;
 }
 
+/** Lightweight company reference for pickers and deal/contact records. */
+export interface CompanyOption {
+  id: string;
+  name: string;
+}
+
 export interface CompanyRow {
   id: string;
   name: string;
