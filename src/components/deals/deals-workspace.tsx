@@ -13,6 +13,7 @@ import {
   Milestone,
   Plus,
   Search,
+  Settings2,
   User,
   X,
   type LucideIcon,
@@ -30,7 +31,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   CLOSE_DATE_FILTERS,
-  DEAL_STAGES,
   WARMTH_FILTERS,
   filterDeals,
   formatDealValue,
@@ -40,8 +40,9 @@ import {
 import { DealBoard, type DealMovePatch } from "@/components/deals/deal-board";
 import { DealList } from "@/components/deals/deal-list";
 import { CreateDealDialog } from "@/components/deals/create-deal-dialog";
+import { ManageStagesDialog } from "@/components/deals/manage-stages-dialog";
 import { memberDisplayName } from "@/components/deals/member-picker";
-import type { DealListItem, DealOwnerData, DealStageValue } from "@/types";
+import type { DealListItem, DealOwnerData, PipelineStageData } from "@/types";
 
 type ViewMode = "board" | "list";
 type StatusFilter = "all" | "open" | "won" | "lost";
@@ -127,12 +128,14 @@ function FilterDropdown<T extends string>({
 
 interface DealsWorkspaceProps {
   deals: DealListItem[];
+  stages: PipelineStageData[];
   members: DealOwnerData[];
   currentUserId: string;
 }
 
 export function DealsWorkspace({
   deals: initialDeals,
+  stages,
   members,
   currentUserId,
 }: DealsWorkspaceProps) {
@@ -146,9 +149,10 @@ export function DealsWorkspace({
   const [ownerFilter, setOwnerFilter] = useState<string | null>(null);
   const [warmthFilter, setWarmthFilter] = useState<WarmthFilter | null>(null);
   const [closeDateFilter, setCloseDateFilter] = useState<CloseDateFilter | null>(null);
-  const [stageFilter, setStageFilter] = useState<DealStageValue | null>(null);
+  const [stageFilter, setStageFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("deals-view") as ViewMode | null;
@@ -179,10 +183,18 @@ export function DealsWorkspace({
           statusFilter === "all"
             ? null
             : (statusFilter.toUpperCase() as DealListItem["status"]),
-        stage: stageFilter,
+        stageId: stageFilter,
       }),
     [baseFiltered, statusFilter, stageFilter]
   );
+
+  const dealCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const deal of deals) {
+      counts[deal.stage.id] = (counts[deal.stage.id] ?? 0) + 1;
+    }
+    return counts;
+  }, [deals]);
 
   const hasActiveFilters =
     !!search.trim() ||
@@ -271,7 +283,7 @@ export function DealsWorkspace({
             icon={Milestone}
             allLabel="All stages"
             value={stageFilter}
-            options={DEAL_STAGES.map((s) => ({ value: s.value, label: s.label }))}
+            options={stages.map((s) => ({ value: s.id, label: s.name }))}
             onChange={setStageFilter}
           />
         )}
@@ -325,6 +337,14 @@ export function DealsWorkspace({
           />
         </div>
 
+        <button
+          onClick={() => setManageOpen(true)}
+          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+        >
+          <Settings2 className="h-3 w-3" />
+          Edit columns
+        </button>
+
         <div className="flex items-center rounded-full border border-border bg-card p-0.5">
           <button
             onClick={() => changeView("board")}
@@ -365,7 +385,12 @@ export function DealsWorkspace({
             }
           />
         ) : view === "board" ? (
-          <DealBoard deals={baseFiltered} onMove={patchDeal} />
+          <DealBoard
+            deals={baseFiltered}
+            stages={stages}
+            onMove={patchDeal}
+            onManageColumns={() => setManageOpen(true)}
+          />
         ) : listFiltered.length === 0 ? (
           <EmptyState
             icon={Search}
@@ -383,9 +408,8 @@ export function DealsWorkspace({
         ) : (
           <DealList
             deals={listFiltered}
-            onStageChange={(dealId, stage: DealStageValue) =>
-              patchDeal(dealId, { stage })
-            }
+            stages={stages}
+            onStageChange={(dealId, stageId) => patchDeal(dealId, { stageId })}
           />
         )}
       </div>
@@ -395,8 +419,19 @@ export function DealsWorkspace({
           isOpen
           onClose={() => setCreateOpen(false)}
           members={members}
+          stages={stages}
           currentUserId={currentUserId}
           onCreated={() => router.refresh()}
+        />
+      )}
+
+      {manageOpen && (
+        <ManageStagesDialog
+          isOpen
+          onClose={() => setManageOpen(false)}
+          stages={stages}
+          dealCounts={dealCounts}
+          onChanged={() => router.refresh()}
         />
       )}
     </div>

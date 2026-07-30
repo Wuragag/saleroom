@@ -23,8 +23,7 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { MemberPicker } from "@/components/deals/member-picker";
-import { DEAL_STAGES, STAGE_LABELS } from "@/lib/deals";
-import type { DealOwnerData, DealStageValue } from "@/types";
+import type { DealOwnerData, PipelineStageData } from "@/types";
 
 export interface CreateDealPrefill {
   /** Room to link to the new deal on creation. */
@@ -38,6 +37,8 @@ interface CreateDealDialogProps {
   isOpen: boolean;
   onClose: () => void;
   members: DealOwnerData[];
+  /** The scope's pipeline columns; the first is the default stage. */
+  stages: PipelineStageData[];
   currentUserId: string;
   prefill?: CreateDealPrefill;
   /** Called with the new deal id after a successful create. */
@@ -48,6 +49,7 @@ export function CreateDealDialog({
   isOpen,
   onClose,
   members,
+  stages,
   currentUserId,
   prefill,
   onCreated,
@@ -55,7 +57,7 @@ export function CreateDealDialog({
   const [name, setName] = useState(prefill?.name ?? "");
   const [company, setCompany] = useState("");
   const [value, setValue] = useState("");
-  const [stage, setStage] = useState<DealStageValue>("NEW");
+  const [stageId, setStageId] = useState<string | undefined>(stages[0]?.id);
   const [closeDate, setCloseDate] = useState<Date | null>(
     prefill?.closeDate ? new Date(prefill.closeDate) : null
   );
@@ -79,7 +81,7 @@ export function CreateDealDialog({
         name: name.trim(),
         company: company.trim(),
         value: parsedValue,
-        stage,
+        stageId,
         expectedCloseDate: closeDate ? closeDate.toISOString() : null,
         // Empty when the caller has no member context — server defaults to the
         // session user.
@@ -165,20 +167,17 @@ export function CreateDealDialog({
                     aria-label="Stage"
                     className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    {STAGE_LABELS[stage]}
+                    {stages.find((s) => s.id === stageId)?.name ?? "Select stage"}
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  {DEAL_STAGES.map((s) => (
-                    <DropdownMenuItem
-                      key={s.value}
-                      onClick={() => setStage(s.value as DealStageValue)}
-                    >
+                  {stages.map((s) => (
+                    <DropdownMenuItem key={s.id} onClick={() => setStageId(s.id)}>
                       <span className="w-4">
-                        {s.value === stage && <Check className="h-3.5 w-3.5" />}
+                        {s.id === stageId && <Check className="h-3.5 w-3.5" />}
                       </span>
-                      {s.label}
+                      {s.name}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

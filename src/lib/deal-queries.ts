@@ -132,6 +132,7 @@ export async function listDealsWithRollups(
     where: accessibleDealWhere(userId, teamId),
     include: {
       owner: { select: OWNER_SELECT },
+      stage: { select: { id: true, name: true } },
       pages: { select: PAGE_SELECT },
       _count: { select: { stakeholders: true } },
     },
@@ -151,6 +152,7 @@ export async function listDealsWithRollups(
       company: deal.company,
       value: deal.value,
       stage: deal.stage,
+      stageEnteredAt: deal.stageEnteredAt.toISOString(),
       status: deal.status,
       expectedCloseDate: iso(deal.expectedCloseDate),
       closedAt: iso(deal.closedAt),
@@ -186,8 +188,13 @@ export async function getDealDetail(
     where: { id: dealId },
     include: {
       owner: { select: OWNER_SELECT },
+      stage: { select: { id: true, name: true } },
       pages: { select: DETAIL_PAGE_SELECT },
       stakeholders: { orderBy: { createdAt: "asc" } },
+      comments: {
+        orderBy: { createdAt: "desc" },
+        include: { author: { select: OWNER_SELECT } },
+      },
     },
   });
   if (!deal) return null;
@@ -345,6 +352,7 @@ export async function getDealDetail(
     company: deal.company,
     value: deal.value,
     stage: deal.stage,
+    stageEnteredAt: deal.stageEnteredAt.toISOString(),
     status: deal.status,
     expectedCloseDate: iso(deal.expectedCloseDate),
     closedAt: iso(deal.closedAt),
@@ -354,6 +362,12 @@ export async function getDealDetail(
     stakeholders,
     stakeholderSuggestions: suggestions,
     actionPlans,
+    comments: deal.comments.map((c) => ({
+      id: c.id,
+      body: c.body,
+      createdAt: c.createdAt.toISOString(),
+      author: c.author,
+    })),
     engagement: {
       lastActivityAt: iso(rollup.lastActivityAt),
       intent: rollup.intent,

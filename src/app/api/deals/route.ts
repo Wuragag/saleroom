@@ -9,9 +9,8 @@ import {
 } from "@/lib/plan-limits";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { listDealsWithRollups } from "@/lib/deal-queries";
-import { DEAL_STAGES } from "@/lib/deals";
+import { ensurePipelineStages } from "@/lib/pipeline-stages";
 import { cleanString } from "@/lib/validation";
-import type { DealStage } from "@/generated/prisma";
 
 /** Thrown inside the create transaction when the room got linked concurrently. */
 class RoomAlreadyLinkedError extends Error {}
@@ -20,7 +19,7 @@ interface CreateDealBody {
   name?: unknown;
   company?: unknown;
   value?: unknown;
-  stage?: unknown;
+  stageId?: unknown;
   expectedCloseDate?: unknown;
   ownerId?: unknown;
   /** Optional room to link on creation ("create a deal from a room"). */
@@ -69,15 +68,6 @@ export const POST = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "Invalid deal value" }, { status: 400 });
   }
 
-  let stage: DealStage = "NEW";
-  if (body.stage !== undefined) {
-    const match = DEAL_STAGES.find((s) => s.value === body.stage);
-    if (!match) {
-      return NextResponse.json({ error: "Invalid stage" }, { status: 400 });
-    }
-    stage = match.value;
-  }
-
   let expectedCloseDate: Date | null = null;
   if (body.expectedCloseDate !== undefined && body.expectedCloseDate !== null) {
     if (typeof body.expectedCloseDate !== "string") {
@@ -95,6 +85,22 @@ export const POST = withErrorHandler(async (request: Request) => {
   const pageId = body.pageId as string | undefined;
 
   const teamId = await getUserTeamId(userId);
+
+  // The scope's columns (seeded on first touch); default to the first one.
+  const stages = await ensurePipelineStages(userId, teamId);
+  let stageId = stages[0]?.id;
+  if (body.stageId !== undefined) {
+    if (
+      typeof body.stageId !== "string" ||
+      !stages.some((s) => s.id === body.stageId)
+    ) {
+      return NextResponse.json({ error: "Invalid stage" }, { status: 400 });
+    }
+    stageId = body.stageId;
+  }
+  if (!stageId) {
+    return NextResponse.json({ error: "No pipeline columns exist" }, { status: 400 });
+  }
 
   // Owner defaults to the creator; anyone else must be a teammate.
   if (body.ownerId !== undefined && typeof body.ownerId !== "string") {
@@ -139,7 +145,7 @@ export const POST = withErrorHandler(async (request: Request) => {
           name,
           company,
           value,
-          stage,
+          stageId,
           expectedCloseDate,
           ownerId,
           teamId,

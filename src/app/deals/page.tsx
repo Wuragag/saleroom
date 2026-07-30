@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
 import { getUserTeamId } from "@/lib/team-auth";
 import { getMemberOptions, listDealsWithRollups } from "@/lib/deal-queries";
+import { ensurePipelineStages } from "@/lib/pipeline-stages";
 import { DealsWorkspace } from "@/components/deals/deals-workspace";
 
 export default async function DealsPage() {
@@ -19,6 +20,8 @@ export default async function DealsPage() {
 
   const teamId = await getUserTeamId(session.user.id);
 
+  // Seed default columns on first touch, then load everything in parallel.
+  const stages = await ensurePipelineStages(session.user.id, teamId);
   const [deals, members] = await Promise.all([
     listDealsWithRollups(session.user.id, teamId),
     getMemberOptions(session.user.id, teamId),
@@ -28,6 +31,7 @@ export default async function DealsPage() {
     <AppShell>
       <DealsWorkspace
         deals={deals}
+        stages={stages.map((s) => ({ id: s.id, name: s.name, order: s.order }))}
         members={members}
         currentUserId={session.user.id}
       />

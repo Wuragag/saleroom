@@ -13,25 +13,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { DEAL_STAGES, STAGE_LABELS, formatDealValue, isOverdue } from "@/lib/deals";
+import { formatDealValue, formatStageAge, isOverdue } from "@/lib/deals";
 import { DealPulse, formatCloseDate } from "@/components/deals/deal-card";
 import { memberDisplayName } from "@/components/deals/member-picker";
-import type { DealListItem, DealStageValue } from "@/types";
+import type { DealListItem, PipelineStageData } from "@/types";
 
 const GRID =
-  "grid grid-cols-[minmax(0,1.8fr)_130px_90px_104px_150px_170px] items-center gap-3";
+  "grid grid-cols-[minmax(0,1.8fr)_130px_90px_104px_84px_150px_170px] items-center gap-3";
 
 interface DealListProps {
   deals: DealListItem[];
-  onStageChange: (dealId: string, stage: DealStageValue) => void;
+  stages: PipelineStageData[];
+  onStageChange: (dealId: string, stageId: string) => void;
 }
 
 function StageCell({
   deal,
+  stages,
   onStageChange,
 }: {
   deal: DealListItem;
-  onStageChange: (dealId: string, stage: DealStageValue) => void;
+  stages: PipelineStageData[];
+  onStageChange: (dealId: string, stageId: string) => void;
 }) {
   if (deal.status === "WON") return <Badge variant="success">Won</Badge>;
   if (deal.status === "LOST") return <Badge variant="neutral">Lost</Badge>;
@@ -43,20 +46,17 @@ function StageCell({
           onClick={(e) => e.stopPropagation()}
           className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-0.5 text-2xs font-semibold text-foreground transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {STAGE_LABELS[deal.stage]}
+          {deal.stage.name}
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
-        {DEAL_STAGES.map((s) => (
-          <DropdownMenuItem
-            key={s.value}
-            onClick={() => onStageChange(deal.id, s.value)}
-          >
+        {stages.map((s) => (
+          <DropdownMenuItem key={s.id} onClick={() => onStageChange(deal.id, s.id)}>
             <span className="w-4">
-              {s.value === deal.stage && <Check className="h-3.5 w-3.5" />}
+              {s.id === deal.stage.id && <Check className="h-3.5 w-3.5" />}
             </span>
-            {s.label}
+            {s.name}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -64,12 +64,12 @@ function StageCell({
   );
 }
 
-export function DealList({ deals, onStageChange }: DealListProps) {
+export function DealList({ deals, stages, onStageChange }: DealListProps) {
   const router = useRouter();
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
-      <div className="min-w-[820px]">
+      <div className="min-w-[900px]">
         <div
           className={cn(
             GRID,
@@ -80,6 +80,7 @@ export function DealList({ deals, onStageChange }: DealListProps) {
           <span>Stage</span>
           <span>Value</span>
           <span>Close date</span>
+          <span>In stage</span>
           <span>Owner</span>
           <span>Buyer activity</span>
         </div>
@@ -105,7 +106,7 @@ export function DealList({ deals, onStageChange }: DealListProps) {
                 )}
               </span>
               <span>
-                <StageCell deal={deal} onStageChange={onStageChange} />
+                <StageCell deal={deal} stages={stages} onStageChange={onStageChange} />
               </span>
               <span className="text-sm tabular-nums text-foreground">
                 {formatDealValue(deal.value)}
@@ -119,6 +120,9 @@ export function DealList({ deals, onStageChange }: DealListProps) {
                 {deal.expectedCloseDate
                   ? formatCloseDate(deal.expectedCloseDate)
                   : "—"}
+              </span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {deal.status === "OPEN" ? formatStageAge(deal.stageEnteredAt) : "—"}
               </span>
               <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
                 <Avatar

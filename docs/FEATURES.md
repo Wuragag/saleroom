@@ -353,16 +353,26 @@ A deliberately lightweight deal layer on top of rooms — the first simple place
 no-CRM team's deals live. **Not a CRM**: no custom fields, no automation, no
 reporting beyond the open-pipeline total, no external logging or integrations.
 
-- **Deal object** (`Deal`) — name, company, optional value (whole USD),
-  a fixed stage (**New → Qualified → Proposal → Negotiation**, a Prisma enum —
-  order/labels in [`src/lib/deals.ts`](../src/lib/deals.ts)), status
-  (open / won / lost with `closedAt`), expected close date, and an owner (a team
-  member). Deals are team-visible; delete is owner/team-OWNER only
-  ([`src/lib/deal-auth.ts`](../src/lib/deal-auth.ts)).
+- **Deal object** (`Deal`) — name, company, optional value (whole USD), a
+  stage, status (open / won / lost with `closedAt`), expected close date, and
+  an owner (a team member). Deals are team-visible; delete is owner/team-OWNER
+  only ([`src/lib/deal-auth.ts`](../src/lib/deal-auth.ts)).
+- **Custom pipeline columns** (`PipelineStage`) — any team member can add,
+  rename, reorder, and delete board columns (max 8, min 1; defaults **New →
+  Qualified → Proposal → Negotiation** seeded on first use). Deleting a column
+  moves its deals to the neighboring one — stated in the confirm, nothing lost.
+  **Won/Lost are fixed status columns**, never customizable. Helpers:
+  [`src/lib/pipeline-stages.ts`](../src/lib/pipeline-stages.ts); API under
+  [`/api/deals/stages`](../src/app/api/deals/stages/route.ts).
 - **Pipeline** ([`/deals`](../src/app/deals/page.tsx)) — a drag-and-drop board
-  (stage columns plus Won/Lost; dnd-kit) with a list/table alternative, owner
-  filter, search, and the **total open value** as the only aggregate. Cards show
-  company, value, close date, owner, and the **deal pulse** (see below).
+  (custom columns plus Won/Lost; dnd-kit) with a list/table alternative,
+  warmth/close-date/owner/stage filters, search, and the **total open value**
+  as the only aggregate. Cards show company, value, close date, owner, the
+  **deal pulse** (see below), and **time in stage** (`stageEnteredAt` — resets
+  on stage moves and reopen; no stage-duration history by design).
+- **Comments** (`DealComment`) — team-only notes on the deal detail page (never
+  buyer-visible). Post + delete your own; the deal owner / team OWNER can
+  moderate. No mentions, threads, or edits.
 - **Room linking** — a room belongs to at most one deal (`Page.dealId`,
   `SetNull`); a deal can hold many rooms. Link/unlink from the deal page, create
   a deal from a room ("Add to deal…" on the dashboard), or spin up a new room

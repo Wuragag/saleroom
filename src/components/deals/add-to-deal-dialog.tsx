@@ -14,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatDealValue, STAGE_LABELS } from "@/lib/deals";
+import { formatDealValue } from "@/lib/deals";
 import { CreateDealDialog } from "@/components/deals/create-deal-dialog";
-import type { DealListItem } from "@/types";
+import type { DealListItem, PipelineStageData } from "@/types";
 
 interface AddToDealDialogProps {
   isOpen: boolean;
@@ -37,15 +37,20 @@ export function AddToDealDialog({
 }: AddToDealDialogProps) {
   const router = useRouter();
   const [deals, setDeals] = useState<DealListItem[] | null>(null);
+  const [stages, setStages] = useState<PipelineStageData[]>([]);
   const [mode, setMode] = useState<"pick" | "create">("pick");
   const [linkingId, setLinkingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    apiClient
-      .get<DealListItem[]>("/api/deals")
-      .then((all) => {
+    // Stages feed the embedded create form; GET also seeds scope defaults.
+    Promise.all([
+      apiClient.get<DealListItem[]>("/api/deals"),
+      apiClient.get<PipelineStageData[]>("/api/deals/stages").catch(() => []),
+    ])
+      .then(([all, stageList]) => {
         if (cancelled) return;
+        setStages(stageList);
         const open = all.filter((d) => d.status === "OPEN");
         setDeals(open);
         if (open.length === 0) setMode("create");
@@ -85,6 +90,7 @@ export function AddToDealDialog({
         isOpen={isOpen}
         onClose={onClose}
         members={[]}
+        stages={stages}
         currentUserId=""
         prefill={{ pageId, name: pageTitle }}
         onCreated={() => router.refresh()}
@@ -120,7 +126,7 @@ export function AddToDealDialog({
                     <p className="truncate text-2xs text-muted-foreground">
                       {[
                         deal.company,
-                        STAGE_LABELS[deal.stage],
+                        deal.stage.name,
                         deal.value !== null ? formatDealValue(deal.value) : null,
                       ]
                         .filter(Boolean)

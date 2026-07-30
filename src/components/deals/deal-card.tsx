@@ -5,7 +5,7 @@ import { FileText, CalendarDays } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { formatDealValue, isOverdue } from "@/lib/deals";
+import { formatDealValue, formatStageAge, isOverdue } from "@/lib/deals";
 import { formatRelativeTime } from "@/lib/format-utils";
 import { memberDisplayName } from "@/components/deals/member-picker";
 import type { DealListItem, IntentLabel } from "@/types";
@@ -79,8 +79,13 @@ export function DealCard({ deal, onClick, overlay, dragging }: DealCardProps) {
         </p>
       )}
 
-      <div className="mt-2.5">
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <DealPulse deal={deal} />
+        {deal.status === "OPEN" && (
+          <span className="shrink-0 text-2xs tabular-nums text-muted-foreground">
+            {formatStageAge(deal.stageEnteredAt)} in stage
+          </span>
+        )}
       </div>
 
       <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-border pt-2 text-2xs text-muted-foreground">

@@ -255,8 +255,14 @@ export interface ActivityFeedItem {
 
 // ──── Deals types ────
 
-export type DealStageValue = "NEW" | "QUALIFIED" | "PROPOSAL" | "NEGOTIATION";
 export type DealStatusValue = "OPEN" | "WON" | "LOST";
+
+/** A user-managed board column (Won/Lost are statuses, never stages). */
+export interface PipelineStageData {
+  id: string;
+  name: string;
+  order: number;
+}
 
 /** The deal pulse: recency + warmth rolled up from every linked room. */
 export interface DealEngagementRollupData {
@@ -285,7 +291,9 @@ export interface DealListItem {
   name: string;
   company: string;
   value: number | null;
-  stage: DealStageValue;
+  stage: { id: string; name: string };
+  /** ISO — when the deal entered its current stage. */
+  stageEnteredAt: string;
   status: DealStatusValue;
   expectedCloseDate: string | null; // ISO
   closedAt: string | null; // ISO
@@ -295,6 +303,13 @@ export interface DealListItem {
   engagement: DealEngagementRollupData;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DealCommentData {
+  id: string;
+  body: string;
+  createdAt: string; // ISO
+  author: DealOwnerData;
 }
 
 export interface DealRoomDetail extends DealRoomSummary {
@@ -347,7 +362,9 @@ export interface DealDetailData {
   name: string;
   company: string;
   value: number | null;
-  stage: DealStageValue;
+  stage: { id: string; name: string };
+  /** ISO — when the deal entered its current stage. */
+  stageEnteredAt: string;
   status: DealStatusValue;
   expectedCloseDate: string | null; // ISO
   closedAt: string | null; // ISO
@@ -357,6 +374,7 @@ export interface DealDetailData {
   stakeholders: DealStakeholderRow[];
   stakeholderSuggestions: DealStakeholderSuggestion[];
   actionPlans: DealMapSummary[];
+  comments: DealCommentData[];
   engagement: DealEngagementRollupData;
   createdAt: string;
 }

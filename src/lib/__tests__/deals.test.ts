@@ -4,7 +4,9 @@ import {
   boardMovePatch,
   filterDeals,
   formatDealValue,
+  formatStageAge,
   isOverdue,
+  stageDeleteTarget,
 } from "@/lib/deals";
 import type { DealListItem } from "@/types";
 
@@ -16,7 +18,8 @@ function deal(overrides: Partial<DealListItem> = {}): DealListItem {
     name: "Acme Renewal",
     company: "Acme Inc.",
     value: 12500,
-    stage: "NEW",
+    stage: { id: "stage-new", name: "New" },
+    stageEnteredAt: "2026-07-28T12:00:00.000Z",
     status: "OPEN",
     expectedCloseDate: null,
     closedAt: null,
@@ -34,39 +37,81 @@ const daysFromNow = (days: number) =>
   new Date(NOW + days * DAY_MS).toISOString();
 
 describe("boardMovePatch", () => {
-  it("moves an open deal between stages", () => {
-    expect(boardMovePatch({ stage: "NEW", status: "OPEN" }, "QUALIFIED")).toEqual({
-      stage: "QUALIFIED",
-    });
+  it("moves an open deal between stage columns", () => {
+    expect(
+      boardMovePatch({ stageId: "stage-new", status: "OPEN" }, "stage-qualified")
+    ).toEqual({ stageId: "stage-qualified" });
   });
 
   it("is a no-op when dropped on its own stage", () => {
-    expect(boardMovePatch({ stage: "NEW", status: "OPEN" }, "NEW")).toBeNull();
+    expect(
+      boardMovePatch({ stageId: "stage-new", status: "OPEN" }, "stage-new")
+    ).toBeNull();
   });
 
   it("marks won/lost when dropped on a terminal column", () => {
-    expect(boardMovePatch({ stage: "PROPOSAL", status: "OPEN" }, "WON")).toEqual({
-      status: "WON",
-    });
-    expect(boardMovePatch({ stage: "PROPOSAL", status: "OPEN" }, "LOST")).toEqual({
-      status: "LOST",
-    });
+    expect(
+      boardMovePatch({ stageId: "stage-prop", status: "OPEN" }, "WON")
+    ).toEqual({ status: "WON" });
+    expect(
+      boardMovePatch({ stageId: "stage-prop", status: "OPEN" }, "LOST")
+    ).toEqual({ status: "LOST" });
   });
 
   it("is a no-op when a closed deal is dropped on its own status column", () => {
-    expect(boardMovePatch({ stage: "PROPOSAL", status: "WON" }, "WON")).toBeNull();
+    expect(boardMovePatch({ stageId: "s", status: "WON" }, "WON")).toBeNull();
   });
 
   it("flips a won deal to lost directly", () => {
-    expect(boardMovePatch({ stage: "PROPOSAL", status: "WON" }, "LOST")).toEqual({
+    expect(boardMovePatch({ stageId: "s", status: "WON" }, "LOST")).toEqual({
       status: "LOST",
     });
   });
 
   it("reopens a closed deal dropped onto a stage column", () => {
-    expect(boardMovePatch({ stage: "PROPOSAL", status: "LOST" }, "QUALIFIED")).toEqual(
-      { status: "OPEN", stage: "QUALIFIED" }
-    );
+    expect(boardMovePatch({ stageId: "s", status: "LOST" }, "stage-q")).toEqual({
+      status: "OPEN",
+      stageId: "stage-q",
+    });
+  });
+});
+
+describe("stageDeleteTarget", () => {
+  const stages = [
+    { id: "a", order: 0 },
+    { id: "b", order: 1 },
+    { id: "c", order: 2 },
+  ];
+
+  it("sends deals to the previous column by order", () => {
+    expect(stageDeleteTarget(stages, "b")).toBe("a");
+    expect(stageDeleteTarget(stages, "c")).toBe("b");
+  });
+
+  it("sends the first column's deals to the next one", () => {
+    expect(stageDeleteTarget(stages, "a")).toBe("b");
+  });
+
+  it("refuses when the stage is missing or the last one left", () => {
+    expect(stageDeleteTarget(stages, "nope")).toBeNull();
+    expect(stageDeleteTarget([{ id: "a", order: 0 }], "a")).toBeNull();
+  });
+
+  it("ignores the input array's ordering", () => {
+    const shuffled = [stages[2], stages[0], stages[1]];
+    expect(stageDeleteTarget(shuffled, "b")).toBe("a");
+  });
+});
+
+describe("formatStageAge", () => {
+  it("floors to hours under a day, days after", () => {
+    expect(formatStageAge(new Date(NOW - 30 * 60 * 1000).toISOString(), NOW)).toBe("<1h");
+    expect(formatStageAge(new Date(NOW - 5 * 60 * 60 * 1000).toISOString(), NOW)).toBe("5h");
+    expect(formatStageAge(daysFromNow(-3), NOW)).toBe("3d");
+  });
+
+  it("clamps future timestamps to zero", () => {
+    expect(formatStageAge(daysFromNow(1), NOW)).toBe("<1h");
   });
 });
 
@@ -104,7 +149,7 @@ describe("filterDeals", () => {
   const wonAtProposal = deal({
     id: "won",
     status: "WON",
-    stage: "PROPOSAL",
+    stage: { id: "stage-proposal", name: "Proposal" },
     closedAt: daysFromNow(-2),
   });
   const all = [hot, cold, quiet, wonAtProposal];
@@ -146,9 +191,9 @@ describe("filterDeals", () => {
     expect(filterDeals([far], { closeDate: "soon" }, NOW)).toHaveLength(0);
   });
 
-  it("filters by owner, status, and stage together", () => {
+  it("filters by owner, status, and stage id together", () => {
     expect(
-      filterDeals(all, { status: "WON", stage: "PROPOSAL" }, NOW).map((d) => d.id)
+      filterDeals(all, { status: "WON", stageId: "stage-proposal" }, NOW).map((d) => d.id)
     ).toEqual(["won"]);
     expect(filterDeals(all, { ownerId: "user-2" }, NOW)).toHaveLength(0);
   });

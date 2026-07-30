@@ -16,7 +16,7 @@ import {
 
 import { apiClient, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { DEAL_STAGES, STAGE_LABELS, isOverdue } from "@/lib/deals";
+import { formatStageAge, isOverdue } from "@/lib/deals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -42,24 +42,27 @@ import { MemberPicker } from "@/components/deals/member-picker";
 import { DealRoomsCard } from "@/components/deals/deal-rooms-card";
 import { DealStakeholdersCard } from "@/components/deals/deal-stakeholders-card";
 import { DealMapCard } from "@/components/deals/deal-map-card";
-import type { DealDetailData, DealOwnerData, DealStageValue } from "@/types";
+import { DealCommentsCard } from "@/components/deals/deal-comments-card";
+import type { DealDetailData, DealOwnerData, PipelineStageData } from "@/types";
 
 interface DealDetailProps {
   deal: DealDetailData;
   members: DealOwnerData[];
+  stages: PipelineStageData[];
+  currentUserId: string;
 }
 
 type DealPatch = Partial<{
   name: string;
   company: string;
   value: number | null;
-  stage: DealStageValue;
+  stageId: string;
   status: "OPEN" | "WON" | "LOST";
   expectedCloseDate: string | null;
   ownerId: string;
 }>;
 
-export function DealDetail({ deal, members }: DealDetailProps) {
+export function DealDetail({ deal, members, stages, currentUserId }: DealDetailProps) {
   const router = useRouter();
   const [name, setName] = useState(deal.name);
   const [company, setCompany] = useState(deal.company);
@@ -247,25 +250,30 @@ export function DealDetail({ deal, members }: DealDetailProps) {
                   type="button"
                   className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {STAGE_LABELS[deal.stage]}
+                  {deal.stage.name}
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {DEAL_STAGES.map((s) => (
-                  <DropdownMenuItem key={s.value} onClick={() => patch({ stage: s.value })}>
+                {stages.map((s) => (
+                  <DropdownMenuItem key={s.id} onClick={() => patch({ stageId: s.id })}>
                     <span className="w-4">
-                      {s.value === deal.stage && <Check className="h-3.5 w-3.5" />}
+                      {s.id === deal.stage.id && <Check className="h-3.5 w-3.5" />}
                     </span>
-                    {s.label}
+                    {s.name}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="flex h-9 items-center px-0.5 text-sm text-muted-foreground">
-              {STAGE_LABELS[deal.stage]}
+              {deal.stage.name}
             </div>
+          )}
+          {isOpen && (
+            <p className="text-2xs text-muted-foreground">
+              In this stage {formatStageAge(deal.stageEnteredAt)}
+            </p>
           )}
         </div>
 
@@ -325,8 +333,15 @@ export function DealDetail({ deal, members }: DealDetailProps) {
           <DealRoomsCard deal={deal} onChanged={() => router.refresh()} />
           <DealMapCard actionPlans={deal.actionPlans} />
         </div>
-        <div>
+        <div className="space-y-5">
           <DealStakeholdersCard deal={deal} onChanged={() => router.refresh()} />
+          <DealCommentsCard
+            dealId={deal.id}
+            dealOwnerId={deal.owner.id}
+            comments={deal.comments}
+            currentUserId={currentUserId}
+            onChanged={() => router.refresh()}
+          />
         </div>
       </div>
 

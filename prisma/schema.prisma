@@ -51,15 +51,6 @@ enum DealStatus {
   LOST
 }
 
-// Fixed pipeline stages (deliberately not user-customizable — Deals is a
-// lightweight layer, not a CRM). Order/labels live in src/lib/deals.ts.
-enum DealStage {
-  NEW
-  QUALIFIED
-  PROPOSAL
-  NEGOTIATION
-}
-
 // ──── Models ────
 
 model User {
@@ -80,6 +71,8 @@ model User {
   lockedPages         Page[]       @relation("LockedBy")
   syncedBlocks        SyncedBlock[]
   ownedDeals          Deal[]       @relation("DealOwner")
+  pipelineStages      PipelineStage[]
+  dealComments        DealComment[]
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -93,6 +86,7 @@ model Team {
   syncedBlocks SyncedBlock[]
   templates    Template[]
   deals        Deal[]
+  pipelineStages PipelineStage[]
   subscription Subscription?
   aiCredits    TeamAiCredits?
   brandKit     BrandKit?
@@ -360,12 +354,35 @@ model PageContact {
 
 // ──── Deals (lightweight pipeline on top of rooms — deliberately not a CRM) ────
 
+// User-managed board columns, scoped like TeamAiCredits: teamId when the scope
+// is a team, userId for the teamless-legacy fallback (exactly one is set).
+// Won/Lost are deal STATUSES, not stages — they are never rows here.
+model PipelineStage {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deals     Deal[]
+  createdAt DateTime @default(now())
+
+  @@index([teamId, order])
+  @@index([userId, order])
+}
+
 model Deal {
   id                String            @id @default(cuid())
   name              String
   company           String            @default("")
   value             Int? // whole currency units (USD display)
-  stage             DealStage         @default(NEW)
+  // Restrict: column deletion moves deals to a neighbor first (app-managed).
+  stageId           String
+  stage             PipelineStage     @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  // When the deal entered its current stage — reset on stage change and
+  // reopen, preserved when a column deletion force-moves the deal.
+  stageEnteredAt    DateTime          @default(now())
   status            DealStatus        @default(OPEN)
   expectedCloseDate DateTime?
   closedAt          DateTime? // set when status becomes WON/LOST, cleared on reopen
@@ -376,11 +393,25 @@ model Deal {
   team              Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
   pages             Page[]
   stakeholders      DealStakeholder[]
+  comments          DealComment[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   @@index([teamId, status])
   @@index([ownerId])
+  @@index([stageId])
+}
+
+model DealComment {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([dealId, createdAt])
 }
 
 model DealStakeholder {

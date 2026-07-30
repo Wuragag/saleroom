@@ -1,20 +1,8 @@
-import type { DealStage, DealStatus } from "@/generated/prisma";
-import type { DealListItem, DealStageValue, DealStatusValue } from "@/types";
+import type { DealStatus } from "@/generated/prisma";
+import type { DealListItem, DealStatusValue } from "@/types";
 
-/**
- * Fixed pipeline stages, in board order. Deliberately not user-customizable —
- * Deals is a lightweight layer on top of rooms, not a CRM.
- */
-export const DEAL_STAGES: { value: DealStage; label: string }[] = [
-  { value: "NEW", label: "New" },
-  { value: "QUALIFIED", label: "Qualified" },
-  { value: "PROPOSAL", label: "Proposal" },
-  { value: "NEGOTIATION", label: "Negotiation" },
-];
-
-export const STAGE_LABELS: Record<DealStage, string> = Object.fromEntries(
-  DEAL_STAGES.map((s) => [s.value, s.label])
-) as Record<DealStage, string>;
+// Stages are user-managed PipelineStage rows (src/lib/pipeline-stages.ts) —
+// this module holds the pure pipeline logic that works over their ids.
 
 export const STATUS_LABELS: Record<DealStatus, string> = {
   OPEN: "Open",
@@ -48,6 +36,18 @@ export function isOverdue(
   );
 }
 
+/** How long a deal has sat in its current stage: "<1h", "5h", "3d". */
+export function formatStageAge(
+  enteredAtIso: string,
+  now: number = Date.now()
+): string {
+  const ms = Math.max(0, now - new Date(enteredAtIso).getTime());
+  const hours = Math.floor(ms / (60 * 60 * 1000));
+  if (hours < 1) return "<1h";
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
 // ──── Pipeline filters (pure — the workspace toolbar drives these) ────
 
 export type WarmthFilter = "high" | "warm" | "cold" | "none";
@@ -73,7 +73,7 @@ export interface DealFilters {
   warmth?: WarmthFilter | null;
   closeDate?: CloseDateFilter | null;
   status?: DealStatusValue | null;
-  stage?: DealStageValue | null;
+  stageId?: string | null;
 }
 
 function matchesWarmth(deal: DealListItem, warmth: WarmthFilter): boolean {
@@ -112,7 +112,7 @@ export function filterDeals(
     if (filters.status && deal.status !== filters.status) return false;
     // Stage is retained on closed deals, so this also answers "which deals
     // closed at Proposal" when combined with the Won/Lost pills.
-    if (filters.stage && deal.stage !== filters.stage) return false;
+    if (filters.stageId && deal.stage.id !== filters.stageId) return false;
     if (filters.warmth && !matchesWarmth(deal, filters.warmth)) return false;
     if (filters.closeDate && !matchesCloseDate(deal, filters.closeDate, now)) {
       return false;
@@ -128,11 +128,28 @@ export function filterDeals(
   });
 }
 
-/** A pipeline-board column: the four stages plus the two terminal statuses. */
-export type BoardColumnId = DealStage | "WON" | "LOST";
+/**
+ * Pure: where a deleted column's deals land — the previous column by order,
+ * else the next one. Null when the stage isn't found or is the last one left.
+ * (Client-safe; the server-side stage helpers in pipeline-stages.ts use it too.)
+ */
+export function stageDeleteTarget(
+  stages: { id: string; order: number }[],
+  deletingId: string
+): string | null {
+  const sorted = [...stages].sort((a, b) => a.order - b.order);
+  const idx = sorted.findIndex((s) => s.id === deletingId);
+  if (idx === -1 || sorted.length < 2) return null;
+  return (sorted[idx - 1] ?? sorted[idx + 1]).id;
+}
+
+// ──── Board moves ────
+
+/** A board column: a PipelineStage id, or the two terminal status columns. */
+export type BoardColumnId = string;
 
 export interface BoardMovePatch {
-  stage?: DealStage;
+  stageId?: string;
   status?: DealStatus;
 }
 
@@ -141,14 +158,14 @@ export interface BoardMovePatch {
  * Dropping a closed deal onto a stage column reopens it.
  */
 export function boardMovePatch(
-  deal: { stage: DealStage; status: DealStatus },
+  deal: { stageId: string; status: DealStatus },
   column: BoardColumnId
 ): BoardMovePatch | null {
   if (column === "WON" || column === "LOST") {
     return deal.status === column ? null : { status: column };
   }
   if (deal.status !== "OPEN") {
-    return { status: "OPEN", stage: column };
+    return { status: "OPEN", stageId: column };
   }
-  return deal.stage === column ? null : { stage: column };
+  return deal.stageId === column ? null : { stageId: column };
 }

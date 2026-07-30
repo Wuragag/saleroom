@@ -4,7 +4,7 @@ import { checkDealAccess } from "@/lib/deal-auth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { getDealDetail } from "@/lib/deal-queries";
-import { DEAL_STAGES, STATUS_LABELS } from "@/lib/deals";
+import { STATUS_LABELS } from "@/lib/deals";
 import { cleanString } from "@/lib/validation";
 import {
   assertCanCreateDealTx,
@@ -25,7 +25,7 @@ interface PatchDealBody {
   name?: unknown;
   company?: unknown;
   value?: unknown;
-  stage?: unknown;
+  stageId?: unknown;
   status?: unknown;
   expectedCloseDate?: unknown;
   ownerId?: unknown;
@@ -92,12 +92,24 @@ export const PATCH = withErrorHandler(async (
     }
   }
 
-  if (body.stage !== undefined) {
-    const match = DEAL_STAGES.find((s) => s.value === body.stage);
-    if (!match) {
+  if (body.stageId !== undefined && body.stageId !== access.deal.stageId) {
+    if (typeof body.stageId !== "string") {
       return NextResponse.json({ error: "Invalid stage" }, { status: 400 });
     }
-    data.stage = match.value;
+    // The stage must belong to the deal's scope (its team, or its teamless owner).
+    const stage = await prisma.pipelineStage.findFirst({
+      where: {
+        id: body.stageId,
+        ...(access.deal.teamId
+          ? { teamId: access.deal.teamId }
+          : { userId: access.deal.ownerId }),
+      },
+    });
+    if (!stage) {
+      return NextResponse.json({ error: "Invalid stage" }, { status: 400 });
+    }
+    data.stage = { connect: { id: stage.id } };
+    data.stageEnteredAt = new Date();
   }
 
   if (body.status !== undefined) {
@@ -113,6 +125,8 @@ export const PATCH = withErrorHandler(async (
     if (status !== access.deal.status) {
       data.status = status;
       data.closedAt = status === "OPEN" ? null : new Date();
+      // Reopening restarts the clock on its (unchanged) stage.
+      if (status === "OPEN") data.stageEnteredAt = new Date();
     }
   }
 

@@ -15,22 +15,25 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 
+import { Plus } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import {
-  DEAL_STAGES,
   boardMovePatch,
   formatDealValue,
   type BoardColumnId,
   type BoardMovePatch,
 } from "@/lib/deals";
 import { DealCard } from "@/components/deals/deal-card";
-import type { DealListItem } from "@/types";
+import type { DealListItem, PipelineStageData } from "@/types";
 
 export type DealMovePatch = BoardMovePatch;
 
 interface DealBoardProps {
   deals: DealListItem[];
+  stages: PipelineStageData[];
   onMove: (dealId: string, patch: DealMovePatch) => void;
+  onManageColumns: () => void;
 }
 
 function byCloseDate(a: DealListItem, b: DealListItem): number {
@@ -124,7 +127,7 @@ function BoardColumn({
   );
 }
 
-export function DealBoard({ deals, onMove }: DealBoardProps) {
+export function DealBoard({ deals, stages, onMove, onManageColumns }: DealBoardProps) {
   const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -138,11 +141,11 @@ export function DealBoard({ deals, onMove }: DealBoardProps) {
   const columns = useMemo(() => {
     const open = deals.filter((d) => d.status === "OPEN");
     return [
-      ...DEAL_STAGES.map((s) => ({
-        id: s.value as BoardColumnId,
-        label: s.label,
+      ...stages.map((s) => ({
+        id: s.id as BoardColumnId,
+        label: s.name,
         tone: undefined,
-        deals: open.filter((d) => d.stage === s.value).sort(byCloseDate),
+        deals: open.filter((d) => d.stage.id === s.id).sort(byCloseDate),
       })),
       {
         id: "WON" as BoardColumnId,
@@ -157,7 +160,7 @@ export function DealBoard({ deals, onMove }: DealBoardProps) {
         deals: deals.filter((d) => d.status === "LOST").sort(byClosedAtDesc),
       },
     ];
-  }, [deals]);
+  }, [deals, stages]);
 
   const activeDeal = activeId ? deals.find((d) => d.id === activeId) : null;
 
@@ -171,7 +174,10 @@ export function DealBoard({ deals, onMove }: DealBoardProps) {
     if (!over) return;
     const deal = deals.find((d) => d.id === active.id);
     if (!deal) return;
-    const patch = boardMovePatch(deal, over.id as BoardColumnId);
+    const patch = boardMovePatch(
+      { stageId: deal.stage.id, status: deal.status },
+      over.id as BoardColumnId
+    );
     if (patch) onMove(deal.id, patch);
   };
 
@@ -193,6 +199,13 @@ export function DealBoard({ deals, onMove }: DealBoardProps) {
             onOpen={(dealId) => router.push(`/deals/${dealId}`)}
           />
         ))}
+        <button
+          onClick={onManageColumns}
+          className="flex h-10 w-40 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-dashed border-border text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add column
+        </button>
       </div>
       <DragOverlay>
         {activeDeal ? (
