@@ -8,7 +8,10 @@ import { PageShell } from "@/components/page-shell";
 import { PubCover } from "@/components/pub-cover";
 import { buildPageHero } from "@/components/pub-hero";
 import { PublishedFormHydrator } from "@/components/published-form";
+import { MapViewer } from "@/components/map-viewer";
+import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
 import { getTeamBrandKit } from "@/lib/brand-kit";
+import type { MutualActionPlanData } from "@/types";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
@@ -31,11 +34,36 @@ export default async function PreviewPage({
   if (!page) notFound();
   if (page.userId !== session.user.id) notFound();
 
-  const tabs = page.tabs.map((tab) => ({
-    id: tab.id,
-    name: tab.name,
-    content: JSON.parse(tab.content),
-  }));
+  // Same pipeline as /p/[slug]: synced references resolve to their content
+  const tabs = await Promise.all(
+    page.tabs.map(async (tab) => {
+      const parsed = JSON.parse(tab.content);
+      const resolved = await resolveSyncedBlocks(parsed, page.teamId);
+      return { id: tab.id, name: tab.name, content: resolved };
+    })
+  );
+
+  // MAP parity with /p/[slug] — fetched server-side because the public
+  // /api/map/[slug] endpoint only serves published pages.
+  const mapRecord = await prisma.mutualActionPlan.findUnique({
+    where: { pageId: page.id },
+    include: { items: { orderBy: { order: "asc" } } },
+  });
+  const initialMap: MutualActionPlanData | null = mapRecord
+    ? {
+        ...mapRecord,
+        closeDate: mapRecord.closeDate?.toISOString() ?? null,
+        createdAt: mapRecord.createdAt.toISOString(),
+        updatedAt: mapRecord.updatedAt.toISOString(),
+        items: mapRecord.items.map((item) => ({
+          ...item,
+          ownerType: item.ownerType as "seller" | "buyer",
+          dueDate: item.dueDate?.toISOString() ?? null,
+          createdAt: item.createdAt.toISOString(),
+          updatedAt: item.updatedAt.toISOString(),
+        })),
+      }
+    : null;
 
   const bgHex = getBgHex(page.background);
   const fontStyle = getFontStyle(page.font);
@@ -172,6 +200,15 @@ export default async function PreviewPage({
         accentColor={accentColor}
         tabPlacement={page.tabPlacement as "top" | "left"}
         isDark={isDark}
+      />
+
+      {/* Mutual Action Plan — read-only in preview */}
+      <MapViewer
+        slug={page.slug}
+        accentColor={accentColor}
+        isDark={isDark}
+        initialMap={initialMap}
+        readOnly
       />
     </PageShell>
   );

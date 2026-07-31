@@ -9,11 +9,26 @@ interface MapViewerProps {
   slug: string;
   accentColor: string;
   isDark: boolean;
+  /**
+   * Server-fetched map (preview uses this — the public /api/map/[slug]
+   * endpoint only serves published pages). When provided, the client fetch is
+   * skipped entirely.
+   */
+  initialMap?: MutualActionPlanData | null;
+  /** Render toggles as local-only (no server writes) — used by the preview. */
+  readOnly?: boolean;
 }
 
-export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
-  const [map, setMap] = useState<MutualActionPlanData | null>(null);
-  const [loading, setLoading] = useState(true);
+export function MapViewer({
+  slug,
+  accentColor,
+  isDark,
+  initialMap,
+  readOnly = false,
+}: MapViewerProps) {
+  const hasInitial = initialMap !== undefined;
+  const [map, setMap] = useState<MutualActionPlanData | null>(initialMap ?? null);
+  const [loading, setLoading] = useState(!hasInitial);
 
   const fetchMap = useCallback(async () => {
     try {
@@ -27,8 +42,9 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
   }, [slug]);
 
   useEffect(() => {
+    if (hasInitial) return;
     fetchMap();
-  }, [fetchMap]);
+  }, [fetchMap, hasInitial]);
 
   // Show a lightweight skeleton while the map loads so the section does not
   // pop in abruptly. Once loaded, the map is optional — render nothing if empty.
@@ -50,6 +66,8 @@ export function MapViewer({ slug, accentColor, isDark }: MapViewerProps) {
         ),
       };
     });
+
+    if (readOnly) return; // preview: local-only toggle, no server write
 
     try {
       await apiClient.post(`/api/map/${slug}/toggle`, { itemId, completed });
