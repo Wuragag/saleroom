@@ -11,6 +11,8 @@ interface EditableHeroTextProps {
   variant: "eyebrow" | "subtitle";
   /** Hidden when empty in read-only mode; shows a ghost placeholder when editing */
   placeholder: string;
+  /** Hero-layout overrides (heroLayoutStyles) so editing stays WYSIWYG */
+  styleOverride?: CSSProperties;
 }
 
 /**
@@ -18,7 +20,7 @@ interface EditableHeroTextProps {
  * (page-shell.tsx PUB_EYEBROW_STYLE / PUB_SUBTITLE_STYLE) so what you type is
  * what visitors see. Follows the EditableTitle auto-grow pattern.
  */
-export function EditableHeroText({ value, onChange, readOnly, variant, placeholder }: EditableHeroTextProps) {
+export function EditableHeroText({ value, onChange, readOnly, variant, placeholder, styleOverride }: EditableHeroTextProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useLayoutEffect(() => {
@@ -61,6 +63,7 @@ export function EditableHeroText({ value, onChange, readOnly, variant, placehold
       className="block w-full resize-none overflow-hidden bg-transparent border-none outline-none focus-visible:ring-0 placeholder:text-current placeholder:opacity-35"
       style={{
         ...baseStyle,
+        ...styleOverride,
         caretColor: "var(--pub-accent, currentColor)",
       }}
     />

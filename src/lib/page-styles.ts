@@ -74,6 +74,13 @@ export const COVER_LAYOUTS = [
   { value: "overlay", label: "Title on cover" },
 ];
 
+// Hero arrangement: logo/eyebrow/title/subtitle alignment and scale.
+export const HERO_LAYOUTS = [
+  { value: "left", label: "Left" },
+  { value: "centered", label: "Centered" },
+  { value: "compact", label: "Compact" },
+];
+
 // Pre-configured theme presets for one-click elegant styling
 export interface ThemePreset {
   id: string;
@@ -126,6 +133,7 @@ export interface PageStyle {
   logoUrl: string;
   coverLayout: string;
   coverHeight: string;
+  heroLayout: string;
   themeRadius: string;
   themeDepth: string;
 }
@@ -144,6 +152,7 @@ export const DEFAULT_PAGE_STYLE: PageStyle = {
   logoUrl: "",
   coverLayout: "standard",
   coverHeight: "default",
+  heroLayout: "left",
   themeRadius: "default",
   themeDepth: "default",
 };

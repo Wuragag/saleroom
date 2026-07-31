@@ -13,6 +13,7 @@ import {
   DEPTH_OPTIONS,
   COVER_HEIGHTS,
   COVER_LAYOUTS,
+  HERO_LAYOUTS,
   getAccentColor,
   getFontStyle,
   type PageStyle,
@@ -560,6 +561,28 @@ export function StylePanel({ style, onChange, password, onPasswordChange, passwo
           )}
         </div>
       )}
+
+      {/* Hero layout */}
+      <div>
+        <SectionLabel className="mb-1.5">Hero</SectionLabel>
+        <div className="flex gap-1">
+          {HERO_LAYOUTS.map((opt) => (
+            <button
+              key={opt.value}
+              aria-label={`${opt.label} hero layout`}
+              aria-pressed={style.heroLayout === opt.value}
+              onClick={() => onChange({ heroLayout: opt.value })}
+              className={`flex-1 py-1 text-xs rounded border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                style.heroLayout === opt.value
+                  ? "border-foreground bg-accent text-accent-foreground"
+                  : "border-border hover:bg-accent/50"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Tab placement */}
       <div>

@@ -28,6 +28,8 @@ interface PageShellProps {
   subtitle?: ReactNode;
   /** Column top padding — published pages use 40px with a cover, 72px without */
   paddingTop?: string;
+  /** Gap between the hero block and the content (from buildPageHero's gap) */
+  heroGap?: string;
   children: ReactNode;
   /** Rendered after the footer (trackers, hydrators, pickers) */
   trailing?: ReactNode;
@@ -58,6 +60,7 @@ export function PageShell({
   title,
   subtitle,
   paddingTop = "72px",
+  heroGap = PUB_HERO_GAP,
   children,
   trailing,
   style,
@@ -93,7 +96,7 @@ export function PageShell({
         {/* Hero text block: eyebrow → title → subtitle, one consistent gap after.
             Skipped entirely when the hero lives on the cover (overlay layout). */}
         {(eyebrow || title || subtitle) && (
-          <div style={{ marginBottom: PUB_HERO_GAP }}>
+          <div style={{ marginBottom: heroGap }}>
             {eyebrow}
 
             {title}

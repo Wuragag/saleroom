@@ -23,6 +23,7 @@ describe("validatePageStylePatch", () => {
         tabPlacement: "left",
         coverLayout: "overlay",
         coverHeight: "tall",
+        heroLayout: "centered",
         themeRadius: "soft",
         themeDepth: "elevated",
         logoUrl: "https://example.com/logo.png",
@@ -63,6 +64,7 @@ describe("validatePageStylePatch", () => {
     expect(validatePageStylePatch({ tabPlacement: "bottom" }).ok).toBe(false);
     expect(validatePageStylePatch({ coverLayout: "split" }).ok).toBe(false);
     expect(validatePageStylePatch({ coverHeight: "huge" }).ok).toBe(false);
+    expect(validatePageStylePatch({ heroLayout: "split" }).ok).toBe(false);
     expect(validatePageStylePatch({ themeRadius: "round" }).ok).toBe(false);
     expect(validatePageStylePatch({ themeDepth: "deep" }).ok).toBe(false);
   });

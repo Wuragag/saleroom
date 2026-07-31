@@ -115,6 +115,7 @@ export const PUT = withErrorHandler(async (
   if (body.coverImage !== undefined) updateData.coverImage = body.coverImage;
   if (body.coverLayout !== undefined) updateData.coverLayout = body.coverLayout;
   if (body.coverHeight !== undefined) updateData.coverHeight = body.coverHeight;
+  if (body.heroLayout !== undefined) updateData.heroLayout = body.heroLayout;
   if (body.eyebrow !== undefined) updateData.eyebrow = String(body.eyebrow).slice(0, 80);
   if (body.subtitle !== undefined) updateData.subtitle = String(body.subtitle).slice(0, 220);
   if (body.themeRadius !== undefined) updateData.themeRadius = body.themeRadius;

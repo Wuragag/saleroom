@@ -194,10 +194,12 @@ export default async function PublishedPage({
     subtitle: page.subtitle,
     logoUrl: page.logoUrl,
     overlay: overlayHero,
+    heroLayout: page.heroLayout,
   });
 
   return (
     <PageShell
+      heroGap={hero.gap}
       bgHex={bgHex}
       fontStyle={fontStyle}
       cssVars={cssVars}

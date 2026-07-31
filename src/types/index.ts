@@ -59,6 +59,7 @@ export interface PageData {
   coverImage: string;
   coverLayout: string;
   coverHeight: string;
+  heroLayout: string;
   eyebrow: string;
   subtitle: string;
   themeRadius: string;

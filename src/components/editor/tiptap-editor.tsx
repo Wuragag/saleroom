@@ -32,7 +32,7 @@ import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle, getBg
 import { getPubCssVars, getMaxWidth, isDarkBackground, getEditorNodeVars, getCoverHeight } from "@/lib/pub-theme";
 import { PageShell, PUB_LOGO_STYLE } from "@/components/page-shell";
 import { PubCover } from "@/components/pub-cover";
-import { buildPageHero } from "@/components/pub-hero";
+import { buildPageHero, heroLayoutStyles } from "@/components/pub-hero";
 import { EditableHeroText } from "./editable-hero-text";
 import { CoverImageEditor } from "./cover-image-editor";
 import { MapPanel } from "./map-panel";
@@ -132,6 +132,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
     logoUrl: page.logoUrl ?? DEFAULT_PAGE_STYLE.logoUrl,
     coverLayout: page.coverLayout ?? DEFAULT_PAGE_STYLE.coverLayout,
     coverHeight: page.coverHeight ?? DEFAULT_PAGE_STYLE.coverHeight,
+    heroLayout: page.heroLayout ?? DEFAULT_PAGE_STYLE.heroLayout,
     themeRadius: page.themeRadius ?? DEFAULT_PAGE_STYLE.themeRadius,
     themeDepth: page.themeDepth ?? DEFAULT_PAGE_STYLE.themeDepth,
   });
@@ -601,6 +602,10 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
   // fields stay in the column so they remain directly editable.
   const overlayHero = Boolean(coverImage) && pageStyle.coverLayout === "overlay" && !!readOnly;
 
+  // Hero-layout overrides applied to the editable hero fields (WYSIWYG parity
+  // with buildPageHero on the published page).
+  const heroLS = heroLayoutStyles(pageStyle.heroLayout);
+
   const editorCanvas = editor ? (
     <div ref={canvasRef} className="relative">
       <EditorContent editor={editor} />
@@ -742,6 +747,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
                           subtitle,
                           logoUrl: pageStyle.logoUrl,
                           overlay: true,
+                          heroLayout: pageStyle.heroLayout,
                         });
                         return (
                           <>
@@ -769,6 +775,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         // Published pages use 72px without a cover (56px in overlay mode);
         // when editable, the "Add cover" ghost strip adds ~32px of chrome.
         paddingTop={coverImage ? (overlayHero ? "56px" : "40px") : readOnly ? "72px" : "40px"}
+        heroGap={heroLS.gap}
         logo={
           !overlayHero && pageStyle.logoUrl ? (
             <NextImage
@@ -776,7 +783,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
               alt="Logo"
               width={180}
               height={36}
-              style={PUB_LOGO_STYLE}
+              style={{ ...PUB_LOGO_STYLE, ...heroLS.logo }}
             />
           ) : undefined
         }
@@ -788,12 +795,18 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
               readOnly={readOnly}
               variant="eyebrow"
               placeholder="Add an eyebrow label"
+              styleOverride={heroLS.eyebrow}
             />
           )
         }
         title={
           overlayHero ? undefined : (
-            <EditableTitle value={title} onChange={setTitle} readOnly={readOnly} />
+            <EditableTitle
+              value={title}
+              onChange={setTitle}
+              readOnly={readOnly}
+              styleOverride={heroLS.title}
+            />
           )
         }
         subtitle={
@@ -804,6 +817,7 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
               readOnly={readOnly}
               variant="subtitle"
               placeholder="Add a subtitle"
+              styleOverride={heroLS.subtitle}
             />
           )
         }

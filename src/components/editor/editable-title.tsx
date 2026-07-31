@@ -1,19 +1,22 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 import { PUB_TITLE_STYLE } from "@/components/page-shell";
 
 interface EditableTitleProps {
   value: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
+  /** Hero-layout overrides (heroLayoutStyles) so editing stays WYSIWYG */
+  styleOverride?: CSSProperties;
 }
 
 /**
  * The page title, editable directly on the canvas but styled exactly like
  * the published h1.pub-title so what you type is what visitors see.
  */
-export function EditableTitle({ value, onChange, readOnly }: EditableTitleProps) {
+export function EditableTitle({ value, onChange, readOnly, styleOverride }: EditableTitleProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   // Auto-grow to fit content (single line by default, wraps like the h1).
@@ -58,6 +61,7 @@ export function EditableTitle({ value, onChange, readOnly }: EditableTitleProps)
       className="block w-full resize-none overflow-hidden bg-transparent border-none outline-none focus-visible:ring-0 placeholder:text-current placeholder:opacity-40"
       style={{
         ...PUB_TITLE_STYLE,
+        ...styleOverride,
         // placeholder inherits color; caret follows heading color
         caretColor: "var(--pub-accent, currentColor)",
       }}

@@ -220,6 +220,7 @@ model Page {
   coverImage    String         @default("")
   coverLayout   String         @default("standard") // standard | overlay (title on cover)
   coverHeight   String         @default("default")  // compact | default | tall
+  heroLayout    String         @default("left")     // left | centered | compact
   eyebrow       String         @default("") // small label above the hero title
   subtitle      String         @default("") // hero subtitle under the title
   themeRadius   String         @default("default") // sharp | default | soft

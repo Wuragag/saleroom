@@ -111,6 +111,7 @@ export const POST = withErrorHandler(async (request: Request) => {
           background: style.background,
           layoutWidth: style.layoutWidth,
           tabPlacement: style.tabPlacement,
+          heroLayout: style.heroLayout,
           themeRadius: style.themeRadius,
           themeDepth: style.themeDepth,
           logoUrl: style.logoUrl,

@@ -105,6 +105,7 @@ export default async function PreviewPage({
     subtitle: page.subtitle,
     logoUrl: page.logoUrl,
     overlay: overlayHero,
+    heroLayout: page.heroLayout,
   });
 
   const previewBanner = (
@@ -159,6 +160,7 @@ export default async function PreviewPage({
 
   return (
     <PageShell
+      heroGap={hero.gap}
       bgHex={bgHex}
       fontStyle={fontStyle}
       cssVars={cssVars}

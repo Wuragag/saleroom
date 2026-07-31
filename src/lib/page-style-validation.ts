@@ -2,6 +2,7 @@ import {
   ACCENT_COLORS,
   COVER_HEIGHTS,
   COVER_LAYOUTS,
+  HERO_LAYOUTS,
   WIDTH_OPTIONS,
 } from "./page-styles";
 import {
@@ -79,6 +80,7 @@ const STYLE_FIELD_VALIDATORS: Record<string, (v: unknown) => boolean> = {
   tabPlacement: (v) => v === "top" || v === "left",
   coverLayout: inOptions(COVER_LAYOUTS),
   coverHeight: inOptions(COVER_HEIGHTS),
+  heroLayout: inOptions(HERO_LAYOUTS),
   themeRadius: isValidRadiusKey,
   themeDepth: isValidDepthKey,
   logoUrl: isValidOptionalUrl,
