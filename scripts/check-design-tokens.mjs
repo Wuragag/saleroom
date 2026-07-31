@@ -29,6 +29,7 @@ const ALLOW = [
   "src/lib/pub-nodes.ts", // server-side published-page node HTML (buyer-facing, --pub-* fallbacks)
   "src/lib/__tests__/pub-color.test.ts", // color-math test fixtures are hex by nature
   "src/lib/__tests__/brand-kit.test.ts", // brand-kit test fixtures are hex by nature
+  "src/lib/__tests__/page-style-validation.test.ts", // accent-validation fixtures are hex by nature
   "src/lib/email.ts", // email HTML: CSS vars/Tailwind don't work in mail clients
   "src/lib/color-palettes.ts", // the swatch options a user picks page colors from
   "src/lib/ai-page-generation.ts", // LLM prompt vocab: hex is an example value shown to the model, not UI
