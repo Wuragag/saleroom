@@ -15,6 +15,7 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
+import { PubFontLinks } from "@/components/pub-font-links";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
 import { getTeamBrandKit } from "@/lib/brand-kit";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
@@ -198,6 +199,8 @@ export default async function PublishedPage({
   });
 
   return (
+    <>
+    <PubFontLinks fontKeys={[page.font, page.headingFont]} />
     <PageShell
       heroGap={hero.gap}
       bgHex={bgHex}
@@ -246,7 +249,7 @@ export default async function PublishedPage({
               <span
                 className="text-xs font-semibold px-3 py-1 rounded-full"
                 style={{
-                  fontFamily: "var(--font-syne, var(--font-montserrat), sans-serif)",
+                  fontFamily: "var(--pub-font-heading, var(--pub-font-body, sans-serif))",
                   background: `${accentColor}1a`,
                   color: accentColor,
                   border: `1px solid ${accentColor}38`,
@@ -321,5 +324,6 @@ export default async function PublishedPage({
       {/* Mutual Action Plan */}
       <MapViewer slug={slug} accentColor={accentColor} isDark={isDark} />
     </PageShell>
+    </>
   );
 }

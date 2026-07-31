@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { checkPageAccess } from "@/lib/team-auth";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
+import { PubFontLinks } from "@/components/pub-font-links";
+import { ALL_PUB_FONT_KEYS } from "@/lib/pub-fonts";
 
 export default async function EditorPage({
   params,
@@ -51,11 +53,17 @@ export default async function EditorPage({
   const isCreator = page.userId === session.user.id;
 
   return (
-    <TiptapEditor
-      page={serialized}
-      readOnly={!canEdit}
-      lockedByName={isLockedByOther ? (page.lockedBy?.name ?? "another user") : undefined}
-      isCreator={isCreator}
-    />
+    <>
+      {/* The editor loads every buyer-page family so the font picker previews
+          render true and switching fonts is instant (authenticated route —
+          the weight is acceptable; buyer pages load only their own fonts). */}
+      <PubFontLinks fontKeys={ALL_PUB_FONT_KEYS} />
+      <TiptapEditor
+        page={serialized}
+        readOnly={!canEdit}
+        lockedByName={isLockedByOther ? (page.lockedBy?.name ?? "another user") : undefined}
+        isCreator={isCreator}
+      />
+    </>
   );
 }

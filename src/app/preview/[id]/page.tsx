@@ -9,6 +9,7 @@ import { PubCover } from "@/components/pub-cover";
 import { buildPageHero } from "@/components/pub-hero";
 import { PublishedFormHydrator } from "@/components/published-form";
 import { MapViewer } from "@/components/map-viewer";
+import { PubFontLinks } from "@/components/pub-font-links";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
 import { getTeamBrandKit } from "@/lib/brand-kit";
 import type { MutualActionPlanData } from "@/types";
@@ -159,6 +160,8 @@ export default async function PreviewPage({
   );
 
   return (
+    <>
+    <PubFontLinks fontKeys={[page.font, page.headingFont]} />
     <PageShell
       heroGap={hero.gap}
       bgHex={bgHex}
@@ -213,5 +216,6 @@ export default async function PreviewPage({
         readOnly
       />
     </PageShell>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { getAccentColor, getBgHex, getFontStyle } from "@/lib/page-styles";
 import { getPubCssVars, isDarkBackground } from "@/lib/pub-theme";
+import { PubFontLinks } from "@/components/pub-font-links";
 
 /**
  * Shared shell for the buyer-facing access gates (password + email) so both
@@ -86,6 +87,7 @@ export function PubGate({
       className="min-h-screen flex items-center justify-center px-4"
       style={{ backgroundColor: bgHex, ...fontStyle, ...cssVars }}
     >
+      <PubFontLinks fontKeys={[style.font, style.headingFont]} />
       {head}
       <div className="w-full max-w-sm">
         {style.logoUrl && (

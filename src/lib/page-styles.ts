@@ -9,15 +9,23 @@ export const ACCENT_COLORS: Record<string, string> = {
   sky: "#0284c7",
 };
 
+// Buyer-page fonts. Chrome-hosted families (DM Sans, Instrument Serif, Inter)
+// resolve via their next/font CSS vars; everything else loads per page through
+// a Google Fonts stylesheet (src/lib/pub-fonts.ts + PubFontLinks), so each
+// stack must include the literal family name.
 export const FONT_OPTIONS = [
   { value: "inter", label: "Inter", style: { fontFamily: "var(--font-inter), Inter, sans-serif" } },
   { value: "georgia", label: "Georgia", style: { fontFamily: "Georgia, serif" } },
-  { value: "playfair", label: "Playfair", style: { fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif" } },
+  { value: "playfair", label: "Playfair", style: { fontFamily: "'Playfair Display', Georgia, serif" } },
   { value: "mono", label: "Mono", style: { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" } },
-  { value: "lora", label: "Lora", style: { fontFamily: "var(--font-lora), Georgia, serif" } },
-  { value: "dmsans", label: "DM Sans", style: { fontFamily: "var(--font-dm-sans), sans-serif" } },
+  { value: "lora", label: "Lora", style: { fontFamily: "Lora, Georgia, serif" } },
+  { value: "dmsans", label: "DM Sans", style: { fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif" } },
   { value: "instrument", label: "Instrument Serif", style: { fontFamily: "var(--font-serif), 'Instrument Serif', Georgia, serif" } },
-  { value: "syne", label: "Syne", style: { fontFamily: "var(--font-syne), sans-serif" } },
+  { value: "syne", label: "Syne", style: { fontFamily: "Syne, sans-serif" } },
+  { value: "spacegrotesk", label: "Space Grotesk", style: { fontFamily: "'Space Grotesk', sans-serif" } },
+  { value: "fraunces", label: "Fraunces", style: { fontFamily: "Fraunces, Georgia, serif" } },
+  { value: "sourceserif", label: "Source Serif", style: { fontFamily: "'Source Serif 4', Georgia, serif" } },
+  { value: "ibmplex", label: "IBM Plex Sans", style: { fontFamily: "'IBM Plex Sans', sans-serif" } },
 ];
 
 export const BACKGROUND_OPTIONS = [
@@ -30,8 +38,8 @@ export const BACKGROUND_OPTIONS = [
   { value: "navy", label: "Navy", bgClass: "bg-[#0f172a]", hex: "#0f172a", dark: true },
 ];
 
-// Curated heading/body font pairings (all from the fonts already loaded in
-// src/app/layout.tsx — no extra font downloads). headingFont "" = same as body.
+// Curated heading/body font pairings. Buyer pages only download the families
+// a pairing actually uses (see pub-fonts.ts). headingFont "" = same as body.
 export interface FontPairing {
   id: string;
   label: string;
@@ -46,6 +54,12 @@ export const FONT_PAIRINGS: FontPairing[] = [
   { id: "modern", label: "Modern", heading: "syne", body: "inter" },
   { id: "warm", label: "Warm", heading: "lora", body: "dmsans" },
   { id: "classic", label: "Classic", heading: "georgia", body: "inter" },
+  { id: "structured", label: "Structured", heading: "spacegrotesk", body: "inter" },
+  { id: "literary", label: "Literary", heading: "fraunces", body: "sourceserif" },
+  { id: "technical", label: "Technical", heading: "spacegrotesk", body: "ibmplex" },
+  { id: "serifduo", label: "Serif Duo", heading: "playfair", body: "sourceserif" },
+  { id: "contrast", label: "Contrast", heading: "syne", body: "sourceserif" },
+  { id: "quiet", label: "Quiet", heading: "fraunces", body: "ibmplex" },
 ];
 
 // Corner-radius scale for cards/tables/media/buttons on the published page.
@@ -100,6 +114,9 @@ export const THEME_PRESETS: ThemePreset[] = [
   { id: "bold", label: "Bold", font: "syne", headingFont: "", accentColor: "#7c3aed", background: "dark", themeRadius: "default", themeDepth: "elevated" },
   { id: "warm", label: "Warm", font: "lora", headingFont: "", accentColor: "#d97706", background: "warm", themeRadius: "soft", themeDepth: "default" },
   { id: "editorial", label: "Editorial", font: "inter", headingFont: "playfair", accentColor: "#0f172a", background: "white", themeRadius: "sharp", themeDepth: "flat" },
+  { id: "product", label: "Product", font: "inter", headingFont: "spacegrotesk", accentColor: "#2563eb", background: "white", themeRadius: "default", themeDepth: "default" },
+  { id: "literary", label: "Literary", font: "sourceserif", headingFont: "fraunces", accentColor: "#1c1917", background: "cream", themeRadius: "sharp", themeDepth: "flat" },
+  { id: "studio", label: "Studio", font: "ibmplex", headingFont: "fraunces", accentColor: "#0d9488", background: "warm", themeRadius: "soft", themeDepth: "flat" },
 ];
 
 export const WIDTH_OPTIONS = [

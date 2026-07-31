@@ -1,37 +1,18 @@
 import type { Metadata } from "next";
-import { Montserrat, Playfair_Display, Lora, DM_Sans, Syne, Inter, Instrument_Serif } from "next/font/google";
+import { DM_Sans, Inter, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { APP_NAME } from "@/lib/constants";
 import "./globals.css";
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "500", "600", "700"],
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-lora",
-  weight: ["400", "500", "600", "700"],
-});
-
+// Only the families the app chrome + marketing site actually use load
+// globally (font-sans = DM Sans, font-serif = Instrument Serif, marketing
+// uses --font-inter). Buyer-page families (Playfair, Lora, Syne, Space
+// Grotesk, Fraunces, …) load per page via PubFontLinks (src/lib/pub-fonts.ts)
+// so a published page only downloads the fonts its seller picked.
 const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-dm-sans",
   weight: ["300", "400", "500", "600", "700"],
-});
-
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["400", "500", "600", "700", "800"],
 });
 
 const inter = Inter({
@@ -71,7 +52,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${montserrat.variable} ${playfairDisplay.variable} ${lora.variable} ${dmSans.variable} ${syne.variable} ${inter.variable} ${instrumentSerif.variable} font-sans antialiased`}>
+      <body className={`${dmSans.variable} ${inter.variable} ${instrumentSerif.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

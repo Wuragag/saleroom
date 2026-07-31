@@ -19,6 +19,8 @@ import { deriveBrandRamp } from "@/lib/pub-color";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
+import { PubFontLinks } from "@/components/pub-font-links";
+import { ALL_PUB_FONT_KEYS } from "@/lib/pub-fonts";
 
 interface BrandKitState {
   primaryColor: string;
@@ -150,6 +152,8 @@ export function BrandingSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Font previews here must render true — load all buyer-page families */}
+      <PubFontLinks fontKeys={ALL_PUB_FONT_KEYS} />
       {!isOwner && (
         <Card className="p-4 text-sm text-muted-foreground">
           Only team owners can edit the brand kit. Changes below are disabled.

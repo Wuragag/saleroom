@@ -50,7 +50,7 @@ interface EditableTabBarProps {
   onClearTabLimitError?: () => void;
 }
 
-const TAB_FONT = "var(--font-dm-sans, var(--font-montserrat), sans-serif)";
+const TAB_FONT = "var(--font-dm-sans, 'DM Sans', sans-serif)";
 
 /* ── Inline rename input, shared by both placements ── */
 function RenameInput({

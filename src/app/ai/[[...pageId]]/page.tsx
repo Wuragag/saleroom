@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { checkPageAccess } from "@/lib/team-auth";
 import { AiWorkspace } from "@/components/ai/ai-workspace";
+import { PubFontLinks } from "@/components/pub-font-links";
+import { ALL_PUB_FONT_KEYS } from "@/lib/pub-fonts";
 
 /**
  * "Create with AI" workspace.
@@ -21,7 +23,12 @@ export default async function AiWorkspacePage({
   const id = pageId?.[0];
 
   if (!id) {
-    return <AiWorkspace initialPage={null} />;
+    return (
+      <>
+        <PubFontLinks fontKeys={ALL_PUB_FONT_KEYS} />
+        <AiWorkspace initialPage={null} />
+      </>
+    );
   }
 
   // The AI applies edits through the live editor, so full edit access
@@ -53,5 +60,11 @@ export default async function AiWorkspacePage({
     })),
   };
 
-  return <AiWorkspace initialPage={serialized} />;
+  return (
+    <>
+      {/* Hosts the live editor — load all buyer-page families like /editor */}
+      <PubFontLinks fontKeys={ALL_PUB_FONT_KEYS} />
+      <AiWorkspace initialPage={serialized} />
+    </>
+  );
 }
