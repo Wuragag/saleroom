@@ -1,7 +1,10 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { APP_NAME } from "@/lib/constants";
 import { TabbedPageView } from "@/components/tabbed-page-view";
 import { getBgHex, getFontStyle, getAccentColor } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground } from "@/lib/pub-theme";
@@ -20,6 +23,56 @@ import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 // Analytics tracking moved client-side so this page can be cached.
 export const revalidate = 60;
 
+// Shared by generateMetadata and the page body — cache() dedupes the query
+// within a single request.
+const getPublishedPage = cache((slug: string) =>
+  prisma.page.findFirst({
+    where: { slug, published: true },
+    include: { tabs: { orderBy: { order: "asc" } } },
+  })
+);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const page = await getPublishedPage(slug);
+  if (!page) return {};
+
+  // Deal pages are share-by-link — keep them out of search indexes.
+  const robots = { index: false, follow: false };
+
+  // Password-protected pages must not leak their title/subtitle in previews.
+  if (page.password) {
+    const title = "Private page";
+    const description = `This page is password-protected. Shared via ${APP_NAME}.`;
+    return {
+      title,
+      description,
+      robots,
+      openGraph: { title, description, type: "website", siteName: APP_NAME },
+      twitter: { card: "summary_large_image", title, description },
+    };
+  }
+
+  const description =
+    page.subtitle || page.eyebrow || `A page shared with you via ${APP_NAME}`;
+  return {
+    title: page.title,
+    description,
+    robots,
+    openGraph: {
+      title: page.title,
+      description,
+      type: "website",
+      siteName: APP_NAME,
+    },
+    twitter: { card: "summary_large_image", title: page.title, description },
+  };
+}
+
 export default async function PublishedPage({
   params,
   searchParams,
@@ -29,10 +82,7 @@ export default async function PublishedPage({
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
-  const page = await prisma.page.findFirst({
-    where: { slug, published: true },
-    include: { tabs: { orderBy: { order: "asc" } } },
-  });
+  const page = await getPublishedPage(slug);
 
   if (!page) notFound();
 
