@@ -11,6 +11,8 @@ export interface SlashCommandItem {
   aliases: string[];
   /** Node type this item inserts — hidden when the host editor's schema lacks it. */
   requiresNode?: string;
+  /** Extra visibility predicate (e.g. hide columns inside a column). */
+  hidden?: (editor: Editor) => boolean;
   command: (props: { editor: Editor; range: Range }) => void;
 }
 
@@ -314,6 +316,28 @@ const COMMANDS: SlashCommandItem[] = [
     },
   },
   {
+    title: "2 Columns",
+    description: "Two side-by-side columns",
+    icon: "Columns2",
+    aliases: ["columns", "cols", "2col", "split", "layout"],
+    requiresNode: "columns",
+    hidden: (editor) => editor.isActive("column"),
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertColumns(2).run();
+    },
+  },
+  {
+    title: "3 Columns",
+    description: "Three side-by-side columns",
+    icon: "Columns3",
+    aliases: ["columns", "cols", "3col", "layout"],
+    requiresNode: "columns",
+    hidden: (editor) => editor.isActive("column"),
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertColumns(3).run();
+    },
+  },
+  {
     title: "Synced Block",
     description: "Insert a reusable content block",
     icon: "Blocks",
@@ -347,6 +371,7 @@ export const slashCommandSuggestion = {
     return COMMANDS.filter(
       (item) =>
         (!item.requiresNode || editor.schema.nodes[item.requiresNode]) &&
+        !item.hidden?.(editor) &&
         (item.title.toLowerCase().includes(search) ||
           item.aliases.some((alias) => alias.includes(search)))
     );

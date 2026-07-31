@@ -14,7 +14,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import NextImage from "next/image";
-import { EmbedNode, CTAButtonNode, LogoGridNode, FormNode, ContactCardNode, BannerNode, SyncedBlockNode, TestimonialNode, MetricsNode, SpacerNode } from "./extensions";
+import { EmbedNode, CTAButtonNode, LogoGridNode, FormNode, ContactCardNode, BannerNode, SyncedBlockNode, TestimonialNode, MetricsNode, SpacerNode, ColumnsNode, ColumnNode } from "./extensions";
 import { SlashCommand } from "./extensions/slash-command";
 import { EditorToolbar } from "./editor-toolbar";
 import { EditorHeader } from "./editor-header";
@@ -225,6 +225,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       TestimonialNode,
       MetricsNode,
       SpacerNode,
+      ColumnsNode,
+      ColumnNode,
       SlashCommand,
     ],
     content: initialContent,

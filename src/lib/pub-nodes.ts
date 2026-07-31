@@ -830,6 +830,67 @@ export const SyncedBlockServerFallback = Node.create({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Columns — side-by-side layout (2–3 columns, stacked on mobile). One
+// definition serves the editor AND the published renderer: the nodes are
+// plain containers (contentDOM, no React node view), styled entirely by the
+// .pub-content CSS in globals.css.
+// ─────────────────────────────────────────────────────────────────────────────
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    columns: {
+      /** Inserts a columns block with `count` empty columns. */
+      insertColumns: (count: 2 | 3) => ReturnType;
+    };
+  }
+}
+
+export const ColumnNode = Node.create({
+  name: "column",
+  content: "block+",
+  isolating: true,
+  parseHTML() {
+    return [{ tag: 'div[data-type="column"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes(HTMLAttributes, { "data-type": "column" }), 0];
+  },
+});
+
+export const ColumnsNode = Node.create({
+  name: "columns",
+  group: "block",
+  content: "column{2,3}",
+  isolating: true,
+  parseHTML() {
+    return [{ tag: 'div[data-type="columns"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, { "data-type": "columns", class: "pub-columns" }),
+      0,
+    ];
+  },
+  addCommands() {
+    return {
+      insertColumns:
+        (count) =>
+        ({ commands }) => {
+          const column = () => ({
+            type: "column",
+            content: [{ type: "paragraph" }],
+          });
+          return commands.insertContent({
+            type: this.name,
+            content: Array.from({ length: count }, column),
+          });
+        },
+    };
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Extension list + sanitizer config shared by every published-output surface
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -866,6 +927,8 @@ export function buildPubExtensions({
     createMetricsNode(isDark, accentColor),
     SpacerNodeServer,
     SyncedBlockServerFallback,
+    ColumnsNode,
+    ColumnNode,
   ];
 }
 

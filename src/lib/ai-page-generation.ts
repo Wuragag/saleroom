@@ -113,6 +113,7 @@ const STANDARD_NODES_SPEC = `Supported Tiptap node types you can use:
 - tableCell: { "type": "tableCell", "content": [{ "type": "paragraph", "content": [...] }] }
 - horizontalRule: { "type": "horizontalRule" }
 - codeBlock: { "type": "codeBlock", "content": [{ "type": "text", "text": "..." }] }
+- columns: { "type": "columns", "content": [{ "type": "column", "content": [ /* block nodes */ ] }, ...] } — exactly 2 or 3 column children for side-by-side layout; never nest columns inside a column
 
 Supported text marks:
 - bold: { "type": "text", "marks": [{ "type": "bold" }], "text": "..." }
@@ -189,6 +190,8 @@ const ALLOWED_NODES = new Set([
   "horizontalRule",
   "codeBlock",
   "hardBreak",
+  "columns",
+  "column",
   // custom blocks
   "ctaButton",
   "testimonial",
@@ -332,6 +335,22 @@ function sanitizeNode(node: any, opts?: SanitizeDocOptions): any | null {
       .map((c: any) => sanitizeNode(c, opts))
       .filter((c: unknown) => c !== null);
     if (children.length > 0) out.content = children;
+  }
+
+  // Columns structure: a columns node needs 2–3 column children; column
+  // children may not nest further columns; stray columns elsewhere are
+  // dropped (Tiptap would reject the whole doc otherwise).
+  if (node.type === "columns") {
+    const cols = (out.content ?? []).filter((c: any) => c.type === "column");
+    if (cols.length < 2) return null;
+    out.content = cols.slice(0, 3);
+  } else if (node.type === "column") {
+    const blocks = (out.content ?? []).filter((c: any) => c.type !== "columns");
+    out.content = blocks.length > 0 ? blocks : [{ type: "paragraph" }];
+  } else if (Array.isArray(out.content)) {
+    const filtered = out.content.filter((c: any) => c.type !== "column");
+    if (filtered.length > 0) out.content = filtered;
+    else delete out.content;
   }
 
   return out;

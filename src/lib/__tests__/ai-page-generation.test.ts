@@ -63,6 +63,55 @@ describe("sanitizeDoc", () => {
       content: [{ type: "paragraph" }],
     });
   });
+
+  it("normalizes columns: caps at 3, drops <2, unnests, and removes strays", () => {
+    const col = (text: string) => ({
+      type: "column",
+      content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+    });
+
+    // 4 columns → capped to 3
+    const capped = sanitizeDoc({
+      type: "doc",
+      content: [{ type: "columns", content: [col("a"), col("b"), col("c"), col("d")] }],
+    });
+    expect(capped?.content?.[0].type).toBe("columns");
+    expect(capped?.content?.[0].content).toHaveLength(3);
+
+    // single column → the whole columns node is dropped, doc stays renderable
+    const dropped = sanitizeDoc({
+      type: "doc",
+      content: [{ type: "columns", content: [col("only")] }],
+    });
+    expect(dropped?.content?.map((n) => n.type)).toEqual(["paragraph"]);
+
+    // nested columns inside a column are removed; empty column gets a paragraph
+    const nested = sanitizeDoc({
+      type: "doc",
+      content: [
+        {
+          type: "columns",
+          content: [
+            col("ok"),
+            {
+              type: "column",
+              content: [{ type: "columns", content: [col("x"), col("y")] }],
+            },
+          ],
+        },
+      ],
+    });
+    const columns = nested?.content?.[0];
+    expect(columns?.content).toHaveLength(2);
+    expect(columns?.content?.[1].content).toEqual([{ type: "paragraph" }]);
+
+    // a stray column outside a columns node is dropped
+    const stray = sanitizeDoc({
+      type: "doc",
+      content: [col("stray"), { type: "paragraph" }],
+    });
+    expect(stray?.content?.map((n) => n.type)).toEqual(["paragraph"]);
+  });
 });
 
 describe("sanitizeStylePatch", () => {

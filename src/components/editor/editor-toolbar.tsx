@@ -39,6 +39,8 @@ import {
   Quote as QuoteIcon,
   BarChart3,
   SeparatorHorizontal,
+  Columns2,
+  Columns3,
   type LucideIcon,
 } from "lucide-react";
 import { detectProvider } from "./extensions/embed-utils";
@@ -266,6 +268,24 @@ const BLOCKS: BlockDef[] = [
           attrs: { height: "md" },
         })
         .run();
+    },
+  },
+  {
+    id: "columns-2",
+    label: "2 Columns",
+    description: "Side-by-side layout",
+    icon: Columns2,
+    insert: (editor) => {
+      editor.chain().focus().insertColumns(2).run();
+    },
+  },
+  {
+    id: "columns-3",
+    label: "3 Columns",
+    description: "Three-column layout",
+    icon: Columns3,
+    insert: (editor) => {
+      editor.chain().focus().insertColumns(3).run();
     },
   },
 ];

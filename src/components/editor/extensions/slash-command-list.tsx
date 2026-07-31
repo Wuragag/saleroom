@@ -29,6 +29,8 @@ import {
   BarChart3,
   SeparatorHorizontal,
   MessageSquareQuote,
+  Columns2,
+  Columns3,
 } from "lucide-react";
 import type { SlashCommandItem } from "./slash-command-suggestion";
 
@@ -53,6 +55,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   SeparatorHorizontal,
   MessageSquareQuote,
+  Columns2,
+  Columns3,
 };
 
 interface SlashCommandListProps {

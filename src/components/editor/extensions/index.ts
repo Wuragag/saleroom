@@ -8,3 +8,5 @@ export { SyncedBlockNode } from "./synced-block-node";
 export { TestimonialNode } from "./testimonial-node";
 export { MetricsNode } from "./metrics-node";
 export { SpacerNode } from "./spacer-node";
+// Columns are plain container nodes shared with the published renderer
+export { ColumnsNode, ColumnNode } from "@/lib/pub-nodes";

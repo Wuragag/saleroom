@@ -766,6 +766,32 @@ div[data-type="cta-button"] a:focus-visible {
   border-radius: 4px;
 }
 
+/* ── Columns: side-by-side layout blocks (2–3), stacked on phones ── */
+.pub-content div[data-type="columns"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 24px;
+  margin: 1.25rem 0;
+  align-items: start;
+}
+.pub-content div[data-type="column"] {
+  min-width: 0;
+}
+/* Trim the first/last child margins so columns align on their edges */
+.pub-content div[data-type="column"] > *:first-child { margin-top: 0; }
+.pub-content div[data-type="column"] > *:last-child { margin-bottom: 0; }
+/* Editor affordance: dashed outline makes (empty) columns discoverable */
+.pub-editing div[data-type="column"] {
+  border-radius: var(--pub-radius-sm, 8px);
+  outline: 1px dashed transparent;
+  outline-offset: 4px;
+  transition: outline-color 0.15s ease;
+}
+.pub-editing div[data-type="columns"]:hover div[data-type="column"],
+.pub-editing div[data-type="column"]:focus-within {
+  outline-color: var(--pub-divider, rgba(0, 0, 0, 0.15));
+}
+
 /* ── Cover height: seller-chosen px on desktop (set inline as --pub-cover-h
       by PubCover), clamped to the viewport on phones ── */
 .pub-cover { height: var(--pub-cover-h, 320px); }
@@ -785,6 +811,10 @@ div[data-type="cta-button"] a:focus-visible {
      grid-template-columns emitted by pub-nodes.ts / the editor node view). */
   .pub-content div[data-type="metrics"] {
     grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Columns stack vertically on phones */
+  .pub-content div[data-type="columns"] {
+    grid-template-columns: 1fr;
   }
   /* Covers scale down with the viewport; overlay covers keep extra room for
      the hero text sitting on the scrim. */
