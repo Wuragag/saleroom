@@ -54,9 +54,23 @@ export default async function PublishedPage({
 
   // ── Email gate ──
   if (page.requireEmail && !refToken) {
-    // No valid ref → show email gate
+    // No valid ref → show email gate, themed like the page behind it
     const { EmailGate } = await import("@/components/email-gate");
-    return <EmailGate pageId={page.id} slug={page.slug} />;
+    return (
+      <EmailGate
+        pageId={page.id}
+        slug={page.slug}
+        pageStyle={{
+          accentColor: page.accentColor,
+          background: page.background,
+          font: page.font,
+          headingFont: page.headingFont,
+          themeRadius: page.themeRadius,
+          themeDepth: page.themeDepth,
+          logoUrl: page.logoUrl,
+        }}
+      />
+    );
   }
 
   // Password gate — HMAC with server secret so DB leak alone can't forge tokens

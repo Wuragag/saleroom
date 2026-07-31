@@ -2,9 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import Image from "next/image";
-import { getAccentColor, getBgHex, getFontStyle } from "@/lib/page-styles";
 import { Lock } from "lucide-react";
+import { PubGate, PUB_GATE_STYLES } from "@/components/pub-gate";
 
 export default async function PasswordPage({
   params,
@@ -17,7 +16,19 @@ export default async function PasswordPage({
   const resolvedSearchParams = await searchParams;
   const page = await prisma.page.findFirst({
     where: { slug, published: true },
-    select: { id: true, title: true, slug: true, password: true, accentColor: true, background: true, font: true, logoUrl: true },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      password: true,
+      accentColor: true,
+      background: true,
+      font: true,
+      headingFont: true,
+      themeRadius: true,
+      themeDepth: true,
+      logoUrl: true,
+    },
   });
 
   if (!page) notFound();
@@ -36,118 +47,78 @@ export default async function PasswordPage({
     .digest("hex");
   if (token === expected) redirect(`/p/${page.slug}`);
 
-  const accentColor = getAccentColor(page.accentColor);
-  const bgHex = getBgHex(page.background);
-  const fontStyle = getFontStyle(page.font);
-  const isDark = page.background === "dark";
-  const textColor = isDark ? "#f3f4f6" : "#111827";
-  const subtextColor = isDark ? "#9ca3af" : "#6b7280";
   const hasError = resolvedSearchParams.error === "1";
 
   return (
-    <main
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: bgHex, ...fontStyle }}
+    <PubGate
+      style={page}
+      icon={<Lock className="h-5 w-5" />}
+      title="Enter password"
+      description={
+        <>
+          Enter the password to view{" "}
+          <span
+            className="font-medium"
+            style={{ color: "var(--pub-heading-color, #111827)" }}
+          >
+            {page.title}
+          </span>
+          .
+        </>
+      }
     >
-      <div className="w-full max-w-sm">
-        {page.logoUrl && (
-          <Image
-            src={page.logoUrl}
-            alt="Logo"
-            width={160}
-            height={32}
-            className="object-contain mb-8 mx-auto"
-            style={{ height: "32px", width: "auto" }}
-          />
-        )}
-
+      {/* Error message */}
+      {hasError && (
         <div
-          className="rounded-2xl border p-8 shadow-sm"
+          role="alert"
+          className="mb-4 px-3 py-2 text-sm text-center"
+          style={PUB_GATE_STYLES.error}
+        >
+          Incorrect password. Please try again.
+        </div>
+      )}
+
+      {/* Form */}
+      <form action={`/api/pages/${page.id}/auth`} method="POST">
+        <input type="hidden" name="slug" value={page.slug} />
+        <div className="mb-4">
+          <label
+            htmlFor="password"
+            className="block text-xs font-medium mb-1.5"
+            style={PUB_GATE_STYLES.label}
+          >
+            Password
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autoFocus
+            aria-label="Password"
+            className="w-full px-3 py-2.5 text-sm transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+            style={{
+              ...PUB_GATE_STYLES.input,
+              // @ts-expect-error - CSS custom props for the per-page accent focus ring are not fully typed
+              "--tw-ring-color": "var(--pub-accent-safe)",
+              "--tw-ring-offset-color": "var(--pub-surface)",
+            }}
+            placeholder="Enter password…"
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full py-2.5 px-4 text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           style={{
-            backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
-            borderColor: isDark ? "rgba(255,255,255,0.12)" : "#e5e7eb",
+            ...PUB_GATE_STYLES.button,
+            // @ts-expect-error - CSS custom props for the per-page accent focus ring are not fully typed
+            "--tw-ring-color": "var(--pub-accent-safe)",
+            "--tw-ring-offset-color": "var(--pub-surface)",
           }}
         >
-          {/* Lock icon */}
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: `${accentColor}18` }}
-          >
-            <Lock className="h-5 w-5" style={{ color: accentColor }} />
-          </div>
-
-          {/* Primary task: unlock this page */}
-          <h1
-            className="text-xl font-bold text-center mb-1.5"
-            style={{ color: textColor }}
-          >
-            Enter password
-          </h1>
-          <p className="text-sm text-center mb-6" style={{ color: subtextColor }}>
-            Enter the password to view{" "}
-            <span className="font-medium" style={{ color: textColor }}>
-              {page.title}
-            </span>
-            .
-          </p>
-
-          {/* Error message */}
-          {hasError && (
-            <div
-              role="alert"
-              className="mb-4 px-3 py-2 rounded-lg text-sm text-center"
-              style={{ backgroundColor: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}
-            >
-              Incorrect password. Please try again.
-            </div>
-          )}
-
-          {/* Form */}
-          <form action={`/api/pages/${page.id}/auth`} method="POST">
-            <input type="hidden" name="slug" value={page.slug} />
-            <div className="mb-4">
-              <label
-                htmlFor="password"
-                className="block text-xs font-medium mb-1.5"
-                style={{ color: subtextColor }}
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoFocus
-                aria-label="Password"
-                className="w-full px-3 py-2.5 text-sm rounded-lg border transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
-                style={{
-                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#f9fafb",
-                  borderColor: isDark ? "rgba(255,255,255,0.15)" : "#d1d5db",
-                  color: textColor,
-                  // @ts-expect-error - CSS custom props for the per-page accent focus ring are not fully typed
-                  "--tw-ring-color": accentColor,
-                  "--tw-ring-offset-color": isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
-                }}
-                placeholder="Enter password…"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-              style={{
-                backgroundColor: accentColor,
-                color: "#ffffff",
-                // @ts-expect-error - CSS custom props for the per-page accent focus ring are not fully typed
-                "--tw-ring-color": accentColor,
-                "--tw-ring-offset-color": isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
-              }}
-            >
-              Unlock page
-            </button>
-          </form>
-        </div>
-      </div>
-    </main>
+          Unlock page
+        </button>
+      </form>
+    </PubGate>
   );
 }

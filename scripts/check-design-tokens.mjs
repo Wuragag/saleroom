@@ -52,6 +52,8 @@ const EXCLUDE = [
   "src/components/page-shell.tsx",
   "src/components/pub-cover.tsx",
   "src/components/pub-hero.tsx",
+  "src/components/pub-gate.tsx",
+  "src/components/email-gate.tsx",
   "src/components/published-form.tsx",
   "src/components/tabbed-page-view.tsx",
   "src/components/page-thumbnail.tsx",
