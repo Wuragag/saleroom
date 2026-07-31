@@ -85,11 +85,12 @@ export function MetricsNodeView({ node, updateAttributes, selected }: NodeViewPr
         </div>
       ) : (
         <div className="group relative">
-          {/* Mirrors the published metrics markup (page-renderer.tsx) */}
+          {/* Mirrors the published metrics markup (pub-nodes.ts) */}
           <div
+            data-type="metrics"
             style={{
               display: "grid",
-              gridTemplateColumns: `repeat(${(node.attrs.metrics as Metric[]).length}, 1fr)`,
+              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
               gap: "10px",
               padding: "14px",
               margin: "12px 0",

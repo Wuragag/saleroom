@@ -106,19 +106,21 @@ export function TabbedPageView({
   }
 
   /* ── Left placement ── */
+  /* Desktop: sticky sidebar rail. Mobile: the rail collapses into a
+     horizontally scrollable pill row above the content. */
   if (tabPlacement === "left") {
     return (
-      <div className="flex gap-10">
-        {/* Sticky left sidebar */}
-        <nav className="flex-shrink-0 w-44 pt-0.5">
-          <div className="pub-tab-bar sticky top-10 flex flex-col gap-0.5">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+        {/* Tab rail */}
+        <nav className="w-full md:w-44 md:flex-shrink-0 md:pt-0.5">
+          <div className="pub-tab-bar md:sticky md:top-10 flex flex-row md:flex-col gap-1.5 md:gap-0.5 overflow-x-auto md:overflow-visible -mx-6 px-6 md:mx-0 md:px-0 pb-1 md:pb-0">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab?.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className="text-left px-3 py-2.5 text-sm rounded-lg transition-all w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="text-left px-3 py-2.5 text-sm rounded-lg transition-all flex-shrink-0 whitespace-nowrap md:whitespace-normal md:w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{
                     fontFamily: "var(--pub-font-body, var(--font-dm-sans, sans-serif))",
                     fontWeight: isActive ? 600 : 500,
@@ -135,7 +137,7 @@ export function TabbedPageView({
 
             {hasLinks && (
               <div
-                className="mt-4 pt-4 flex flex-col gap-0.5"
+                className="hidden md:flex mt-4 pt-4 flex-col gap-0.5"
                 style={{ borderTop: "1px solid var(--pub-divider)" }}
               >
                 {links.map((link) => (
@@ -161,6 +163,11 @@ export function TabbedPageView({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
+          {hasLinks && (
+            <div className="mb-6 md:hidden">
+              <LinksRow />
+            </div>
+          )}
           <div key={contentKey} className="pub-tab-content">
             {activeTab && (
               <PageRenderer content={activeTab.content} isDark={isDark} accentColor={accentColor} />

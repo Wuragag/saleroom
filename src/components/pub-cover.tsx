@@ -24,7 +24,11 @@ export function PubCover({ src, coverHeight, coverLayout, maxWidth, overlayConte
   const height = getCoverHeight(coverHeight, coverLayout);
   const overlay = coverLayout === "overlay" && overlayContent;
   return (
-    <div className="relative z-10 w-full" style={{ height: `${height}px` }}>
+    <div
+      className="pub-cover relative z-10 w-full"
+      data-overlay={overlay ? "" : undefined}
+      style={{ "--pub-cover-h": `${height}px` } as CSSProperties}
+    >
       <NextImage src={src} alt="" fill sizes="100vw" priority style={{ objectFit: "cover" }} />
       {overlay && (
         <>

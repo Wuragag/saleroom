@@ -766,6 +766,10 @@ div[data-type="cta-button"] a:focus-visible {
   border-radius: 4px;
 }
 
+/* ── Cover height: seller-chosen px on desktop (set inline as --pub-cover-h
+      by PubCover), clamped to the viewport on phones ── */
+.pub-cover { height: var(--pub-cover-h, 320px); }
+
 /* ── Mobile ── */
 @media (max-width: 640px) {
   .pub-content h1 { font-size: 2rem; }
@@ -776,6 +780,17 @@ div[data-type="cta-button"] a:focus-visible {
     display: block !important;
     text-align: center !important;
     width: 100% !important;
+  }
+  /* Metrics: never more than 2 stat columns on a phone (beats the inline
+     grid-template-columns emitted by pub-nodes.ts / the editor node view). */
+  .pub-content div[data-type="metrics"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Covers scale down with the viewport; overlay covers keep extra room for
+     the hero text sitting on the scrim. */
+  .pub-cover { height: max(180px, min(var(--pub-cover-h, 320px), 56vw)); }
+  .pub-cover[data-overlay] {
+    height: max(280px, min(var(--pub-cover-h, 420px), 90vw));
   }
 }
 
