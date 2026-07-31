@@ -4,6 +4,9 @@ import {
   FONT_OPTIONS,
   BACKGROUND_OPTIONS,
   WIDTH_OPTIONS,
+  RADIUS_OPTIONS,
+  DEPTH_OPTIONS,
+  HERO_LAYOUTS,
   type PageStyle,
 } from "./page-styles";
 
@@ -167,10 +170,14 @@ Rules:
 
 export const STYLE_VOCAB = `Page style options (only these values are valid):
 - font: ${FONT_OPTIONS.map((o) => `"${o.value}"`).join(" | ")}
+- headingFont: same values as font, or "" for same-as-body
 - accentColor: a hex color like "#7c3aed"
 - background: ${BACKGROUND_OPTIONS.map((o) => `"${o.value}"`).join(" | ")}
 - layoutWidth: ${WIDTH_OPTIONS.map((o) => `"${o.value}"`).join(" | ")}
-- tabPlacement: "top" | "left"`;
+- tabPlacement: "top" | "left"
+- themeRadius: ${RADIUS_OPTIONS.map((o) => `"${o.value}"`).join(" | ")}
+- themeDepth: ${DEPTH_OPTIONS.map((o) => `"${o.value}"`).join(" | ")}
+- heroLayout: ${HERO_LAYOUTS.map((o) => `"${o.value}"`).join(" | ")}`;
 
 // ── Sanitization ───────────────────────────────────────────────────────────
 
@@ -388,6 +395,9 @@ export function sanitizeDoc(
 const VALID_FONTS = new Set(FONT_OPTIONS.map((o) => o.value));
 const VALID_BACKGROUNDS = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
 const VALID_WIDTHS = new Set(WIDTH_OPTIONS.map((o) => o.value));
+const VALID_RADII = new Set(RADIUS_OPTIONS.map((o) => o.value));
+const VALID_DEPTHS = new Set(DEPTH_OPTIONS.map((o) => o.value));
+const VALID_HERO_LAYOUTS = new Set(HERO_LAYOUTS.map((o) => o.value));
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 /**
@@ -411,6 +421,21 @@ export function sanitizeStylePatch(patch: unknown): Partial<PageStyle> {
   }
   if (p.tabPlacement === "top" || p.tabPlacement === "left") {
     out.tabPlacement = p.tabPlacement;
+  }
+  if (
+    typeof p.headingFont === "string" &&
+    (p.headingFont === "" || VALID_FONTS.has(p.headingFont))
+  ) {
+    out.headingFont = p.headingFont;
+  }
+  if (typeof p.themeRadius === "string" && VALID_RADII.has(p.themeRadius)) {
+    out.themeRadius = p.themeRadius;
+  }
+  if (typeof p.themeDepth === "string" && VALID_DEPTHS.has(p.themeDepth)) {
+    out.themeDepth = p.themeDepth;
+  }
+  if (typeof p.heroLayout === "string" && VALID_HERO_LAYOUTS.has(p.heroLayout)) {
+    out.heroLayout = p.heroLayout;
   }
   return out;
 }

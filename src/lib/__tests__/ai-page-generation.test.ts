@@ -144,4 +144,32 @@ describe("sanitizeStylePatch", () => {
       })
     ).toEqual({});
   });
+
+  it("accepts headingFont, themeRadius, themeDepth and heroLayout", () => {
+    expect(
+      sanitizeStylePatch({
+        headingFont: "fraunces",
+        themeRadius: "soft",
+        themeDepth: "elevated",
+        heroLayout: "centered",
+      })
+    ).toEqual({
+      headingFont: "fraunces",
+      themeRadius: "soft",
+      themeDepth: "elevated",
+      heroLayout: "centered",
+    });
+
+    // "" = same-as-body is a valid headingFont
+    expect(sanitizeStylePatch({ headingFont: "" })).toEqual({ headingFont: "" });
+
+    expect(
+      sanitizeStylePatch({
+        headingFont: "papyrus",
+        themeRadius: "round",
+        themeDepth: "deep",
+        heroLayout: "split",
+      })
+    ).toEqual({});
+  });
 });
