@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
 import { canSetPassword } from "@/lib/plan-limits";
 import { withErrorHandler } from "@/lib/api-error";
+import { validatePageStylePatch } from "@/lib/page-style-validation";
 import bcrypt from "bcryptjs";
 import slugify from "slugify";
 
@@ -63,6 +64,14 @@ export const PUT = withErrorHandler(async (
   if (!access.authorized) {
     const status = !access.session ? 401 : access.reason === "Page not found" ? 404 : 403;
     return NextResponse.json({ error: access.reason }, { status });
+  }
+
+  const styleCheck = validatePageStylePatch(body);
+  if (!styleCheck.ok) {
+    return NextResponse.json(
+      { error: `Invalid value for ${styleCheck.field}` },
+      { status: 400 }
+    );
   }
 
   const updateData: Record<string, unknown> = {};
