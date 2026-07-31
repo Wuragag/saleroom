@@ -9,6 +9,8 @@ export interface SlashCommandItem {
   description: string;
   icon: string;
   aliases: string[];
+  /** Node type this item inserts — hidden when the host editor's schema lacks it. */
+  requiresNode?: string;
   command: (props: { editor: Editor; range: Range }) => void;
 }
 
@@ -316,6 +318,7 @@ const COMMANDS: SlashCommandItem[] = [
     description: "Insert a reusable content block",
     icon: "Blocks",
     aliases: ["synced", "block", "reusable", "library", "shared"],
+    requiresNode: "syncedBlock",
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
       window.dispatchEvent(
@@ -339,12 +342,13 @@ export const slashCommandSuggestion = {
   }) => {
     props.command({ editor, range });
   },
-  items: ({ query }: { query: string }) => {
+  items: ({ query, editor }: { query: string; editor: Editor }) => {
     const search = query.toLowerCase();
     return COMMANDS.filter(
       (item) =>
-        item.title.toLowerCase().includes(search) ||
-        item.aliases.some((alias) => alias.includes(search))
+        (!item.requiresNode || editor.schema.nodes[item.requiresNode]) &&
+        (item.title.toLowerCase().includes(search) ||
+          item.aliases.some((alias) => alias.includes(search)))
     );
   },
   render: () => {

@@ -6,33 +6,17 @@ import type { NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Mail, Phone, ImageIcon, UserRound } from "lucide-react";
 import type { ContactPerson } from "./contact-card-node";
+import { cardGradient, cardInitials } from "@/lib/pub-nodes";
 
 // ─── Avatar helpers ───────────────────────────────────────────────────────────
 
-// Shades of the brand forest green so all contact avatars read as one family.
-const GRADIENTS = [
-  ["#003B22", "#0a5a36"],
-  ["#0a5a36", "#15784b"],
-  ["#15784b", "#1f9560"],
-  ["#0d4f30", "#2a8a5c"],
-] as const;
-
+// Same accent-derived gradient math as the published renderer (pub-nodes.ts);
+// the live --page-accent var keeps the editor in sync with the Design panel.
 function getGradient(name: string): readonly [string, string] {
-  const idx = (name.charCodeAt(0) || 0) % GRADIENTS.length;
-  return GRADIENTS[idx];
+  return cardGradient(name, "var(--page-accent, #17171a)");
 }
 
-function getInitials(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "?"
-  );
-}
+const getInitials = cardInitials;
 
 // ─── Shared input style ───────────────────────────────────────────────────────
 
@@ -209,10 +193,11 @@ export function ContactCardNodeView({
           </div>
         ) : (
           <div
-            className={
+            className="grid gap-3"
+            style={
               contacts.length > 1
-                ? "grid grid-cols-2 gap-3"
-                : "grid grid-cols-1 gap-3"
+                ? { gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }
+                : { gridTemplateColumns: "1fr" }
             }
           >
             {contacts.map((contact) => (

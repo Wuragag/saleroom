@@ -11,7 +11,7 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import { EmbedNode, CTAButtonNode, LogoGridNode, FormNode, ContactCardNode, BannerNode } from "./editor/extensions";
+import { EmbedNode, CTAButtonNode, LogoGridNode, FormNode, ContactCardNode, BannerNode, TestimonialNode, MetricsNode, SpacerNode } from "./editor/extensions";
 import { SlashCommand } from "./editor/extensions/slash-command";
 import { EditorToolbar } from "./editor/editor-toolbar";
 import { Check, Loader2 } from "lucide-react";
@@ -61,6 +61,9 @@ export function SyncedBlockEditor({ block, onUpdate }: SyncedBlockEditorProps) {
       FormNode,
       ContactCardNode,
       BannerNode,
+      TestimonialNode,
+      MetricsNode,
+      SpacerNode,
       SlashCommand,
     ],
     content: initialContent,

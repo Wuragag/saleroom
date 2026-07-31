@@ -631,6 +631,21 @@ div[data-type="form-block"] button[type="submit"]:disabled {
   overflow: hidden;
   box-shadow: 0 0 0 1px var(--pub-divider, rgba(0,0,0,0.06));
 }
+/* Published tables are wrapped for horizontal scrolling on small screens
+   (pub-nodes.ts); the frame moves to the wrapper. The live editor canvas has
+   no wrapper, so the standalone table rules above still apply there. */
+.pub-content .pub-table-wrap {
+  margin: 2rem 0;
+  overflow-x: auto;
+  border-radius: var(--pub-radius-md, 12px);
+  box-shadow: 0 0 0 1px var(--pub-divider, rgba(0,0,0,0.06));
+}
+.pub-content .pub-table-wrap table {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: min-content;
+}
 .pub-content thead th {
   background: var(--pub-table-header-bg, #f1f5f9);
   color: var(--pub-heading-color, #0f172a);

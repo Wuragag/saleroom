@@ -19,11 +19,12 @@ export const CTAButtonNode = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
+    // Mirrors the published output (pub-nodes.ts): left-aligned, accent-themed.
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-type": "cta-button",
-        style: "text-align:center;margin:24px 0;",
+        style: "margin:0;",
       }),
       [
         "a",
@@ -32,7 +33,7 @@ export const CTAButtonNode = Node.create({
           target: "_blank",
           rel: "noopener noreferrer",
           style:
-            "display:inline-block;padding:12px 32px;background:#0f172a;color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:16px;",
+            "display:inline-block;padding:13px 28px;background:var(--pub-accent, #17171a);color:var(--pub-accent-ink, #ffffff);border-radius:var(--pub-radius-sm, 9px);font-weight:700;text-decoration:none;font-size:15px;letter-spacing:-0.01em;",
         },
         HTMLAttributes.label,
       ],

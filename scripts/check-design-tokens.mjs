@@ -26,6 +26,7 @@ const ALLOW = [
   "src/lib/page-styles.ts", // per-page brand preset data (buyer-facing branding)
   "src/lib/pub-theme.ts", // published-page theme CSS vars (buyer-facing, like page-styles.ts)
   "src/lib/pub-color.ts", // pure color math deriving the buyer-facing ramp from user brand hex
+  "src/lib/pub-nodes.ts", // server-side published-page node HTML (buyer-facing, --pub-* fallbacks)
   "src/lib/__tests__/pub-color.test.ts", // color-math test fixtures are hex by nature
   "src/lib/__tests__/brand-kit.test.ts", // brand-kit test fixtures are hex by nature
   "src/lib/email.ts", // email HTML: CSS vars/Tailwind don't work in mail clients

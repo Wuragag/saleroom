@@ -5,27 +5,15 @@ import type { NodeViewProps } from "@tiptap/react";
 import { useEffect, useState, useMemo } from "react";
 import { Link2, AlertTriangle, Loader2 } from "lucide-react";
 import { generateHTML } from "@tiptap/html";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table-row";
-import { TableCell } from "@tiptap/extension-table-cell";
-import { TableHeader } from "@tiptap/extension-table-header";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
 import DOMPurify from "dompurify";
+import { buildPubExtensions, PUB_SANITIZE_CONFIG } from "@/lib/pub-nodes";
 
-// Lightweight extensions for rendering preview (no custom nodes to prevent recursion)
-const previewExtensions = [
-  StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
-  Image.configure({ inline: false, allowBase64: false }),
-  Table.configure({ resizable: false }),
-  TableRow,
-  TableCell,
-  TableHeader,
-  TextStyle,
-  Color,
-];
+// Same extension set as the published renderer, so custom blocks (CTA,
+// testimonial, metrics, banner, …) preview correctly instead of throwing.
+// Nested synced references render as the server fallback's dashed placeholder,
+// which also prevents infinite recursion. Colors ride on the --pub-* CSS vars
+// already set on the editor canvas, so the literal fallbacks rarely show.
+const previewExtensions = buildPubExtensions();
 
 export function SyncedBlockNodeView({ node, selected }: NodeViewProps) {
   const { syncedBlockId, blockName } = node.attrs;
@@ -61,10 +49,7 @@ export function SyncedBlockNodeView({ node, selected }: NodeViewProps) {
     try {
       const parsed = JSON.parse(content);
       const raw = generateHTML(parsed, previewExtensions);
-      return DOMPurify.sanitize(raw, {
-        ADD_TAGS: ["iframe"],
-        ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "target"],
-      });
+      return DOMPurify.sanitize(raw, PUB_SANITIZE_CONFIG);
     } catch {
       return "<p>Unable to render preview</p>";
     }

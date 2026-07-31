@@ -47,16 +47,27 @@ export function LogoGridNodeView({
             <span className="text-sm">Customer Logos</span>
           </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-center gap-6">
+          <div className="flex flex-wrap items-center gap-3 px-4">
             {logos.map((logo, i) => (
-              <div key={i} className="relative group">
+              <div
+                key={i}
+                className="relative group inline-flex items-center rounded-full"
+                style={{
+                  padding: "10px 20px",
+                  background: "var(--pub-surface, #f1f5f9)",
+                }}
+              >
                 <Image
                   src={logo.src}
                   alt={logo.alt || ""}
                   width={120}
-                  height={40}
+                  height={28}
                   className="object-contain"
-                  style={{ height: "40px", width: "auto" }}
+                  style={{
+                    height: "28px",
+                    width: "auto",
+                    filter: "grayscale(1) opacity(0.55)",
+                  }}
                 />
                 <button
                   type="button"

@@ -32,14 +32,23 @@ export const LogoGridNode = Node.create({
         ? JSON.parse(HTMLAttributes["data-logos"])
         : HTMLAttributes.logos || [];
 
+    // Mirrors the published output (pub-nodes.ts): left-aligned grayscale pills.
     const children = logos.map(
       (logo: { src: string; alt?: string }) => [
-        "img",
+        "div",
         {
-          src: logo.src,
-          alt: logo.alt || "",
-          style: "height:40px;object-fit:contain;",
+          style:
+            "display:inline-flex;align-items:center;padding:10px 20px;background:var(--pub-surface, #f1f5f9);border-radius:100px;",
         },
+        [
+          "img",
+          {
+            src: logo.src,
+            alt: logo.alt || "",
+            style:
+              "height:28px;object-fit:contain;filter:grayscale(1) opacity(0.55);",
+          },
+        ],
       ]
     );
 
@@ -49,7 +58,7 @@ export const LogoGridNode = Node.create({
         {
           "data-type": "logo-grid",
           style:
-            "display:flex;flex-wrap:wrap;align-items:center;gap:24px;justify-content:center;padding:24px 0;",
+            "display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:2rem 0;",
         },
         { "data-logos": JSON.stringify(logos) }
       ),
