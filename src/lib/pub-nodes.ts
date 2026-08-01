@@ -15,8 +15,16 @@ import { Color } from "@tiptap/extension-color";
  * HTML outside the live editor: the published page (/p/[slug]), the preview
  * (/preview/[id]) and the synced-block preview inside the editor all build
  * their extension list via buildPubExtensions() so they cannot drift apart.
- * Styling rides on the --pub-* CSS variables emitted by pub-theme.ts, with
- * literal fallbacks for contexts where the vars are absent.
+ * Styling rides on the --pub-* CSS variables emitted by pub-theme.ts.
+ *
+ * KNOWN LIMITATION: generateHTML runs against happy-dom on the server, whose
+ * CSSStyleDeclaration drops whole declarations whose value is a var() for the
+ * properties it parses (background, color, border-radius — box-shadow and
+ * other unparsed ones survive). So server-rendered markup ships without those
+ * colors and they only appear once the client re-renders: a first-paint flash
+ * on published pages. The literal second argument to var() does NOT rescue
+ * this — the declaration is gone entirely. New styling should therefore use
+ * CSS classes (see .pub-columns / .pub-table-wrap) rather than inline var().
  */
 
 // ─────────────────────────────────────────────────────────────────────────────

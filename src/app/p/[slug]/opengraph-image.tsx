@@ -16,6 +16,24 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const revalidate = 60;
 
+/**
+ * satori resolves remote <img src> with a bare server-side fetch (no host
+ * allowlist, no redirect guard), so only first-party Blob-hosted images may
+ * reach it — a hostile URL here would be an SSRF primitive. Everywhere else
+ * these fields render through next/image, which enforces the same host via
+ * remotePatterns (next.config.mjs).
+ */
+function trustedImageUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:") return null;
+    return u.hostname.endsWith(".public.blob.vercel-storage.com") ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function OgImage({
   params,
 }: {
@@ -28,6 +46,7 @@ export default async function OgImage({
       title: true,
       eyebrow: true,
       password: true,
+      requireEmail: true,
       accentColor: true,
       background: true,
       logoUrl: true,
@@ -40,14 +59,18 @@ export default async function OgImage({
   const isDark = isDarkBackground(page?.background);
   const heading = isDark ? "#f8fafc" : "#111318";
   const muted = isDark ? "rgba(248,250,252,0.62)" : "rgba(17,19,24,0.55)";
-  const isPrivate = !page || Boolean(page.password);
+  // Gated pages (password or email) must not leak content into the preview
+  // image — a declined gate or a link-unfurling bot would see it otherwise.
+  const isPrivate = !page || Boolean(page.password) || Boolean(page.requireEmail);
+  const logoUrl = trustedImageUrl(page?.logoUrl ?? null);
+  const coverUrl = trustedImageUrl(page?.coverImage ?? null);
 
   const washBackground = [
     `radial-gradient(ellipse 900px 540px at 85% -10%, ${hexAlpha(accent, isDark ? 0.32 : 0.16)} 0%, ${hexAlpha(accent, 0)} 62%)`,
     `radial-gradient(ellipse 700px 480px at -5% 105%, ${hexAlpha(accent, isDark ? 0.22 : 0.1)} 0%, ${hexAlpha(accent, 0)} 60%)`,
   ].join(", ");
 
-  const showCoverBackdrop = !isPrivate && Boolean(page?.coverImage);
+  const showCoverBackdrop = !isPrivate && Boolean(coverUrl);
 
   return new ImageResponse(
     (
@@ -64,7 +87,7 @@ export default async function OgImage({
         {/* Cover backdrop, dimmed so the title stays readable */}
         {showCoverBackdrop && (
           <img
-            src={page!.coverImage!}
+            src={coverUrl!}
             alt=""
             width={size.width}
             height={size.height}
@@ -111,10 +134,10 @@ export default async function OgImage({
             position: "relative",
           }}
         >
-          {!isPrivate && page?.logoUrl && (
+          {!isPrivate && logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={page.logoUrl}
+              src={logoUrl}
               alt=""
               height={56}
               style={{ height: 56, objectFit: "contain", alignSelf: "flex-start", marginBottom: 44 }}
@@ -143,7 +166,9 @@ export default async function OgImage({
                   letterSpacing: "-0.02em",
                 }}
               >
-                This page is password-protected
+                {page?.password
+                  ? "This page is password-protected"
+                  : "A page was shared with you"}
               </div>
             </div>
           ) : (

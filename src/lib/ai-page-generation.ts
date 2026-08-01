@@ -352,7 +352,9 @@ function sanitizeNode(node: any, opts?: SanitizeDocOptions): any | null {
     if (cols.length < 2) return null;
     out.content = cols.slice(0, 3);
   } else if (node.type === "column") {
-    const blocks = (out.content ?? []).filter((c: any) => c.type !== "columns");
+    const blocks = (out.content ?? []).filter(
+      (c: any) => c.type !== "columns" && c.type !== "column"
+    );
     out.content = blocks.length > 0 ? blocks : [{ type: "paragraph" }];
   } else if (Array.isArray(out.content)) {
     const filtered = out.content.filter((c: any) => c.type !== "column");

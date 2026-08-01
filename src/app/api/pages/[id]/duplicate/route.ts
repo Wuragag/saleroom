@@ -85,6 +85,7 @@ export const POST = withErrorHandler(async (
           // the old blob, which would break a duplicate sharing the same URL
           coverLayout: original.coverLayout,
           coverHeight: original.coverHeight,
+          heroLayout: original.heroLayout,
           eyebrow: original.eyebrow,
           subtitle: original.subtitle,
           themeRadius: original.themeRadius,

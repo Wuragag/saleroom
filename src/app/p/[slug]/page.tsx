@@ -45,10 +45,13 @@ export async function generateMetadata({
   // Deal pages are share-by-link — keep them out of search indexes.
   const robots = { index: false, follow: false };
 
-  // Password-protected pages must not leak their title/subtitle in previews.
-  if (page.password) {
+  // Gated pages must not leak their title/subtitle in previews — a declined
+  // gate or any link-unfurling bot (Slack, mail scanners) would see it.
+  if (page.password || page.requireEmail) {
     const title = "Private page";
-    const description = `This page is password-protected. Shared via ${APP_NAME}.`;
+    const description = page.password
+      ? `This page is password-protected. Shared via ${APP_NAME}.`
+      : `A page was shared with you via ${APP_NAME}.`;
     return {
       title,
       description,

@@ -134,10 +134,13 @@ export function getFontStyle(font: string): CSSProperties {
 }
 
 export function getAccentColor(accentColor: string): string {
-  // New format: raw hex value stored directly
-  if (accentColor?.startsWith("#")) return accentColor;
+  // New format: raw hex value stored directly. Strict shape check so junk
+  // written before server-side validation existed can't reach inline styles.
+  if (/^#[0-9a-fA-F]{6}$/.test(accentColor ?? "")) return accentColor;
   // Legacy format: named key (backward compat with existing pages)
-  return ACCENT_COLORS[accentColor] ?? "#64748b";
+  return Object.prototype.hasOwnProperty.call(ACCENT_COLORS, accentColor)
+    ? ACCENT_COLORS[accentColor]
+    : "#64748b";
 }
 
 export interface PageStyle {

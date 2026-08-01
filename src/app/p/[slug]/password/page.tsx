@@ -49,9 +49,19 @@ export default async function PasswordPage({
 
   const hasError = resolvedSearchParams.error === "1";
 
+  // Explicit style object — never spread the row here: it carries the bcrypt
+  // password hash, and PubGate is shared with a client component graph.
   return (
     <PubGate
-      style={page}
+      style={{
+        accentColor: page.accentColor,
+        background: page.background,
+        font: page.font,
+        headingFont: page.headingFont,
+        themeRadius: page.themeRadius,
+        themeDepth: page.themeDepth,
+        logoUrl: page.logoUrl,
+      }}
       icon={<Lock className="h-5 w-5" />}
       title="Enter password"
       description={

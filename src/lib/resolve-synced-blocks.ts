@@ -23,11 +23,16 @@ export async function resolveSyncedBlocks(doc: TipTapNode, teamId?: string | nul
 
   if (ids.size === 0) return doc;
 
-  // 2. Batch fetch from DB (scoped to team to prevent cross-team leakage)
-  const blocks = await prisma.syncedBlock.findMany({
-    where: { id: { in: Array.from(ids) }, ...(teamId ? { teamId } : {}) },
-    select: { id: true, content: true },
-  });
+  // 2. Batch fetch from DB, scoped to team to prevent cross-team leakage.
+  // Synced blocks always belong to a team (SyncedBlock.teamId is required),
+  // so a teamless page resolves nothing — its stale references are simply
+  // omitted, same as deleted blocks.
+  const blocks = teamId
+    ? await prisma.syncedBlock.findMany({
+        where: { id: { in: Array.from(ids) }, teamId },
+        select: { id: true, content: true },
+      })
+    : [];
   const blockMap = new Map(
     blocks.map((b) => {
       try {

@@ -150,6 +150,9 @@ export function getEditorNodeVars(accentColor: string, background?: string | nul
     "--node-accent-safe": ramp.accentSafe,
     "--node-accent-ink":  ramp.accentInk,
     "--node-wash":        `linear-gradient(135deg, ${ramp.washA} 0%, ${ramp.washB} 100%)`,
+    // Logo-grid pill fill — literal values matching the published renderer
+    // (pub-nodes.ts createLogoGridNode), which can't read CSS vars.
+    "--node-logo-pill":   isDark ? "#13131a" : "#f1f5f9",
     // Metrics render as solid stat chips on the wash (see page-renderer.tsx)
     "--metric-cell-bg":   isDark ? ramp.surfaceStrong : "rgba(255,255,255,0.85)",
   } as CSSProperties;

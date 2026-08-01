@@ -2,9 +2,11 @@ import { googleFontsHref } from "@/lib/pub-fonts";
 
 /**
  * Loads the Google Fonts stylesheet for a page's selected font keys.
- * React hoists these <link> tags into <head>. Buyer pages pass just
- * [page.font, page.headingFont]; the editor passes ALL_PUB_FONT_KEYS so
- * the font picker previews render true and switching is instant.
+ * Rendered in the body rather than <head> (React 18 has no stylesheet
+ * hoisting) — browsers still fetch and apply it, and `display=swap` keeps
+ * text visible meanwhile. Buyer pages pass just [page.font,
+ * page.headingFont]; the editor passes ALL_PUB_FONT_KEYS so the font picker
+ * previews render true and switching is instant.
  */
 export function PubFontLinks({
   fontKeys,

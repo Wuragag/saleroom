@@ -298,7 +298,11 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }).catch(() => toast.error("Failed to save style"));
+      })
+        .then((res) => {
+          if (!res.ok) toast.error("Failed to save style");
+        })
+        .catch(() => toast.error("Failed to save style"));
     }, 800);
   };
 
@@ -346,7 +350,11 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ links: JSON.stringify(val) }),
-      }).catch(() => toast.error("Failed to save links"));
+      })
+        .then((res) => {
+          if (!res.ok) toast.error("Failed to save links");
+        })
+        .catch(() => toast.error("Failed to save links"));
     }, 800);
   };
 

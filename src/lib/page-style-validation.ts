@@ -20,8 +20,8 @@ import {
  * that every renderer then has to defensively fall back from.
  */
 
-const MAX_LINKS = 20;
-const MAX_LINK_LABEL = 80;
+const MAX_LINKS = 50;
+const MAX_LINK_LABEL = 200;
 const MAX_URL = 2048;
 
 function isValidHttpUrl(v: unknown): boolean {
@@ -36,12 +36,28 @@ function isValidHttpUrl(v: unknown): boolean {
 
 /** "" (unset) or an http(s) URL — used for logoUrl / coverImage. */
 function isValidOptionalUrl(v: unknown): boolean {
-  return v === "" || v === null || isValidHttpUrl(v);
+  return v === "" || isValidHttpUrl(v);
 }
 
 /** Raw hex (new format) or a legacy named accent key (see getAccentColor). */
 function isValidAccent(v: unknown): boolean {
-  return isValidHex(v) || (typeof v === "string" && v in ACCENT_COLORS);
+  return (
+    isValidHex(v) ||
+    (typeof v === "string" &&
+      Object.prototype.hasOwnProperty.call(ACCENT_COLORS, v))
+  );
+}
+
+/**
+ * Link URLs mirror the render-time contract (tabbed-page-view sanitizeUrl):
+ * protocol-less values get https:// prefixed at render, mailto:/tel: are
+ * allowed — so here we only reject what render-time would neuter anyway,
+ * plus absurd lengths. Rejecting more would 400 legacy rows and mid-typing
+ * autosaves that previously succeeded.
+ */
+function isSafeLinkUrl(v: unknown): boolean {
+  if (typeof v !== "string" || v.length > MAX_URL) return false;
+  return !/^\s*(javascript|data|vbscript)\s*:/i.test(v);
 }
 
 function isValidLinksJson(v: unknown): boolean {
@@ -59,7 +75,7 @@ function isValidLinksJson(v: unknown): boolean {
       item !== null &&
       typeof (item as Record<string, unknown>).label === "string" &&
       ((item as Record<string, unknown>).label as string).length <= MAX_LINK_LABEL &&
-      isValidHttpUrl((item as Record<string, unknown>).url)
+      isSafeLinkUrl((item as Record<string, unknown>).url)
   );
 }
 

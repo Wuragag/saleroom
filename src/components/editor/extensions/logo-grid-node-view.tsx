@@ -54,7 +54,7 @@ export function LogoGridNodeView({
                 className="relative group inline-flex items-center rounded-full"
                 style={{
                   padding: "10px 20px",
-                  background: "var(--pub-surface, #f1f5f9)",
+                  background: "var(--node-logo-pill, #f1f5f9)",
                 }}
               >
                 <Image

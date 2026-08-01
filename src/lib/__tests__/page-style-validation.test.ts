@@ -56,6 +56,9 @@ describe("validatePageStylePatch", () => {
       validatePageStylePatch({ accentColor: "red; background:url(x)" }).ok
     ).toBe(false);
     expect(validatePageStylePatch({ accentColor: 7 }).ok).toBe(false);
+    // prototype-chain keys must not pass the legacy-name check
+    expect(validatePageStylePatch({ accentColor: "toString" }).ok).toBe(false);
+    expect(validatePageStylePatch({ accentColor: "constructor" }).ok).toBe(false);
   });
 
   it("rejects invalid enum values", () => {
@@ -71,7 +74,8 @@ describe("validatePageStylePatch", () => {
 
   it("validates logo/cover URLs", () => {
     expect(validatePageStylePatch({ logoUrl: "" }).ok).toBe(true);
-    expect(validatePageStylePatch({ logoUrl: null }).ok).toBe(true);
+    // null would hit Prisma's non-nullable column — reject before the DB does
+    expect(validatePageStylePatch({ logoUrl: null }).ok).toBe(false);
     expect(
       validatePageStylePatch({ logoUrl: "https://blob.example.com/a.png" }).ok
     ).toBe(true);
@@ -90,6 +94,17 @@ describe("validatePageStylePatch", () => {
         ]),
       }).ok
     ).toBe(true);
+    // Protocol-less, mailto: and mid-typing values are legitimate — the
+    // render-time sanitizer prefixes/neuters, so writes must not 400 them
+    expect(
+      validatePageStylePatch({
+        links: JSON.stringify([
+          { label: "Site", url: "example.com" },
+          { label: "Mail", url: "mailto:a@b.com" },
+          { label: "Typing", url: "exa" },
+        ]),
+      }).ok
+    ).toBe(true);
     expect(validatePageStylePatch({ links: "not json" }).ok).toBe(false);
     expect(validatePageStylePatch({ links: '{"label":"x"}' }).ok).toBe(false);
     expect(
@@ -99,8 +114,13 @@ describe("validatePageStylePatch", () => {
     ).toBe(false);
     expect(
       validatePageStylePatch({
+        links: JSON.stringify([{ label: "x", url: " DATA:text/html,x" }]),
+      }).ok
+    ).toBe(false);
+    expect(
+      validatePageStylePatch({
         links: JSON.stringify(
-          Array.from({ length: 21 }, (_, i) => ({
+          Array.from({ length: 51 }, (_, i) => ({
             label: `l${i}`,
             url: "https://example.com",
           }))

@@ -111,6 +111,20 @@ describe("sanitizeDoc", () => {
       content: [col("stray"), { type: "paragraph" }],
     });
     expect(stray?.content?.map((n) => n.type)).toEqual(["paragraph"]);
+
+    // a column directly nested inside a column is removed too
+    const directNest = sanitizeDoc({
+      type: "doc",
+      content: [
+        {
+          type: "columns",
+          content: [col("ok"), { type: "column", content: [col("inner")] }],
+        },
+      ],
+    });
+    expect(directNest?.content?.[0].content?.[1].content).toEqual([
+      { type: "paragraph" },
+    ]);
   });
 });
 
