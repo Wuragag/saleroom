@@ -156,9 +156,15 @@ Beyond rich text, the editor ships custom blocks (Tiptap node extensions in
 | **Metrics**      | A row of headline numbers (value + label). |
 | **Spacer**       | Vertical spacing control (sm/md/lg/xl). |
 
-All blocks render on the public page through a sanitized renderer
-([`src/components/page-renderer.tsx`](../src/components/page-renderer.tsx)); page
-HTML is sanitized with DOMPurify before display.
+All blocks render on the public page through one server-side pipeline
+([`src/lib/pub-html.ts`](../src/lib/pub-html.ts) over the shared block schema in
+[`src/lib/pub-nodes.ts`](../src/lib/pub-nodes.ts)): Tiptap JSON → HTML →
+DOMPurify, per tab, at request time. The client receives finished HTML, so the
+buyer bundle carries no editor schema and the first paint is already fully
+themed. Block types the running build doesn't know (e.g. content written on a
+newer deploy) are dropped and logged instead of failing the page. Embed URLs
+are normalized to their embeddable form (YouTube/Loom share links → `/embed/`)
+on render, matching the editor.
 
 ---
 
@@ -171,6 +177,11 @@ Next Steps*), each with its own Tiptap content.
 - Tab placement (top / side) is part of page theming.
 - Buyers' time and views are tracked **per tab** (see Buyer Intelligence).
 - Tab count per page is plan-limited (FREE: 3).
+- **Deep links** — every tab has a URL anchor derived from its name
+  (`/p/acme-renewal#pricing`); switching tabs updates the hash, and a shared
+  anchor opens that tab directly (tracked as the first tab view). The tab bar
+  follows the WAI-ARIA tabs pattern (roving focus, arrow keys)
+  ([`src/lib/tab-anchor.ts`](../src/lib/tab-anchor.ts)).
 
 Models: `Tab`. UI: [`tab-sidebar`](../src/components/editor/tab-sidebar.tsx),
 [`tabbed-page-view`](../src/components/tabbed-page-view.tsx).
@@ -219,9 +230,12 @@ Two AI-powered ways to create a page, both using Claude (Haiku).
 - **AI Write** ([`/ai`](../src/app/ai/[[...pageId]]/page.tsx),
   [`/api/ai-chat/[pageId]`](../src/app/api/ai-chat/[pageId]/route.ts)) —
   describe the sales page you want in chat. The workspace creates a draft page,
-  plans the buyer journey, builds tabs one at a time, persists generated tab
-  content server-side for reload durability, and applies the result through the
-  live editor. Existing pages can be edited with the same chat via `/ai/{pageId}`.
+  plans the buyer journey (title, hero eyebrow + subtitle, style, tabs, CTA,
+  action plan), builds tabs one at a time, persists generated tab content
+  server-side for reload durability, and applies the result through the live
+  editor. Existing pages can be edited with the same chat via `/ai/{pageId}`
+  (scoped ops incl. `setHero`). Generated forms always get a submittable id
+  and embed URLs are normalized; the summary flags a CTA that has no link yet.
 - **Document Import** ([`/api/import`](../src/app/api/import/route.ts)) — upload a
   **PDF, DOCX, or PPTX** (≤10 MB); text is extracted server-side
   ([`src/lib/document-parser.ts`](../src/lib/document-parser.ts)) and Claude
@@ -250,6 +264,14 @@ UI: [`ai-workspace`](../src/components/ai/ai-workspace.tsx),
   ([`/api/ref`](../src/app/api/ref/route.ts), `PageContact.refToken`).
 - **Preview** ([`/preview/[id]`](../src/app/preview/[id]/page.tsx)) — see the page
   as a buyer would before publishing.
+- **Placeholder guard** — publishing a page that still contains unfilled
+  placeholders (`[Company Name]`, `[PLACEHOLDER: …]`, `[your@email.com]`) asks
+  for confirmation first ([`src/lib/page-placeholders.ts`](../src/lib/page-placeholders.ts)).
+- **Dead links** — an unpublished, deleted or renamed page shows a buyer-facing
+  "link unavailable" screen ([`/p/[slug]/not-found`](../src/app/p/[slug]/not-found.tsx))
+  rather than the app 404.
+- The "Powered by Dealbeam" footer badge links back to the marketing site with
+  UTM tags (hidden for white-label plans).
 
 ---
 

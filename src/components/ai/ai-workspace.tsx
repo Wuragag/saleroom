@@ -352,6 +352,13 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
       } catch {
         // Keep building; content persistence will still surface any auth/save failures.
       }
+      // Hero eyebrow/subtitle make the published header read complete
+      // ("Prepared for Acme" / one-line promise) without a manual pass.
+      const hero = {
+        ...(plan.eyebrow ? { eyebrow: plan.eyebrow } : {}),
+        ...(plan.subtitle ? { subtitle: plan.subtitle } : {}),
+      };
+      if (Object.keys(hero).length > 0) liveBridge.setHero(hero);
       if (plan.style && Object.keys(plan.style).length > 0) {
         liveBridge.setStyle(plan.style);
       }
@@ -499,6 +506,11 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
       );
       if (plan.cta && hasCta(builtDocs)) {
         parts.push(`The primary CTA is "${plan.cta.label}" on the ${plan.ctaTabName} tab.`);
+        if (!plan.cta.url) {
+          parts.push(
+            "It doesn't link anywhere yet — click the button in the editor to add the URL, or tell me where it should go."
+          );
+        }
       }
       if (plan.includeMap && (plan.mapItems?.length ?? 0) > 0) {
         parts.push(
@@ -550,6 +562,8 @@ export function AiWorkspace({ initialPage }: AiWorkspaceProps) {
           messages: toApiHistory(history),
           context: {
             title: ctx.title,
+            eyebrow: ctx.eyebrow,
+            subtitle: ctx.subtitle,
             style: ctx.style,
             activeTabId: ctx.activeTabId,
             tabs: ctx.tabs,

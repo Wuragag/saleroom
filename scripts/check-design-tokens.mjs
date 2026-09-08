@@ -48,7 +48,6 @@ const EXCLUDE = [
   // Buyer-facing published page + its gates/thumbnails:
   "src/app/p/",
   "src/app/preview/",
-  "src/components/page-renderer.tsx",
   "src/components/page-shell.tsx",
   "src/components/pub-cover.tsx",
   "src/components/pub-hero.tsx",

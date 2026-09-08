@@ -12,8 +12,9 @@ import { MapViewer } from "@/components/map-viewer";
 import { PubFontLinks } from "@/components/pub-font-links";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
 import { getTeamBrandKit } from "@/lib/brand-kit";
-import type { MutualActionPlanData } from "@/types";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
+import { parseDocJson, renderPubHtml } from "@/lib/pub-html";
+import { serializeMap } from "@/lib/map-serialize";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 
@@ -35,41 +36,28 @@ export default async function PreviewPage({
   if (!page) notFound();
   if (page.userId !== session.user.id) notFound();
 
-  // Same pipeline as /p/[slug]: synced references resolve to their content
-  const tabs = await Promise.all(
-    page.tabs.map(async (tab) => {
-      const parsed = JSON.parse(tab.content);
-      const resolved = await resolveSyncedBlocks(parsed, page.teamId);
-      return { id: tab.id, name: tab.name, content: resolved };
-    })
-  );
-
-  // MAP parity with /p/[slug] — fetched server-side because the public
-  // /api/map/[slug] endpoint only serves published pages.
-  const mapRecord = await prisma.mutualActionPlan.findUnique({
-    where: { pageId: page.id },
-    include: { items: { orderBy: { order: "asc" } } },
-  });
-  const initialMap: MutualActionPlanData | null = mapRecord
-    ? {
-        ...mapRecord,
-        closeDate: mapRecord.closeDate?.toISOString() ?? null,
-        createdAt: mapRecord.createdAt.toISOString(),
-        updatedAt: mapRecord.updatedAt.toISOString(),
-        items: mapRecord.items.map((item) => ({
-          ...item,
-          ownerType: item.ownerType as "seller" | "buyer",
-          dueDate: item.dueDate?.toISOString() ?? null,
-          createdAt: item.createdAt.toISOString(),
-          updatedAt: item.updatedAt.toISOString(),
-        })),
-      }
-    : null;
-
   const bgHex = getBgHex(page.background);
   const fontStyle = getFontStyle(page.font);
   const accentColor = getAccentColor(page.accentColor);
   const isDark = isDarkBackground(page.background);
+
+  // Same pipeline as /p/[slug]: synced references resolve, tabs render to
+  // final HTML, and the MAP is fetched here (the public /api/map/[slug]
+  // endpoint only serves published pages).
+  const [tabs, mapRecord] = await Promise.all([
+    Promise.all(
+      page.tabs.map(async (tab) => {
+        const resolved = await resolveSyncedBlocks(parseDocJson(tab.content), page.teamId);
+        const { html } = renderPubHtml(resolved, { isDark, accentColor });
+        return { id: tab.id, name: tab.name, html };
+      })
+    ),
+    prisma.mutualActionPlan.findUnique({
+      where: { pageId: page.id },
+      include: { items: { orderBy: { order: "asc" } } },
+    }),
+  ]);
+  const initialMap = serializeMap(mapRecord);
   const links = (() => {
     try {
       return JSON.parse(page.links ?? "[]");
@@ -172,6 +160,7 @@ export default async function PreviewPage({
       maxWidth={maxWidth}
       banner={previewBanner}
       showBranding={showBranding}
+      documentTheme
       paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
       coverImage={
         page.coverImage ? (
@@ -204,7 +193,6 @@ export default async function PreviewPage({
         links={links}
         accentColor={accentColor}
         tabPlacement={page.tabPlacement as "top" | "left"}
-        isDark={isDark}
       />
 
       {/* Mutual Action Plan — read-only in preview */}

@@ -81,7 +81,7 @@ even then, a small set:
 ## Explicitly out of scope for a product reskin
 
 - **Marketing site** — `src/app/(marketing)/`, `src/components/marketing/`: its own bespoke visual system.
-- **Buyer-facing published page** — `page-renderer.tsx`, `published-form.tsx`, `tabbed-page-view.tsx`, `/p`, `/preview`, and the editor `extensions/*` blocks: themed by the **seller's** brand (`src/lib/page-styles.ts` + the `--page-accent` variable), reskinned there.
+- **Buyer-facing published page** — `src/lib/pub-html.ts` + `pub-nodes.ts`, `published-form.tsx`, `tabbed-page-view.tsx`, `/p`, `/preview`, and the editor `extensions/*` blocks: themed by the **seller's** brand (`src/lib/page-styles.ts` + the `--page-accent` variable), reskinned there.
 - **Email** — `src/lib/email.ts`: inline hex required by mail clients.
 - **Content-color pickers** — `src/lib/color-palettes.ts`: the swatches a seller picks page colors from.
 

@@ -60,7 +60,7 @@ independently. Know which one you're editing (details in `docs/DESIGN-SYSTEM.md`
    files must not hardcode visual values.
 2. **Marketing site** (`src/app/(marketing)/`, `src/components/marketing/`) — its
    own bespoke styles, data-driven from `src/data/marketing/`.
-3. **Buyer-facing published page** (`page-renderer.tsx`, `published-form.tsx`,
+3. **Buyer-facing published page** (`src/lib/pub-html.ts`, `published-form.tsx`,
    `tabbed-page-view.tsx`, `/p`, `/preview`, editor `extensions/*` blocks) —
    themed by the **seller's** brand via `src/lib/page-styles.ts` + the
    `--page-accent` CSS var, not the chrome tokens.
@@ -166,7 +166,11 @@ ESLint `no-restricted-syntax` rule:
   `next.config.mjs`. Embeds are limited to an allowlist of providers (YouTube,
   Vimeo, Loom, Google Docs, Airtable, Calendly) — extend the `frame-src` CSP and
   the embed allowlist together when adding one.
-- Page HTML is sanitized with DOMPurify before render (`page-renderer.tsx`).
+- Published-page HTML is generated **server-side only** (`src/lib/pub-html.ts`:
+  Tiptap JSON → HTML via the shared `pub-nodes.ts` schema → DOMPurify) and
+  handed to the client as strings; unknown block types are dropped, never
+  fatal. Never import `pub-html.ts` from a client component (it pulls in
+  happy-dom).
 - Rate limiting (`src/lib/rate-limit.ts`) uses Upstash in prod with an in-memory
   dev fallback; applied to auth, uploads, AI/import, forms, and analytics writes.
 - Stripe webhooks are signature-verified (`src/app/api/webhooks/stripe/route.ts`).

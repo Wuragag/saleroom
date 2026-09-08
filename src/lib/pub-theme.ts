@@ -87,7 +87,7 @@ export function getPubCssVars(opts: {
     // Soft brand-washed gradient for framed containers (media, cards).
     "--pub-wash":             `linear-gradient(135deg, ${ramp.washA} 0%, ${ramp.washB} 100%)`,
     // Metrics stat-chip fill — single source shared with getEditorNodeVars
-    // and page-renderer.tsx so editor/published can't drift.
+    // and pub-nodes.ts so editor/published can't drift.
     "--metric-cell-bg":       isDark ? ramp.surfaceStrong : "rgba(255,255,255,0.85)",
     // Brand-washed neutral ramp derived from the accent (pub-color.ts).
     "--pub-heading-color":    ramp.heading,
@@ -153,7 +153,7 @@ export function getEditorNodeVars(accentColor: string, background?: string | nul
     // Logo-grid pill fill — literal values matching the published renderer
     // (pub-nodes.ts createLogoGridNode), which can't read CSS vars.
     "--node-logo-pill":   isDark ? "#13131a" : "#f1f5f9",
-    // Metrics render as solid stat chips on the wash (see page-renderer.tsx)
+    // Metrics render as solid stat chips on the wash (see pub-nodes.ts)
     "--metric-cell-bg":   isDark ? ramp.surfaceStrong : "rgba(255,255,255,0.85)",
   } as CSSProperties;
 }

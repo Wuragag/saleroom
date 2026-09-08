@@ -5,7 +5,10 @@ import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Check } from "lucide-react";
+import { Pencil, Check, AlertCircle } from "lucide-react";
+
+/** The published page only links http(s) URLs (pub-nodes sanitizeUrl). */
+const hasRealLink = (url: unknown) => /^https?:\/\//i.test(String(url ?? "").trim());
 
 export function CTAButtonNodeView({
   node,
@@ -48,7 +51,7 @@ export function CTAButtonNodeView({
             </Button>
           </div>
         ) : (
-          <div className="group relative inline-block">
+          <div className="group relative inline-flex items-center gap-3">
             <a
               className="inline-block px-8 py-3 font-semibold text-base cursor-default"
               style={{
@@ -60,6 +63,20 @@ export function CTAButtonNodeView({
             >
               {node.attrs.label}
             </a>
+            {/* Editor-only hint: AI drafts often leave the CTA without a
+                destination, and a dead button is the worst thing a buyer can
+                click. Never rendered on the published page. */}
+            {!hasRealLink(node.attrs.url) && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                contentEditable={false}
+                className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning-subtle px-2 py-0.5 text-2xs font-medium text-warning-subtle-foreground"
+              >
+                <AlertCircle className="h-3 w-3" />
+                No link yet
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setEditing(true)}

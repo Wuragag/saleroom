@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,17 @@ export function FormNodeView({
 }: NodeViewProps) {
   const [showSettings, setShowSettings] = useState(false);
   const fields: FormField[] = node.attrs.fields || [];
+
+  // Submissions are keyed by formId and the submit endpoint rejects an empty
+  // one — self-heal any form that reached the editor without an id.
+  useEffect(() => {
+    if (!node.attrs.formId) {
+      updateAttributes({
+        formId: `form_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const submitLabel: string = node.attrs.submitLabel || "Submit";
   const successMessage: string = node.attrs.successMessage || "Thank you!";
 

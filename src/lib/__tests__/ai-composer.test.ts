@@ -46,7 +46,41 @@ describe("sanitizePlan", () => {
   });
 });
 
+describe("sanitizePlan hero fields", () => {
+  it("keeps trimmed eyebrow/subtitle within the page limits and drops empties", () => {
+    const base = {
+      pageType: "proposal",
+      title: "Acme renewal",
+      tabs: [{ name: "Overview", purpose: "Recap" }],
+      ctaTabName: null,
+      cta: null,
+    };
+    const plan = sanitizePlan(
+      { ...base, eyebrow: "  Prepared for Acme  ", subtitle: "x".repeat(300) },
+      3
+    );
+    expect(plan?.eyebrow).toBe("Prepared for Acme");
+    expect(plan?.subtitle).toHaveLength(220);
+
+    const empty = sanitizePlan({ ...base, eyebrow: "", subtitle: 42 }, 3);
+    expect(empty?.eyebrow).toBeUndefined();
+    expect(empty?.subtitle).toBeUndefined();
+  });
+});
+
 describe("sanitizeOps", () => {
+  it("accepts setHero with at least one field and drops an empty one", () => {
+    const ops = sanitizeOps(
+      [
+        { op: "setHero", eyebrow: " Prepared for Acme ", subtitle: "" },
+        { op: "setHero" },
+        { op: "setHero", eyebrow: 12 },
+      ],
+      { validTabIds: new Set(), allowedSyncedBlockIds: new Set() }
+    );
+    expect(ops).toEqual([{ op: "setHero", eyebrow: "Prepared for Acme", subtitle: "" }]);
+  });
+
   it("drops operations for unknown tabs and preserves only allowed synced blocks", () => {
     const ops = sanitizeOps(
       [

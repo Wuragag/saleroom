@@ -59,7 +59,7 @@ export function TestimonialNodeView({ node, updateAttributes, selected }: NodeVi
         </div>
       ) : (
         <div className="group relative">
-          {/* Mirrors the published testimonial card (page-renderer.tsx) */}
+          {/* Mirrors the published testimonial card (pub-nodes.ts) */}
           <div
             style={{
               background: "var(--node-card-bg, #ffffff)",
