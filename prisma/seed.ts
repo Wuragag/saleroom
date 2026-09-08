@@ -1,4 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+// The client is generated to src/generated/prisma, not @prisma/client — see
+// CLAUDE.md. Importing the default location only appeared to work while a
+// stale client happened to be present in node_modules.
+import { PrismaClient } from "@/generated/prisma";
 
 const prisma = new PrismaClient();
 

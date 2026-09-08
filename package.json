@@ -11,7 +11,9 @@
     "lint:design": "node scripts/check-design-tokens.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "smoke:seed": "tsx scripts/smoke-seed.ts",
+    "smoke": "tsx scripts/smoke-test.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -1,9 +1,14 @@
 name: CI
 
 # Runs the checks we already have (typecheck, lint, design tokens, tests, build)
-# on every PR and every push to a long-lived branch. Jobs run in parallel so a
-# red result comes back fast. Prisma client must be generated before typecheck,
-# tests, or build — see CLAUDE.md ("cannot find module '@/generated/prisma'").
+# plus a smoke test that actually requests the buyer-facing pages, on every PR
+# and every push to a long-lived branch. Jobs run in parallel so a red result
+# comes back fast. Prisma client must be generated before typecheck, tests, or
+# build — see CLAUDE.md ("cannot find module '@/generated/prisma'").
+#
+# Node version tracks the Vercel project's runtime (24.x) and .nvmrc. CI that
+# runs a different major than production cannot catch a version-sensitive
+# failure — keep these three in step.
 
 on:
   pull_request:
@@ -41,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - name: Install
         run: npm ci
@@ -57,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - name: Install
         run: npm ci
@@ -70,3 +75,55 @@ jobs:
         run: npx next build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+
+  # Boots the production build against a throwaway Postgres and requests the
+  # buyer-facing pages. Everything above this job passed while every /p/[slug]
+  # request 500'd in production: the failure was in the bundled server output
+  # at module load, so only an actual request could surface it. See
+  # scripts/smoke-test.ts.
+  smoke:
+    name: Smoke (published pages)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dealbeam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/dealbeam"
+      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/dealbeam"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      # The migration history can't build a database from scratch right now (a
+      # migration reads PageContact before any migration creates it), and an
+      # ephemeral test database needs no history — push the schema directly.
+      # --accept-data-loss keeps it non-interactive; the database is created
+      # fresh for this job and thrown away with it.
+      - name: Create schema
+        run: npx prisma db push --skip-generate --accept-data-loss
+      - name: Seed templates
+        run: npx tsx prisma/seed.ts
+      - name: Seed smoke fixtures
+        run: npm run smoke:seed
+      - name: Build
+        run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - name: Smoke
+        run: npm run smoke
