@@ -2,7 +2,7 @@ import { getSchema } from "@tiptap/core";
 import type { JSONContent } from "@tiptap/core";
 import { DOMSerializer, Node as PMNode, type Schema } from "@tiptap/pm/model";
 import { Window } from "happy-dom";
-import DOMPurify from "isomorphic-dompurify";
+import createDOMPurify from "dompurify";
 import {
   buildPubExtensions,
   PUB_SANITIZE_CONFIG,
@@ -29,6 +29,13 @@ import {
  * looked right once hydration re-rendered it — a visible flash on every
  * buyer visit. The document facade below hides the `style` accessor, so the
  * serializer falls back to setAttribute, which keeps declarations verbatim.
+ *
+ * Sanitizing runs against that same happy-dom window rather than through
+ * isomorphic-dompurify: that package pulls in jsdom, whose CJS entry
+ * `require()`s an ES module and therefore only loads on Node >= 20.19 /
+ * >= 22.12. On an older runtime the require threw at module load and every
+ * /p/[slug] request 500'd (published or not), while dev on a newer Node
+ * looked fine. One DOM implementation, no jsdom, no Node-version cliff.
  */
 
 const HAPPY_DOM_SETTINGS = {
@@ -150,7 +157,7 @@ export function renderPubHtml(
   const schema = getSchema(extensions);
   const { doc, dropped } = stripUnknownNodes(content, schema);
 
-  let raw: string;
+  let html: string;
   const win = new Window({ settings: HAPPY_DOM_SETTINGS });
   try {
     const node = PMNode.fromJSON(schema, doc);
@@ -160,14 +167,16 @@ export function renderPubHtml(
       { document: rawStyleDocument(win.document) },
       wrap as unknown as HTMLElement
     );
-    raw = wrap.innerHTML;
+    // Sanitize inside the try: the window has to outlive it (closed below).
+    const purify = createDOMPurify(win as unknown as Window & typeof globalThis);
+    html = purify.sanitize(wrap.innerHTML, PUB_SANITIZE_CONFIG);
   } catch (err) {
     console.error("[pub-html] failed to render page content:", err);
-    return { html: PUB_RENDER_FALLBACK_HTML, dropped };
+    html = PUB_RENDER_FALLBACK_HTML;
   } finally {
     win.happyDOM.abort();
     void win.happyDOM.close();
   }
 
-  return { html: DOMPurify.sanitize(raw, PUB_SANITIZE_CONFIG), dropped };
+  return { html, dropped };
 }
