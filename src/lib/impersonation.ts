@@ -1,8 +1,13 @@
 import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 
 function getSecret(): string {
-  if (!process.env.NEXTAUTH_SECRET) throw new Error("NEXTAUTH_SECRET not set");
-  return process.env.NEXTAUTH_SECRET;
+  // Auth.js v5 reads AUTH_SECRET natively and only falls back to
+  // NEXTAUTH_SECRET, so deployments commonly set just AUTH_SECRET. Accept
+  // either, in the same order as the other signers in this codebase
+  // (see src/app/p/[slug]/page.tsx, api/pages/[id]/auth).
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be set");
+  return secret;
 }
 
 /** Create a 5-minute signed impersonation token */
