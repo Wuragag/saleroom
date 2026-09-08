@@ -4,8 +4,10 @@ import {
   verifyImpersonateToken,
 } from "@/lib/impersonation";
 
-// The token is HMAC-signed with NEXTAUTH_SECRET; set a fixed secret for the suite.
+// The token is HMAC-signed with AUTH_SECRET (falling back to NEXTAUTH_SECRET);
+// set a fixed secret for the suite and make sure neither leaks in from the env.
 beforeAll(() => {
+  delete process.env.AUTH_SECRET;
   process.env.NEXTAUTH_SECRET = "test-secret-do-not-use-in-prod";
 });
 
@@ -49,6 +51,17 @@ describe("impersonation tokens", () => {
       })
     ).toString("base64url");
     expect(verifyImpersonateToken(`${forgedBody}.${sig}`)).toBeNull();
+  });
+
+  it("signs with AUTH_SECRET when set (Auth.js v5's native name)", () => {
+    // Regression: getSecret() used to read only NEXTAUTH_SECRET, so deployments
+    // that set just AUTH_SECRET threw on every mint/verify and "Log in as" failed.
+    process.env.AUTH_SECRET = "authjs-v5-secret";
+    const token = createImpersonateToken("admin-1", "user-2");
+    expect(verifyImpersonateToken(token)?.targetUserId).toBe("user-2");
+    // A token signed under AUTH_SECRET must not verify under the fallback alone.
+    delete process.env.AUTH_SECRET;
+    expect(verifyImpersonateToken(token)).toBeNull();
   });
 
   it("rejects a token signed with a different secret", () => {
