@@ -9,6 +9,7 @@ import {
   HERO_LAYOUTS,
   type PageStyle,
 } from "./page-styles";
+import { detectProvider } from "./embed-utils";
 
 /**
  * Shared AI page-generation helpers, used by:
@@ -224,6 +225,7 @@ const ALLOWED_MARKS = new Set([
 ]);
 
 const MAX_DOC_CHARS = 300_000;
+const FORM_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 function isHttpUrl(value: unknown): boolean {
   return typeof value === "string" && /^https?:\/\//i.test(value.trim());
@@ -266,9 +268,14 @@ function sanitizeNode(node: any, opts?: SanitizeDocOptions): any | null {
       };
       break;
     }
-    case "embed":
+    case "embed": {
       if (!isHttpUrl(out.attrs?.src)) return null;
+      // Store the embeddable form (watch → /embed/), as the slash menu does,
+      // so the editor preview and the published iframe agree.
+      const info = detectProvider(String(out.attrs.src).trim());
+      out.attrs = { src: info.embedUrl, provider: info.provider };
       break;
+    }
     case "logoGrid": {
       const logos = Array.isArray(out.attrs?.logos)
         ? out.attrs.logos.filter((l: any) => isHttpUrl(l?.src))
@@ -305,8 +312,11 @@ function sanitizeNode(node: any, opts?: SanitizeDocOptions): any | null {
               required: !!f.required,
             }))
         : [];
+      // /api/forms/submit rejects an empty formId, so every form gets an id
+      // (a sane echoed id is kept so an AI rewrite doesn't orphan submissions).
+      const echoedId = String(out.attrs?.formId ?? "").trim();
       out.attrs = {
-        formId: "",
+        formId: FORM_ID_RE.test(echoedId) ? echoedId : `form_${Date.now()}_${randomId()}`,
         fields,
         submitLabel: String(out.attrs?.submitLabel ?? "Submit"),
         successMessage: String(out.attrs?.successMessage ?? "Thanks!"),

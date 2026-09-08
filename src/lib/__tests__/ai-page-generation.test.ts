@@ -57,6 +57,32 @@ describe("sanitizeDoc", () => {
     });
   });
 
+  it("gives every form a submittable id and normalizes embed URLs", () => {
+    const doc = sanitizeDoc({
+      type: "doc",
+      content: [
+        {
+          type: "formBlock",
+          attrs: { formId: "", fields: [{ id: "f1", type: "email", label: "Email", required: true }] },
+        },
+        {
+          type: "formBlock",
+          attrs: { formId: "form_123_abcd", fields: [] },
+        },
+        { type: "embed", attrs: { src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" } },
+        { type: "embed", attrs: { src: "https://calendly.com/acme/30min" } },
+      ],
+    });
+    const [form1, form2, yt, cal] = doc!.content!;
+    expect(String(form1.attrs?.formId)).toMatch(/^form_\d+_[a-z0-9]+$/);
+    expect(form2.attrs?.formId).toBe("form_123_abcd");
+    expect(yt.attrs).toEqual({
+      src: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      provider: "youtube",
+    });
+    expect(cal.attrs).toEqual({ src: "https://calendly.com/acme/30min", provider: "generic" });
+  });
+
   it("replaces an empty valid doc with a renderable paragraph", () => {
     expect(sanitizeDoc({ type: "doc", content: [] })).toEqual({
       type: "doc",

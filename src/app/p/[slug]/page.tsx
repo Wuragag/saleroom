@@ -19,9 +19,14 @@ import { PubFontLinks } from "@/components/pub-font-links";
 import { resolveSyncedBlocks } from "@/lib/resolve-synced-blocks";
 import { getTeamBrandKit } from "@/lib/brand-kit";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
+import { parseDocJson, renderPubHtml } from "@/lib/pub-html";
+import { serializeMap } from "@/lib/map-serialize";
 
-// ISR: serve cached pages, revalidate in background every 60s.
-// Analytics tracking moved client-side so this page can be cached.
+// This route renders per request: it reads cookies (ref + password tokens)
+// and search params, which opt Next out of static caching regardless of
+// `revalidate`. The hint is kept so ISR kicks back in at 60s should those
+// reads ever move to middleware. Analytics tracking is client-side for the
+// same reason.
 export const revalidate = 60;
 
 // Shared by generateMetadata and the page body — cache() dedupes the query
@@ -141,18 +146,34 @@ export default async function PublishedPage({
     }
   }
 
-  const tabs = await Promise.all(
-    page.tabs.map(async (tab) => {
-      const parsed = JSON.parse(tab.content);
-      const resolved = await resolveSyncedBlocks(parsed, page.teamId);
-      return { id: tab.id, name: tab.name, content: resolved };
-    })
-  );
-
   const bgHex = getBgHex(page.background);
   const fontStyle = getFontStyle(page.font);
   const accentColor = getAccentColor(page.accentColor);
   const isDark = isDarkBackground(page.background);
+
+  // Every tab is rendered to final HTML here (synced blocks resolved, unknown
+  // block types dropped, sanitized) so the buyer bundle carries no editor
+  // schema and nothing re-renders on hydration. The Mutual Action Plan loads
+  // alongside so the buyer never sees a loading skeleton.
+  const [tabs, mapRecord] = await Promise.all([
+    Promise.all(
+      page.tabs.map(async (tab) => {
+        const resolved = await resolveSyncedBlocks(parseDocJson(tab.content), page.teamId);
+        const { html, dropped } = renderPubHtml(resolved, { isDark, accentColor });
+        if (dropped.length > 0) {
+          console.warn(
+            `[p/${page.slug}] tab "${tab.name}" contains block types this build can't render (dropped): ${dropped.join(", ")}`
+          );
+        }
+        return { id: tab.id, name: tab.name, html };
+      })
+    ),
+    prisma.mutualActionPlan.findUnique({
+      where: { pageId: page.id },
+      include: { items: { orderBy: { order: "asc" } } },
+    }),
+  ]);
+
   const links = (() => { try { return JSON.parse(page.links ?? "[]"); } catch { return []; } })();
 
   // Respect the page's layout width setting
@@ -213,6 +234,7 @@ export default async function PublishedPage({
       isDark={isDark}
       maxWidth={maxWidth}
       showBranding={showBranding}
+      documentTheme
       paddingTop={page.coverImage ? (overlayHero ? "56px" : "40px") : "72px"}
       coverImage={
         page.coverImage ? (
@@ -321,11 +343,15 @@ export default async function PublishedPage({
         links={links}
         accentColor={accentColor}
         tabPlacement={page.tabPlacement as "top" | "left"}
-        isDark={isDark}
       />
 
-      {/* Mutual Action Plan */}
-      <MapViewer slug={slug} accentColor={accentColor} isDark={isDark} />
+      {/* Mutual Action Plan — server-rendered, buyer items toggle live */}
+      <MapViewer
+        slug={slug}
+        accentColor={accentColor}
+        isDark={isDark}
+        initialMap={serializeMap(mapRecord)}
+      />
     </PageShell>
     </>
   );

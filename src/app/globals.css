@@ -753,6 +753,17 @@ div[data-type="contact-card"] > div:hover {
   letter-spacing: 0.01em;
 }
 
+/* ── Footer badge (links back to the marketing site) ── */
+.pub-powered-by { text-decoration: none; transition: color 0.15s ease; }
+.pub-powered-by:hover,
+.pub-powered-by:focus-visible { color: var(--pub-heading-color, #17171a); }
+
+/* ── Fallback when a tab's content can't be serialized (pub-html.ts) ── */
+.pub-content .pub-block-missing {
+  font-style: italic;
+  color: var(--pub-muted-color, #97979f);
+}
+
 /* ── Tab scrollbar hide ── */
 .pub-tab-bar::-webkit-scrollbar { display: none; }
 .pub-tab-bar { -ms-overflow-style: none; scrollbar-width: none; }

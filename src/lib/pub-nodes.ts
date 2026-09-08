@@ -7,6 +7,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import { detectProvider } from "./embed-utils";
 
 /**
  * Server-side Tiptap node definitions for the published page pipeline.
@@ -17,14 +18,11 @@ import { Color } from "@tiptap/extension-color";
  * their extension list via buildPubExtensions() so they cannot drift apart.
  * Styling rides on the --pub-* CSS variables emitted by pub-theme.ts.
  *
- * KNOWN LIMITATION: generateHTML runs against happy-dom on the server, whose
- * CSSStyleDeclaration drops whole declarations whose value is a var() for the
- * properties it parses (background, color, border-radius — box-shadow and
- * other unparsed ones survive). So server-rendered markup ships without those
- * colors and they only appear once the client re-renders: a first-paint flash
- * on published pages. The literal second argument to var() does NOT rescue
- * this — the declaration is gone entirely. New styling should therefore use
- * CSS classes (see .pub-columns / .pub-table-wrap) rather than inline var().
+ * Inline `style` values may use var(): the published pipeline serializes
+ * through src/lib/pub-html.ts, which keeps declarations verbatim (plain
+ * @tiptap/html on the server would drop var()-valued background/color/border
+ * declarations — see that module for the mechanism). Prefer CSS classes in
+ * globals.css for anything shared across blocks (.pub-columns, .pub-table-wrap).
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,15 +41,16 @@ export function sanitizeUrl(raw: unknown): string {
   }
 }
 
-/** Strips HTML-special characters to prevent attribute-breakout injection. */
-export function escapeHtml(str: unknown): string {
-  if (typeof str !== "string") return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
+/**
+ * Coerces a block attribute to plain text. Values returned from renderHTML
+ * become DOM text nodes / attribute values, which the serializer escapes
+ * itself — escaping here as well double-encodes ("Let's" → "Let&#x27;s" on
+ * the buyer's screen), so this deliberately does NOT escape.
+ */
+export function asText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  return String(value);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,7 +106,15 @@ export const EmbedNodeServer = Node.create({
     return [{ tag: 'div[data-type="embed"]' }];
   },
   renderHTML({ HTMLAttributes }) {
-    const safeSrc = sanitizeUrl(HTMLAttributes.src);
+    // Same provider normalization the editor applies on display: a pasted
+    // YouTube/Loom share link becomes its /embed/ form (share pages refuse to
+    // be framed). The AI path stores what the user typed, so normalize here too.
+    const info = detectProvider(String(HTMLAttributes.src ?? ""));
+    const safeSrc = sanitizeUrl(info.embedUrl);
+    // Video providers keep the 16:9 frame; documents/calendars need height.
+    const frame = info.aspectRatio
+      ? "width:100%;aspect-ratio:16/9;border:0;display:block;"
+      : `width:100%;height:${info.height ?? "500px"};aspect-ratio:auto;border:0;display:block;`;
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
@@ -122,7 +129,7 @@ export const EmbedNodeServer = Node.create({
           allowfullscreen: "true",
           allow:
             "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-          style: "width:100%;aspect-ratio:16/9;border:0;display:block;",
+          style: frame,
         },
       ],
     ];
@@ -149,13 +156,10 @@ export function createCTAButtonNode(accentColor: string) {
     },
     renderHTML({ HTMLAttributes }) {
       const safeUrl = sanitizeUrl(HTMLAttributes.url) || "#";
-      const safeLabel = escapeHtml(HTMLAttributes.label) || "Click Here";
+      const safeLabel = asText(HTMLAttributes.label) || "Click Here";
       return [
         "div",
-        mergeAttributes(HTMLAttributes, {
-          "data-type": "cta-button",
-          style: "margin:0;",
-        }),
+        { "data-type": "cta-button", style: "margin:0;" },
         [
           "a",
           {
@@ -217,7 +221,7 @@ export function createLogoGridNode(isDark: boolean) {
               "img",
               {
                 src: safeSrc,
-                alt: escapeHtml(logo.alt || ""),
+                alt: asText(logo.alt || ""),
                 style:
                   "height:28px;object-fit:contain;filter:grayscale(1) opacity(0.55);transition:filter 0.22s ease,transform 0.22s ease;",
               },
@@ -453,10 +457,10 @@ export function createContactCardNode(isDark: boolean, accentColor: string) {
         const initials = cardInitials(contact.name || "?");
 
         const safePhoto = sanitizeUrl(contact.photo);
-        const safeName = escapeHtml(contact.name || "");
-        const safeTitle = escapeHtml(contact.title || "");
-        const safeEmail = escapeHtml(contact.email || "");
-        const safePhone = escapeHtml(contact.phone || "");
+        const safeName = asText(contact.name || "");
+        const safeTitle = asText(contact.title || "");
+        const safeEmail = asText(contact.email || "");
+        const safePhone = asText(contact.phone || "");
 
         const avatarEl = safePhoto
           ? [
@@ -561,10 +565,10 @@ export function createBannerNode(accentColor: string) {
     },
     renderHTML({ HTMLAttributes }) {
       const bgStyle = HTMLAttributes["data-bg-style"] || HTMLAttributes.bgStyle || "accent";
-      const text     = escapeHtml(HTMLAttributes["data-text"]      || HTMLAttributes.text      || "");
-      const emoji    = escapeHtml(HTMLAttributes["data-emoji"]     || HTMLAttributes.emoji     || "");
+      const text     = asText(HTMLAttributes["data-text"]      || HTMLAttributes.text      || "");
+      const emoji    = asText(HTMLAttributes["data-emoji"]     || HTMLAttributes.emoji     || "");
       const link     = sanitizeUrl(HTMLAttributes["data-link"]     || HTMLAttributes.link      || "");
-      const linkLabel = escapeHtml(HTMLAttributes["data-link-label"] || HTMLAttributes.linkLabel || "Learn more →");
+      const linkLabel = asText(HTMLAttributes["data-link-label"] || HTMLAttributes.linkLabel || "Learn more →");
 
       const bgCss =
         bgStyle === "warning"
@@ -631,9 +635,9 @@ export function createTestimonialNode(isDark: boolean, accentColor: string) {
       return [{ tag: 'div[data-type="testimonial"]' }];
     },
     renderHTML({ HTMLAttributes }) {
-      const safeQuote  = escapeHtml(HTMLAttributes["data-quote"]  || HTMLAttributes.quote  || "");
-      const safeAuthor = escapeHtml(HTMLAttributes["data-author"] || HTMLAttributes.author || "");
-      const safeRole   = escapeHtml(HTMLAttributes["data-role"]   || HTMLAttributes.role   || "");
+      const safeQuote  = asText(HTMLAttributes["data-quote"]  || HTMLAttributes.quote  || "");
+      const safeAuthor = asText(HTMLAttributes["data-author"] || HTMLAttributes.author || "");
+      const safeRole   = asText(HTMLAttributes["data-role"]   || HTMLAttributes.role   || "");
       const safeAvatar = sanitizeUrl(HTMLAttributes["data-avatar"] || HTMLAttributes.avatar || "");
 
       const cardBg = isDark ? "var(--pub-card-bg, rgba(255,255,255,0.04))" : "#ffffff";
@@ -747,8 +751,8 @@ export function createMetricsNode(isDark: boolean, accentColor: string) {
         (m: { value: string; label: string }) => [
           "div",
           { style: `text-align:center;padding:24px 16px;border-radius:var(--pub-radius-md, 10px);background:${cellBg};box-shadow:var(--pub-shadow-sm, 0 0 0 0 rgba(0,0,0,0));` },
-          ["div", { style: `font-size:28px;font-weight:800;letter-spacing:-0.02em;color:${valueColor};margin-bottom:6px;` }, escapeHtml(m.value)],
-          ["div", { style: `font-size:13px;font-weight:500;color:${labelColor};` }, escapeHtml(m.label)],
+          ["div", { style: `font-size:28px;font-weight:800;letter-spacing:-0.02em;color:${valueColor};margin-bottom:6px;` }, asText(m.value)],
+          ["div", { style: `font-size:13px;font-weight:500;color:${labelColor};` }, asText(m.label)],
         ]
       );
 
@@ -832,7 +836,7 @@ export const SyncedBlockServerFallback = Node.create({
         style:
           "padding:12px 16px;border:1px dashed #cbd5e1;border-radius:8px;color:#94a3b8;font-size:13px;",
       }),
-      `[Synced: ${escapeHtml(HTMLAttributes.blockName) || "Unknown block"}]`,
+      `[Synced: ${asText(HTMLAttributes.blockName) || "Unknown block"}]`,
     ];
   },
 });

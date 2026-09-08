@@ -53,7 +53,7 @@ export const FormNode = Node.create({
   renderHTML({ HTMLAttributes }) {
     // Simple wrapper div with data attributes only.
     // Editor uses ReactNodeViewRenderer for interactive display.
-    // page-renderer.tsx has its own full HTML form rendering for published pages.
+    // pub-nodes.ts (createFormBlockNode) renders the real form on published pages.
     return [
       "div",
       mergeAttributes(HTMLAttributes, {

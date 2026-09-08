@@ -37,6 +37,12 @@ interface PageShellProps {
   style?: CSSProperties;
   /** "Powered by" footer badge; hidden for plans with white-label branding */
   showBranding?: boolean;
+  /**
+   * Paint the page background on <html> too (overscroll, rubber-banding) and
+   * set color-scheme so native controls/scrollbars match a dark page. Only
+   * for the buyer-facing routes — the editor keeps the app chrome behind it.
+   */
+  documentTheme?: boolean;
 }
 
 /**
@@ -65,12 +71,21 @@ export function PageShell({
   trailing,
   style,
   showBranding = true,
+  documentTheme = false,
 }: PageShellProps) {
   return (
     <main
       className="min-h-screen w-full relative"
       style={{ backgroundColor: bgHex, ...fontStyle, ...cssVars, ...style }}
     >
+      {documentTheme && (
+        // bgHex comes from BACKGROUND_OPTIONS (validated key → hex), never user input
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `html{background-color:${bgHex};color-scheme:${isDark ? "dark" : "light"}}`,
+          }}
+        />
+      )}
       {banner}
 
       {coverImage}
@@ -114,8 +129,13 @@ export function PageShell({
         style={{ borderTop: "1px solid var(--pub-header-border)" }}
       >
         {showBranding && (
-          <span
-            className="select-none"
+          // The badge is the product's growth loop: every shared page links
+          // back to the marketing site (utm-tagged so signups attribute).
+          <a
+            href="/?utm_source=powered_by&utm_medium=shared_page"
+            target="_blank"
+            rel="noopener"
+            className="pub-powered-by select-none"
             style={{
               fontFamily: "var(--font-dm-sans, sans-serif)",
               fontSize: "0.6875rem",
@@ -126,7 +146,7 @@ export function PageShell({
             }}
           >
             Powered by {APP_NAME}
-          </span>
+          </a>
         )}
       </footer>
 

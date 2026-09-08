@@ -72,6 +72,8 @@ Your output MUST be ONLY a valid JSON object (no markdown, no code fences):
   "plan": {
     "pageType": "one of the library ids (or closest fit)",
     "title": "Buyer-facing page title (max 80 chars, e.g. 'Acme + ${APP_NAME} — Next Steps')",
+    "eyebrow": "Short label above the title, max 60 chars (e.g. 'Prepared for Acme', 'Renewal proposal · Q4'), or \"\"",
+    "subtitle": "One sentence under the title stating the outcome for the buyer, max 160 chars (e.g. 'How Acme cuts onboarding time in half before Q1'), or \"\"",
     "style": { ... },                     // OPTIONAL, only when a look clearly fits
     "tabs": [{ "name": "Recap", "purpose": "One line: what this tab must accomplish for the buyer" }],
     "ctaTabName": "Next Steps",           // tab carrying the ONE primary CTA, or null
@@ -137,6 +139,8 @@ Your output MUST be ONLY a valid JSON object (no markdown, no code fences):
 
 export function buildEditSystemPrompt(ctx: {
   title: string;
+  eyebrow: string;
+  subtitle: string;
   style: Partial<PageStyle>;
   activeTabId: string;
   tabsInventoryJson: string;
@@ -157,6 +161,7 @@ Operations you can return (use real tabIds from the inventory):
 - { "op": "addTab", "name": "...", "content": { "type": "doc", ... } }
 - { "op": "setTitle", "title": "..." }
 - { "op": "setStyle", "style": { ... } }
+- { "op": "setHero", "eyebrow"?: "...", "subtitle"?: "..." } — the short label above the page title (max 60 chars) and the one-line subtitle under it (max 160 chars); "" clears a field.
 - { "op": "setMap", "title"?: "...", "closeDate"?: "ISO date"|null, "items"?: [{ "title", "ownerType": "seller"|"buyer", "ownerName"?, "dueDateOffsetDays"? }] } — items REPLACE the list, so include unchanged items you want to keep.
 - { "op": "removeMap" }
 
@@ -177,6 +182,8 @@ ${syncedSection}
 
 CURRENT PAGE STATE
 Title: ${ctx.title}
+Hero eyebrow: ${JSON.stringify(ctx.eyebrow)}
+Hero subtitle: ${JSON.stringify(ctx.subtitle)}
 Style: ${JSON.stringify(ctx.style)}
 Active tab id: ${ctx.activeTabId}
 Tabs inventory:
@@ -194,6 +201,9 @@ Your output MUST be ONLY a valid JSON object (no markdown, no code fences):
 // ── Sanitizers ──────────────────────────────────────────────────────────────
 
 const MAX_PLAN_TABS_HARD = 8;
+// Mirror the caps the pages PUT enforces (api/pages/[id]/route.ts).
+const MAX_EYEBROW = 80;
+const MAX_SUBTITLE = 220;
 
 function str(v: unknown, max: number): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -262,6 +272,8 @@ export function sanitizePlan(raw: unknown, maxTabs: number): ComposerPlan | null
   return {
     pageType: str(p.pageType, 40) || "custom",
     title,
+    eyebrow: str(p.eyebrow, MAX_EYEBROW) || undefined,
+    subtitle: str(p.subtitle, MAX_SUBTITLE) || undefined,
     style: sanitizeStylePatch(p.style),
     tabs,
     ctaTabName,
@@ -323,6 +335,13 @@ export function sanitizeOps(
       case "setStyle": {
         const style = sanitizeStylePatch(op.style);
         if (Object.keys(style).length > 0) out.push({ op: "setStyle", style });
+        break;
+      }
+      case "setHero": {
+        const payload: Extract<ComposerOp, { op: "setHero" }> = { op: "setHero" };
+        if (typeof op.eyebrow === "string") payload.eyebrow = str(op.eyebrow, MAX_EYEBROW);
+        if (typeof op.subtitle === "string") payload.subtitle = str(op.subtitle, MAX_SUBTITLE);
+        if (payload.eyebrow !== undefined || payload.subtitle !== undefined) out.push(payload);
         break;
       }
       case "setMap": {

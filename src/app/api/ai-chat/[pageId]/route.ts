@@ -380,6 +380,8 @@ async function handleEdit(body: any, teamId: string | null, userId: string) {
   const responseText = await callClaudeWithRetries({
     system: buildEditSystemPrompt({
       title: typeof ctx.title === "string" ? ctx.title.slice(0, 200) : "Untitled Page",
+      eyebrow: typeof ctx.eyebrow === "string" ? ctx.eyebrow.slice(0, 80) : "",
+      subtitle: typeof ctx.subtitle === "string" ? ctx.subtitle.slice(0, 220) : "",
       style: sanitizeStylePatch(ctx.style),
       activeTabId,
       tabsInventoryJson: buildTabsInventoryJson(tabs, activeTabId),

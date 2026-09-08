@@ -96,6 +96,10 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
   const pendingEvents  = useRef<PendingEvent[]>([]);
   const ctaClickedRef  = useRef(false);
   const pricingTabRef  = useRef(false);
+  // A deep-linked tab (#anchor) dispatches sr:tab_view on mount, before the
+  // session POST resolves; when that happened, init must not reset the active
+  // tab back to the first one.
+  const tabViewSeenRef = useRef(false);
   const fileDownloaded = useRef(false);
   const scrollDepth    = useRef(0);
   const scrollDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -266,8 +270,8 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
           }
         }
 
-        // Record initial tab view
-        if (initialTabId) {
+        // Record initial tab view (unless the page already switched tabs)
+        if (initialTabId && !tabViewSeenRef.current) {
           h.startOrSwitchTab(initialTabId, initialTabName ?? "");
         }
 
@@ -284,6 +288,7 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
   useEffect(() => {
     function onTabView(e: Event) {
       const { tabId, tabName } = (e as CustomEvent).detail;
+      tabViewSeenRef.current = true;
       const h = helpersRef.current;
       h.startOrSwitchTab(tabId, tabName);
       h.queueEvent("TAB_VIEW", { tabId, tabName });

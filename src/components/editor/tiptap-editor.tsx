@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import type { PageData, PageLink, TabData, MutualActionPlanData } from "@/types";
 import type { ComposerOp, ComposerMapItemInput } from "@/types/ai-composer";
 import { DEFAULT_CONTENT } from "@/lib/constants";
+import { findPagePlaceholders } from "@/lib/page-placeholders";
 import { type PageStyle, DEFAULT_PAGE_STYLE, getAccentColor, getFontStyle, getBgHex } from "@/lib/page-styles";
 import { getPubCssVars, getMaxWidth, isDarkBackground, getEditorNodeVars, getCoverHeight } from "@/lib/pub-theme";
 import { PageShell, PUB_LOGO_STYLE } from "@/components/page-shell";
@@ -44,6 +45,8 @@ import { Lock } from "lucide-react";
 /** Full page snapshot the AI composer reads through the bridge. */
 export interface AiComposerContext {
   title: string;
+  eyebrow: string;
+  subtitle: string;
   style: PageStyle;
   activeTabId: string;
   tabs: { id: string; name: string; content: JSONContent | null }[];
@@ -59,6 +62,8 @@ export interface AiEditorBridge {
   isReady: boolean;
   getContext(): AiComposerContext;
   setTitle(title: string): Promise<void>;
+  /** Hero eyebrow/subtitle (debounced-saved like a hand edit). */
+  setHero(patch: { eyebrow?: string; subtitle?: string }): void;
   setStyle(style: Partial<PageStyle>): void;
   renameTab(tabId: string, name: string): Promise<void>;
   createTab(name: string): Promise<TabData | null>;
@@ -478,6 +483,8 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       isReady: !!editor,
       getContext: () => ({
         title,
+        eyebrow,
+        subtitle,
         style: pageStyle,
         activeTabId,
         tabs: tabs.map((t) => {
@@ -495,6 +502,10 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
       setTitle: async (value: string) => {
         setTitle(value);
         await forceSaveTitle(value);
+      },
+      setHero: (patch) => {
+        if (patch.eyebrow !== undefined) handleHeroTextChange("eyebrow", patch.eyebrow);
+        if (patch.subtitle !== undefined) handleHeroTextChange("subtitle", patch.subtitle);
       },
       setStyle: (style: Partial<PageStyle>) => {
         if (Object.keys(style).length > 0) handleStyleChange(style);
@@ -521,6 +532,11 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
                 break;
               case "setStyle":
                 handleStyleChange(op.style);
+                applied++;
+                break;
+              case "setHero":
+                if (op.eyebrow !== undefined) handleHeroTextChange("eyebrow", op.eyebrow);
+                if (op.subtitle !== undefined) handleHeroTextChange("subtitle", op.subtitle);
                 applied++;
                 break;
               case "renameTab":
@@ -684,6 +700,26 @@ export function TiptapEditor({ page, readOnly, lockedByName, isCreator = false, 
         password={password}
         onPasswordChange={handlePasswordChange}
         passwordProtection={passwordProtection}
+        onBeforePublish={() =>
+          findPagePlaceholders({
+            title,
+            eyebrow,
+            subtitle,
+            tabs: tabs.map((t) => ({
+              // The active tab's freshest content lives in the editor itself
+              content:
+                t.id === activeTabId && editor
+                  ? editor.getJSON()
+                  : (() => {
+                      try {
+                        return JSON.parse(t.content);
+                      } catch {
+                        return null;
+                      }
+                    })(),
+            })),
+          })
+        }
       />
 
       {readOnly ? (

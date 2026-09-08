@@ -16,7 +16,7 @@ Enforced by `npm run lint:design` ([scripts/check-design-tokens.mjs](../scripts/
 |---|---|---|
 | App chrome (dashboard, editor, analytics, settings, auth, onboarding, tour, admin, modals) | ✅ yes | tokens + primitives |
 | Marketing site (`src/app/(marketing)`, `src/components/marketing`) | ❌ no | its own bespoke styles |
-| Buyer-facing published page (`page-renderer`, `published-form`, `tabbed-page-view`, `/p`, `/preview`, editor `extensions/` blocks) | ❌ no | the seller-brand system (`src/lib/page-styles.ts` + `--page-accent`) |
+| Buyer-facing published page (`lib/pub-html`, `lib/pub-nodes`, `published-form`, `tabbed-page-view`, `/p`, `/preview`, editor `extensions/` blocks) | ❌ no | the seller-brand system (`src/lib/page-styles.ts` + `--page-accent`) |
 | Transactional email (`src/lib/email.ts`) | ❌ no | inline hex (mail clients lack CSS vars) |
 | Content-color pickers (`src/lib/color-palettes.ts`) | ❌ no | that data file (these are user color *choices*, not chrome) |
 

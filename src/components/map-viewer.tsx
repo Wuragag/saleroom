@@ -241,6 +241,13 @@ function MapViewerItem({
 }) {
   const isOverdue =
     item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
+  // Buyers can only check off their own steps — the public toggle endpoint
+  // rejects seller items, so don't offer a control that would just snap back.
+  const buyerOwned = item.ownerType === "buyer";
+  const boxStyle = {
+    borderColor: item.completed ? accentColor : isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+    background: item.completed ? accentColor : "transparent",
+  };
 
   return (
     <div
@@ -249,18 +256,27 @@ function MapViewerItem({
         borderBottom: isLast ? "none" : "1px solid var(--pub-divider)",
       }}
     >
-      {/* Checkbox */}
-      <button
-        onClick={() => onToggle(!item.completed)}
-        className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center"
-        style={{
-          borderColor: item.completed ? accentColor : isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
-          background: item.completed ? accentColor : "transparent",
-        }}
-        aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
-      >
-        {item.completed && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-      </button>
+      {/* Checkbox (buyer steps) / status indicator (seller steps) */}
+      {buyerOwned ? (
+        <button
+          onClick={() => onToggle(!item.completed)}
+          className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center"
+          style={boxStyle}
+          aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
+        >
+          {item.completed && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+        </button>
+      ) : (
+        <span
+          role="img"
+          aria-label={item.completed ? "Completed by the seller" : "Seller step, not yet complete"}
+          title={item.completed ? "Completed by the seller" : "Your seller completes this step"}
+          className="relative flex-shrink-0 mt-0.5 h-5 w-5 rounded-md border-2 flex items-center justify-center cursor-default"
+          style={{ ...boxStyle, opacity: item.completed ? 1 : 0.55 }}
+        >
+          {item.completed && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+        </span>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">

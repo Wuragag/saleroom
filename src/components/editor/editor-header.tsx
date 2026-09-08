@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/popover";
 import { StylePanel } from "./style-panel";
 import type { PageStyle } from "@/lib/page-styles";
+import type { PlaceholderScan } from "@/lib/page-placeholders";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,6 +96,12 @@ interface EditorHeaderProps {
   hasCover?: boolean;
   /** When the AI panel hosts its own Design tab, hide this header popover. */
   hideDesign?: boolean;
+  /**
+   * Runs right before publishing; a scan with placeholders left in the page
+   * ([Company Name], [PLACEHOLDER: …]) opens a confirmation instead of
+   * shipping them to the buyer.
+   */
+  onBeforePublish?: () => PlaceholderScan;
 }
 
 export function EditorHeader({
@@ -121,10 +128,12 @@ export function EditorHeader({
   passwordProtection,
   hasCover,
   hideDesign,
+  onBeforePublish,
 }: EditorHeaderProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [placeholderWarning, setPlaceholderWarning] = useState<PlaceholderScan | null>(null);
   const [lockLoading, setLockLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -171,6 +180,18 @@ export function EditorHeader({
   };
 
   const handleTogglePublish = async () => {
+    // Publishing (not unpublishing) with unfilled placeholders asks first.
+    if (!published && onBeforePublish) {
+      const scan = onBeforePublish();
+      if (scan.count > 0) {
+        setPlaceholderWarning(scan);
+        return;
+      }
+    }
+    await togglePublish();
+  };
+
+  const togglePublish = async () => {
     setPublishing(true);
     try {
       await onForceSave();
@@ -564,6 +585,43 @@ export function EditorHeader({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Placeholder warning before publish ── */}
+      <AlertDialog
+        open={placeholderWarning !== null}
+        onOpenChange={(open) => {
+          if (!open) setPlaceholderWarning(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish with placeholders?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This page still has {placeholderWarning?.count}{" "}
+              {placeholderWarning?.count === 1 ? "placeholder" : "placeholders"} to
+              fill in, such as{" "}
+              {placeholderWarning?.samples.map((s, i) => (
+                <span key={s}>
+                  {i > 0 && ", "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-2xs text-foreground">{s}</code>
+                </span>
+              ))}
+              . Buyers will see them exactly like that.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setPlaceholderWarning(null);
+                void togglePublish();
+              }}
+            >
+              Publish anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

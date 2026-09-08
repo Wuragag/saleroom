@@ -31,6 +31,10 @@ export interface ComposerMapItemInput {
 export interface ComposerPlan {
   pageType: string;
   title: string;
+  /** Short label rendered above the title ("Prepared for Acme"). */
+  eyebrow?: string;
+  /** One-line promise rendered under the title. */
+  subtitle?: string;
   style?: Partial<PageStyle>;
   tabs: PlanTabSpec[];
   /** Which tab carries the single primary CTA button (null = no CTA). */
@@ -83,6 +87,8 @@ export interface EditRequest {
   messages: ComposerChatMessage[];
   context: {
     title: string;
+    eyebrow: string;
+    subtitle: string;
     style: Partial<PageStyle>;
     activeTabId: string;
     tabs: EditTabContext[];
@@ -128,6 +134,8 @@ export type ComposerOp =
   | { op: "addTab"; name: string; content: JSONContent }
   | { op: "setTitle"; title: string }
   | { op: "setStyle"; style: Partial<PageStyle> }
+  /** Hero text above/below the title; "" clears a field. */
+  | { op: "setHero"; eyebrow?: string; subtitle?: string }
   | {
       op: "setMap";
       title?: string;
