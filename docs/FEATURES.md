@@ -566,6 +566,26 @@ claimed anywhere on the site.
   to an allowlist of providers.
 - **Secrets & billing** — Stripe webhooks are signature-verified; impersonation
   tokens are HMAC-signed, short-lived, and single-use.
+- **Sanitizer canary** — DOMPurify's behaviour depends on the DOM it runs in,
+  and a DOMPurify ≥ 3.4.7 / happy-dom pairing has been observed to return input
+  *unsanitized* while reporting `isSupported`. `renderPubHtml` therefore pushes
+  a known-bad fragment through the pipeline once per process
+  (`isSanitizerHealthy()` in [`src/lib/pub-html.ts`](../src/lib/pub-html.ts));
+  if any dangerous scheme or handler survives, every published page renders
+  the safe fallback and the failure is logged. `pub-html.test.ts` pins the
+  behaviour. **Do not bump `dompurify` past the version in package.json
+  without running that suite.**
+- **Vulnerability disclosure** — `/.well-known/security.txt` (RFC 9116) names
+  the security contact; `npm audit` is part of the release checklist
+  (production dependencies are kept free of critical/high advisories that
+  affect code paths in use; remaining transitive advisories are DoS/ReDoS
+  class in build tooling).
+- **Account erasure** — `DELETE /api/account` re-checks the password, is
+  rate-limited (5/min/user), and deletes only Blob files whose path proves
+  ownership (`avatars/{userId}-`, `logos/{pageId}-`, `covers/{pageId}-`,
+  `brand-logos/{teamId}-` for teams being erased) — never a URL a user merely
+  pasted into a page. JWT sessions re-verify that the user row still exists at
+  most every 10 minutes, so an erased account loses access on every device.
 
 Data model: [`prisma/schema.prisma`](../prisma/schema.prisma).
 

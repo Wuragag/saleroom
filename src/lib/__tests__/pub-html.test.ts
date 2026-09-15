@@ -6,7 +6,7 @@ import {
   parseDocJson,
   renderPubHtml,
   stripUnknownNodes,
-} from "../pub-html";
+ isSanitizerHealthy } from "../pub-html";
 
 const ACCENT = ["#", "7c3aed"].join("");
 
@@ -77,6 +77,44 @@ describe("renderPubHtml", () => {
     expect(html).not.toContain("<img");
     // Escaped exactly once — the label reads "<img …>" on screen, not "&lt;img …&gt;"
     expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;</a>");
+  });
+
+  it("passes the sanitizer canary on this DOMPurify/happy-dom pairing", () => {
+    expect(isSanitizerHealthy()).toBe(true);
+  });
+
+  it("strips javascript: and data: URLs from link marks and never returns raw input", () => {
+    // Regression guard: a DOMPurify/happy-dom mismatch once let the sanitizer
+    // return its input untouched. Every dangerous scheme must disappear.
+    const { html } = renderPubHtml({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "click", marks: [{ type: "link", attrs: { href: "javascript:alert(1)" } }] },
+            { type: "text", text: " or ", marks: [] },
+            { type: "text", text: "this", marks: [{ type: "link", attrs: { href: "data:text/html,<script>alert(1)</script>" } }] },
+          ],
+        },
+        { type: "image", attrs: { src: "javascript:alert(1)", alt: "x" } },
+      ],
+    });
+    expect(html).not.toMatch(/javascript:/i);
+    expect(html).not.toMatch(/data:text\/html/i);
+    expect(html).not.toContain("<script");
+    expect(html).toContain("click");
+  });
+
+  it("removes event-handler attributes that reach the sanitizer", () => {
+    const { html } = renderPubHtml({
+      type: "doc",
+      content: [{ type: "banner", attrs: { text: "hi\" onmouseover=\"alert(1)", emoji: "x", bgStyle: "info" } }],
+    });
+    // The string may appear as escaped attribute text or as visible text, but
+    // never as an attribute on an element (a real handler reads `<tag … onmouseover="`).
+    expect(html).not.toMatch(/<[^>]*\sonmouseover="/i);
+    expect(html).toContain("onmouseover=&quot;alert(1)");
   });
 
   it("does not double-escape apostrophes and ampersands in block text", () => {

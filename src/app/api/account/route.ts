@@ -5,6 +5,35 @@ import { prisma } from "@/lib/prisma";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { isDeletionConfirmed, planAccountDeletion } from "@/lib/account-deletion";
 import { getStripe } from "@/lib/stripe";
+import { rateLimit } from "@/lib/rate-limit";
+import { del } from "@vercel/blob";
+
+// The password check makes this endpoint a brute-force target for anyone
+// holding a stolen session; five attempts a minute per user is plenty.
+const limiter = rateLimit({ limit: 5, window: "60s", prefix: "account-delete" });
+
+/**
+ * Best-effort removal of the account's own public Blob files, so an erased
+ * account leaves no images behind. Page logo/cover URLs are user-editable
+ * (any https URL is accepted by the page style API) and brand logos are
+ * shared with the whole team, so — exactly like the upload routes — a file is
+ * deleted only when its path proves it belongs to this user, this page, or a
+ * team being deleted here. Anything else is left alone.
+ */
+async function deleteOwnedBlobs(targets: Array<{ url: string | null | undefined; prefix: string }>) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return;
+  const urls = new Set<string>();
+  for (const { url, prefix } of targets) {
+    if (!url?.startsWith("https://")) continue;
+    try {
+      const u = new URL(url);
+      if (u.hostname.endsWith(".public.blob.vercel-storage.com") && u.pathname.startsWith(prefix)) urls.add(url);
+    } catch {
+      // not a URL — ignore
+    }
+  }
+  await Promise.allSettled([...urls].map((u) => del(u)));
+}
 
 /**
  * DELETE /api/account — erase the signed-in user (GDPR Art. 17, KVKK Art. 7,
@@ -27,6 +56,10 @@ export const DELETE = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = session.user.id;
+  const { success } = await limiter.limit(userId);
+  if (!success) {
+    return NextResponse.json({ error: "Too many attempts. Try again in a minute." }, { status: 429 });
+  }
   const body = (await safeJson<{ password?: string; confirmation?: string }>(request)) ?? {};
 
   if (!isDeletionConfirmed(body.confirmation)) {
@@ -35,7 +68,7 @@ export const DELETE = withErrorHandler(async (request: Request) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, password: true, email: true },
+    select: { id: true, password: true, email: true, avatarUrl: true },
   });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
@@ -96,6 +129,14 @@ export const DELETE = withErrorHandler(async (request: Request) => {
     }
   }
 
+  // Collect public image files before the rows that reference them vanish.
+  const [pageImages, brandLogos] = await Promise.all([
+    prisma.page.findMany({ where: { userId }, select: { id: true, logoUrl: true, coverImage: true } }),
+    plan.deleteTeamIds.length
+      ? prisma.brandKit.findMany({ where: { teamId: { in: plan.deleteTeamIds } }, select: { teamId: true, logoUrl: true } })
+      : Promise.resolve([] as { teamId: string; logoUrl: string | null }[]),
+  ]);
+
   await prisma.$transaction(async (tx) => {
     if (plan.leaveTeamIds.length) {
       await tx.teamMember.deleteMany({ where: { userId, teamId: { in: plan.leaveTeamIds } } });
@@ -106,6 +147,17 @@ export const DELETE = withErrorHandler(async (request: Request) => {
     // Pages, deals, comments, contacts and buyer data cascade from the user.
     await tx.user.delete({ where: { id: userId } });
   });
+
+  await deleteOwnedBlobs([
+    { url: user.avatarUrl, prefix: `/avatars/${userId}-` },
+    ...pageImages.flatMap((p) => [
+      { url: p.logoUrl, prefix: `/logos/${p.id}-` },
+      { url: p.coverImage, prefix: `/covers/${p.id}-` },
+    ]),
+    // Brand logos only for teams erased in this request: a surviving team's
+    // logo is shared by its other members' pages and must stay.
+    ...brandLogos.map((b) => ({ url: b.logoUrl, prefix: `/brand-logos/${b.teamId}-` })),
+  ]);
 
   console.info(`[account:delete] user ${userId} erased (${plan.deleteTeamIds.length} team(s) removed, left ${plan.leaveTeamIds.length})`);
   return NextResponse.json({ deleted: true });

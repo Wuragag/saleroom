@@ -9,7 +9,7 @@
  * legal advice; have counsel review them before relying on them, and complete
  * the TODO fields in ./entity.ts.
  */
-import { LEGAL } from "./entity"
+import { ADDRESS_SENTENCE, GOVERNING_LAW, KVKK_ADDRESS_LINE, LEGAL } from "./entity"
 import { CATEGORY_LABELS, STORAGE_ENTRIES } from "./cookies"
 import { SUBPROCESSORS } from "./subprocessors"
 
@@ -70,7 +70,7 @@ const privacy: LegalDocument = {
     {
       heading: "Who we are and what this covers",
       blocks: [
-        p(`${LEGAL.legalName} ("${B}", "we") operates the ${B} website and application at ${LEGAL.site}. Registered address: ${LEGAL.address}. Privacy questions and requests: ${LEGAL.privacyEmail}.`),
+        p(`${LEGAL.legalName} ("${B}", "we") operates the ${B} website and application at ${LEGAL.site}.${ADDRESS_SENTENCE} Privacy questions and requests: ${LEGAL.privacyEmail}.`),
         p("This policy covers two groups of people, and our role differs for each:"),
         ul(
           `Account holders and website visitors — people who sign up for ${B}, or browse this website. For this data ${B} is the controller (under GDPR and UK GDPR), the "veri sorumlusu" (under Türkiye's KVKK), and the "business" (under US state privacy laws).`,
@@ -257,7 +257,7 @@ const privacy: LegalDocument = {
       heading: "Changes and contact",
       blocks: [
         p("We will post changes here and update the effective date. For material changes we will notify account holders by email or in the app before they take effect."),
-        p(`Contact: ${LEGAL.privacyEmail} · ${LEGAL.legalName}, ${LEGAL.address}.${LEGAL.euRepresentative ? ` EU representative: ${LEGAL.euRepresentative}.` : ""}${LEGAL.ukRepresentative ? ` UK representative: ${LEGAL.ukRepresentative}.` : ""}`),
+        p(`Contact: ${LEGAL.privacyEmail} · ${LEGAL.legalName}${LEGAL.address ? `, ${LEGAL.address}` : ""}.${LEGAL.euRepresentative ? ` EU representative: ${LEGAL.euRepresentative}.` : ""}${LEGAL.ukRepresentative ? ` UK representative: ${LEGAL.ukRepresentative}.` : ""}`),
       ],
     },
   ],
@@ -312,9 +312,9 @@ const terms: LegalDocument = {
     { heading: "Termination and data", blocks: [ul("You can delete your account at any time from Settings → Account. Deletion is immediate and irreversible: your pages, buyer data, contacts and deals are removed, and any paid subscription on a workspace you alone own is cancelled.", "We may terminate for breach with notice, or immediately for serious breach. Where lawful, we will give you a chance to export your data first.", "Billing records are kept by our payment provider for as long as tax law requires.")] },
     { heading: "Disclaimers", blocks: [p("The service is provided \"as is\". To the extent the law allows, we disclaim implied warranties of merchantability, fitness for a particular purpose and non-infringement. Engagement scores and intent labels are heuristics, not facts; do not make decisions with legal or significant effects on a person based on them alone.")] },
     { heading: "Limitation of liability", blocks: [p(`To the extent the law allows, ${B} is not liable for indirect, incidental, special or consequential losses, or for lost profits, revenue or data, and our total liability under these terms in any 12-month period is limited to the amount you paid us in that period (or, for Free, to 100 EUR/USD). Nothing limits liability for fraud, wilful misconduct, death or personal injury, or anything that cannot be limited by law. Consumers keep their statutory rights.`)] },
-    { heading: "Governing law and disputes", blocks: [p(`These terms are governed by the laws of ${LEGAL.country}, and its courts have jurisdiction, without prejudice to mandatory consumer protections in your country of residence. We will try to resolve any dispute informally first; write to ${LEGAL.supportEmail}.`)] },
+    { heading: "Governing law and disputes", blocks: [p(`These terms are governed by ${GOVERNING_LAW}, without prejudice to mandatory consumer protections in your country of residence. We will try to resolve any dispute informally first; write to ${LEGAL.supportEmail}.`)] },
     { heading: "Changes to these terms", blocks: [p("We will post changes here and update the effective date. For material changes we will email account holders at least 14 days before they take effect; continuing to use the service after that date means you accept them.")] },
-    { heading: "Contact", blocks: [p(`${LEGAL.legalName}, ${LEGAL.address} · ${LEGAL.supportEmail}`)] },
+    { heading: "Contact", blocks: [p(`${LEGAL.legalName}${LEGAL.address ? `, ${LEGAL.address}` : ""} · ${LEGAL.supportEmail}`)] },
   ],
 }
 
@@ -444,7 +444,7 @@ const kvkk: LegalDocument = {
     {
       heading: "Veri sorumlusu",
       blocks: [
-        p(`Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, veri sorumlusu sıfatıyla ${LEGAL.legalName} ("${B}") tarafından hazırlanmıştır. Adres: ${LEGAL.address}. İletişim: ${LEGAL.privacyEmail}.${LEGAL.verbisNo ? ` VERBİS kayıt numarası: ${LEGAL.verbisNo}.` : ""}`),
+        p(`Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, veri sorumlusu sıfatıyla ${LEGAL.legalName} ("${B}") tarafından hazırlanmıştır.${LEGAL.address ? ` Adres: ${LEGAL.address}.` : ""} İletişim: ${LEGAL.privacyEmail}.${LEGAL.verbisNo ? ` VERBİS kayıt numarası: ${LEGAL.verbisNo}.` : ""}`),
         p(`${B}, satış ekiplerinin teklif, fiyatlandırma ve sonraki adımları tek bir bağlantı ("anlaşma sayfası") halinde paylaşmasını ve bu sayfanın nasıl okunduğunu görmesini sağlayan bir yazılım hizmetidir. İki farklı ilgili kişi grubu bulunmaktadır: (i) ${B}'de hesap açan kullanıcılar ve web sitesi ziyaretçileri — bu veriler bakımından ${B} veri sorumlusudur; (ii) bir ${B} müşterisi ("satıcı") tarafından kendisine sayfa gönderilen alıcılar — bu veriler bakımından veri sorumlusu satıcı olup ${B}, satıcı adına hareket eden veri işleyendir.`),
       ],
     },
@@ -531,7 +531,7 @@ const kvkk: LegalDocument = {
       blocks: [
         p(`Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ uyarınca başvurularınızı; adınız, soyadınız, başvuru yazılı ise imzanız, T.C. kimlik numaranız (yabancılar için pasaport numarası), tebligata esas adresiniz veya e-posta adresiniz ve talep konunuzla birlikte:`),
         ul(
-          `${LEGAL.address} adresine yazılı olarak (noter veya iadeli taahhütlü posta ile),`,
+          KVKK_ADDRESS_LINE,
           `${LEGAL.privacyEmail} adresine, sistemimizde kayıtlı e-posta adresinizden göndererek,`,
           "Kayıtlı elektronik posta (KEP) adresi, güvenli elektronik imza veya mobil imza ile",
         ),

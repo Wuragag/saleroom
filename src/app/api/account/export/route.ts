@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { withErrorHandler } from "@/lib/api-error";
+import { rateLimit } from "@/lib/rate-limit";
+
+// A full export is a heavy query and a complete personal dataset: a few per
+// hour per user is enough for any legitimate use.
+const limiter = rateLimit({ limit: 5, window: "3600s", prefix: "account-export" });
 
 /**
  * GET /api/account/export — machine-readable copy of the signed-in user's
@@ -21,6 +26,10 @@ export const GET = withErrorHandler(async () => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = session.user.id;
+  const { success } = await limiter.limit(userId);
+  if (!success) {
+    return NextResponse.json({ error: "Export limit reached. Try again in an hour." }, { status: 429 });
+  }
 
   const [user, memberships, pages, deals, comments] = await Promise.all([
     prisma.user.findUnique({
