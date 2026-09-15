@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
-import { brandDefaultPageStyle, getTeamBrandKit } from "@/lib/brand-kit";
 import { auth } from "@/auth";
 import { getUserTeamId } from "@/lib/team-auth";
-import { assertCanCreatePageTx, withResourceLock, pageLockKey } from "@/lib/plan-limits";
+import { createPageWithTabs, SlugCollisionError } from "@/lib/page-create";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
-import slugify from "slugify";
-
-function generateSlug(title: string): string {
-  const base = slugify(title, { lower: true, strict: true });
-  const suffix = Math.random().toString(36).substring(2, 6);
-  return `${base}-${suffix}`;
-}
 
 export const POST = withErrorHandler(async (request: Request) => {
   const session = await auth();
@@ -23,70 +14,17 @@ export const POST = withErrorHandler(async (request: Request) => {
   const body = await safeJson<{ title?: string }>(request) ?? {};
   const title = body.title || "Untitled Page";
 
-  let slug = generateSlug(title);
-
-  // Retry if slug collision
-  let attempts = 0;
-  while (attempts < 5) {
-    const existing = await prisma.page.findUnique({ where: { slug } });
-    if (!existing) break;
-    slug = generateSlug(title);
-    attempts++;
-  }
-
-  if (attempts >= 5) {
-    return NextResponse.json(
-      { error: "Could not generate a unique URL. Please try a different title." },
-      { status: 409 }
-    );
-  }
-
-  // Assign to user's team
-  const teamId = await getUserTeamId(session.user.id);
-
-  // New pages start from the team's brand kit (Settings → Branding), falling
-  // back to the editorial baseline. Set explicitly because the DB column
-  // defaults (inter/slate) predate the redesign.
-  const style = brandDefaultPageStyle(await getTeamBrandKit(teamId));
-
-  // Atomic plan-limit enforcement + create. The advisory lock serializes
-  // concurrent creates for this team/user so the count can't be raced
+  // Slug + brand kit + atomic plan-limit enforcement live in page-create.ts
   // (PlanLimitError → 403 PLAN_LIMIT via withErrorHandler).
-  const page = await withResourceLock(
-    pageLockKey(teamId, session.user.id),
-    async (tx) => {
-      await assertCanCreatePageTx(tx, teamId, session.user.id);
-      return tx.page.create({
-        data: {
-          title,
-          slug,
-          content: JSON.stringify(DEFAULT_CONTENT),
-          userId: session.user.id,
-          teamId,
-          font: style.font,
-          headingFont: style.headingFont,
-          accentColor: style.accentColor,
-          background: style.background,
-          layoutWidth: style.layoutWidth,
-          tabPlacement: style.tabPlacement,
-          heroLayout: style.heroLayout,
-          themeRadius: style.themeRadius,
-          themeDepth: style.themeDepth,
-          logoUrl: style.logoUrl,
-          tabs: {
-            create: {
-              name: DEFAULT_TAB_NAME,
-              order: 0,
-              content: JSON.stringify(DEFAULT_CONTENT),
-            },
-          },
-        },
-        include: { tabs: { orderBy: { order: "asc" } } },
-      });
+  try {
+    const page = await createPageWithTabs({ userId: session.user.id, title });
+    return NextResponse.json(page, { status: 201 });
+  } catch (err) {
+    if (err instanceof SlugCollisionError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
     }
-  );
-
-  return NextResponse.json(page, { status: 201 });
+    throw err;
+  }
 });
 
 export const GET = withErrorHandler(async () => {

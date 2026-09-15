@@ -42,6 +42,14 @@ interface DealAuthResult {
   reason?: string;
 }
 
+/** Result of the session-free ACL check (`checkDealAccessFor`). */
+export interface DealAccessResult {
+  authorized: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deal?: any;
+  reason?: string;
+}
+
 /**
  * Check whether the current user can perform `action` on a deal.
  *
@@ -59,30 +67,41 @@ export async function checkDealAccess(
   if (!session?.user?.id) {
     return { authorized: false, session: null, reason: "Unauthorized" };
   }
+  const result = await checkDealAccessFor(session.user.id, dealId, action);
+  return { ...result, session };
+}
 
+/**
+ * The same ACL for an explicit principal (API-key callers such as the MCP
+ * server). `checkDealAccess` wraps this so the rules stay in one place.
+ */
+export async function checkDealAccessFor(
+  userId: string,
+  dealId: string,
+  action: DealPermission
+): Promise<DealAccessResult> {
   const deal = await prisma.deal.findUnique({ where: { id: dealId } });
   if (!deal) {
-    return { authorized: false, session, reason: "Deal not found" };
+    return { authorized: false, reason: "Deal not found" };
   }
 
-  const isOwner = deal.ownerId === session.user.id;
+  const isOwner = deal.ownerId === userId;
 
   if (deal.teamId) {
     const membership = await prisma.teamMember.findUnique({
       where: {
-        userId_teamId: { userId: session.user.id, teamId: deal.teamId },
+        userId_teamId: { userId, teamId: deal.teamId },
       },
     });
 
     if (!membership) {
-      return { authorized: false, session, deal, reason: "Not a team member" };
+      return { authorized: false, deal, reason: "Not a team member" };
     }
 
     if (action === "delete") {
       const isTeamOwner = membership.role === "OWNER";
       return {
         authorized: isOwner || isTeamOwner,
-        session,
         deal,
         reason:
           isOwner || isTeamOwner
@@ -91,13 +110,12 @@ export async function checkDealAccess(
       };
     }
 
-    return { authorized: true, session, deal };
+    return { authorized: true, deal };
   }
 
   // No team — owner-only for every action
   return {
     authorized: isOwner,
-    session,
     deal,
     reason: isOwner ? undefined : "Forbidden",
   };

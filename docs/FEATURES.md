@@ -36,7 +36,8 @@ rate limiting · Tiptap editor · Anthropic (Claude) for AI · Resend for email.
 17. [Admin Console](#17-admin-console)
 18. [Marketing Site](#18-marketing-site)
 19. [Security & Platform](#19-security--platform)
-20. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
+20. [MCP Server & API Keys](#20-mcp-server--api-keys)
+21. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
 
 ---
 
@@ -545,9 +546,43 @@ Content is data-driven from [`src/data/marketing/`](../src/data/marketing/).
   a referrer policy set in [`next.config.mjs`](../next.config.mjs); embeds limited
   to an allowlist of providers.
 - **Secrets & billing** — Stripe webhooks are signature-verified; impersonation
-  tokens are HMAC-signed, short-lived, and single-use.
+  tokens are HMAC-signed, short-lived, and single-use; API keys are stored
+  hashed and act strictly as their user (see §20).
 
 Data model: [`prisma/schema.prisma`](../prisma/schema.prisma).
+
+---
+
+## 20. MCP Server & API Keys
+
+AI assistants can work inside a rep's workspace through a
+[Model Context Protocol](https://modelcontextprotocol.io) server — full guide in
+[`docs/MCP.md`](./MCP.md).
+
+- **Endpoint** `/api/mcp` (Streamable HTTP, stateless JSON) —
+  [`src/app/api/mcp/route.ts`](../src/app/api/mcp/route.ts). One server per
+  request, bound to the calling user, so it runs on serverless with no session
+  store.
+- **Personal API keys** (Settings → Integrations, `ApiKey` model) — `dbk_…`
+  secrets stored only as a SHA-256 hash with a display prefix, shown once,
+  revocable, max 10 per user, rate-limited per key
+  ([`src/lib/api-keys.ts`](../src/lib/api-keys.ts),
+  [`api-keys-settings`](../src/components/api-keys-settings.tsx)). The settings
+  tab includes ready-to-paste snippets for Claude Code, Cursor-style JSON
+  configs and Claude Desktop (via `mcp-remote`).
+- **21 tools** ([`src/lib/mcp/`](../src/lib/mcp/)): workspace orientation,
+  recent buyer activity, pages (list/get/analytics/create/add tab/write
+  markdown/update settings/share tracked links/action plan), deals
+  (list/get/create/update/comment/stakeholder/link page), contacts & companies.
+  Reads carry `readOnlyHint`; results come back as text + `structuredContent`.
+- **Markdown in, Tiptap out** —
+  [`src/lib/markdown-to-doc.ts`](../src/lib/markdown-to-doc.ts) converts a
+  strict markdown subset to editor JSON, then `sanitizeDoc` (the AI composer's
+  whitelist) runs on it.
+- **Same permissions as the app** — every tool uses the session-free ACL
+  variants `checkPageAccessFor` / `checkDealAccessFor` and the shared list
+  scopes, and the atomic plan-limit asserts. Not exposed: password protection,
+  ownership reassignment, deletes, billing, team management, AI generation.
 
 ---
 

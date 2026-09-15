@@ -7,6 +7,7 @@ import { AccountSettings } from "@/components/account-settings";
 import { TeamSettings } from "@/components/team-settings";
 import { BillingSettings } from "@/components/billing-settings";
 import { BrandingSettings } from "@/components/branding-settings";
+import { ApiKeysSettings } from "@/components/api-keys-settings";
 import { Card } from "@/components/ui/card";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
@@ -18,7 +19,7 @@ const TABS = [
   { id: "billing", label: "Billing", icon: CreditCard, ready: true },
   { id: "branding", label: "Branding", icon: Paintbrush, ready: true },
   { id: "notifications", label: "Notifications", icon: Bell, ready: false },
-  { id: "integrations", label: "Integrations", icon: Plug, ready: false },
+  { id: "integrations", label: "Integrations", icon: Plug, ready: true },
 ];
 
 function SettingsContent() {
@@ -74,8 +75,9 @@ function SettingsContent() {
       {activeTab === "team" && <TeamSettings />}
       {activeTab === "billing" && <BillingSettings />}
       {activeTab === "branding" && <BrandingSettings />}
+      {activeTab === "integrations" && <ApiKeysSettings />}
 
-      {!["account", "team", "billing", "branding"].includes(activeTab) && (
+      {!["account", "team", "billing", "branding", "integrations"].includes(activeTab) && (
         <Card className="p-12 text-center">
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
             {TABS.find((t) => t.id === activeTab)?.icon &&

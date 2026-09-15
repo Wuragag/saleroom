@@ -33,6 +33,14 @@ interface AuthResult {
   reason?: string;
 }
 
+/** Result of the session-free ACL check (`checkPageAccessFor`). */
+export interface PageAccessResult {
+  authorized: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  page?: any;
+  reason?: string;
+}
+
 /**
  * Check whether the current user can perform `action` on a given page.
  *
@@ -52,22 +60,34 @@ export async function checkPageAccess(
   if (!session?.user?.id) {
     return { authorized: false, session: null, reason: "Unauthorized" };
   }
+  const result = await checkPageAccessFor(session.user.id, pageId, action);
+  return { ...result, session };
+}
 
+/**
+ * The same ACL for an explicit principal — used by callers that authenticate
+ * outside the NextAuth session (the MCP server's API keys). `checkPageAccess`
+ * is a thin wrapper over this, so the rules can never diverge.
+ */
+export async function checkPageAccessFor(
+  userId: string,
+  pageId: string,
+  action: PagePermission
+): Promise<PageAccessResult> {
   const page = await prisma.page.findUnique({
     where: { id: pageId },
   });
 
   if (!page) {
-    return { authorized: false, session, reason: "Page not found" };
+    return { authorized: false, reason: "Page not found" };
   }
 
-  const isCreator = page.userId === session.user.id;
+  const isCreator = page.userId === userId;
 
   // Private page: only creator has any access
   if (page.visibility === "PRIVATE") {
     return {
       authorized: isCreator,
-      session,
       page,
       reason: isCreator ? undefined : "This is a private page",
     };
@@ -78,37 +98,35 @@ export async function checkPageAccess(
     const membership = await prisma.teamMember.findUnique({
       where: {
         userId_teamId: {
-          userId: session.user.id,
+          userId,
           teamId: page.teamId,
         },
       },
     });
 
     if (!membership) {
-      return { authorized: false, session, page, reason: "Not a team member" };
+      return { authorized: false, page, reason: "Not a team member" };
     }
 
     if (action === "view") {
-      return { authorized: true, session, page };
+      return { authorized: true, page };
     }
 
     if (action === "edit") {
-      if (page.lockedById && page.lockedById !== session.user.id) {
+      if (page.lockedById && page.lockedById !== userId) {
         return {
           authorized: false,
-          session,
           page,
           reason: "Page is locked by another user",
         };
       }
-      return { authorized: true, session, page };
+      return { authorized: true, page };
     }
 
     if (action === "delete") {
       const isOwner = membership.role === "OWNER";
       return {
         authorized: isCreator || isOwner,
-        session,
         page,
         reason:
           isCreator || isOwner
@@ -121,7 +139,6 @@ export async function checkPageAccess(
   // Fallback: no teamId — legacy creator-only check
   return {
     authorized: isCreator,
-    session,
     page,
     reason: isCreator ? undefined : "Forbidden",
   };

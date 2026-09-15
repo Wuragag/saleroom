@@ -75,6 +75,7 @@ model User {
   dealComments        DealComment[]
   companies           Company[]
   contacts            Contact[]
+  apiKeys             ApiKey[]
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -321,6 +322,22 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+/// Personal API key for programmatic access (the MCP server). Only the
+/// SHA-256 hash is stored; the plaintext is shown once at creation. `prefix`
+/// is the visible first characters so users can tell keys apart.
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  prefix     String
+  keyHash    String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // ──── Synced Content Blocks ────

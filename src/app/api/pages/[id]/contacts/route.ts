@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { checkPageAccess } from "@/lib/team-auth";
-import { sendSharePageEmail } from "@/lib/email";
 import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
-import { upsertContactFromActivity } from "@/lib/contacts";
+import { sharePageWithContacts, MAX_SHARE_CONTACTS } from "@/lib/page-share";
 import { withErrorHandler } from "@/lib/api-error";
 
 /**
@@ -93,90 +91,32 @@ export const POST = withErrorHandler(async (
     return NextResponse.json({ error: "contacts array is required" }, { status: 400 });
   }
 
-  if (contactInputs.length > 50) {
-    return NextResponse.json({ error: "Maximum 50 contacts per request" }, { status: 400 });
+  if (contactInputs.length > MAX_SHARE_CONTACTS) {
+    return NextResponse.json(
+      { error: `Maximum ${MAX_SHARE_CONTACTS} contacts per request` },
+      { status: 400 }
+    );
   }
 
   const page = await prisma.page.findUnique({
     where: { id },
-    select: { title: true, slug: true },
+    select: { id: true, title: true, slug: true, teamId: true, userId: true },
   });
 
   if (!page) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
   }
 
-  const senderName = access.session?.user?.name ?? "Someone";
   // Derive origin from the actual incoming request rather than a possibly
   // unset/misconfigured NEXTAUTH_URL — that fallback previously meant share
   // links sent to real prospects could contain http://localhost:3000.
-  const appUrl = req.nextUrl.origin;
-  const created: Array<{ id: string; email: string; name: string | null; refToken: string; link: string }> = [];
-
-  // Sharing a room with someone is a capture moment — mirror each recipient
-  // into the canonical Contacts book (fire-safe, never blocks the share).
-  const crmScope = {
-    teamId: access.page.teamId ?? null,
-    userId: access.page.userId as string,
-  };
-
-  for (const input of contactInputs) {
-    const email = input.email?.trim().toLowerCase();
-    if (!email) continue;
-
-    // companyName (not a pre-resolved id) so the company lookup also runs
-    // inside the fire-safe wrapper and can't 500 the share mid-loop.
-    await upsertContactFromActivity(crmScope, {
-      email,
-      name: typeof input.name === "string" ? input.name : null,
-      companyName: typeof input.company === "string" ? input.company : null,
-    });
-
-    const contact = await prisma.pageContact.upsert({
-      where: { pageId_email: { pageId: id, email } },
-      update: {
-        ...(input.name ? { name: input.name.trim() } : {}),
-        ...(input.company ? { company: input.company.trim() } : {}),
-      },
-      create: {
-        pageId: id,
-        email,
-        name: input.name?.trim() ?? null,
-        company: input.company?.trim() ?? null,
-        refToken: nanoid(12),
-      },
-    });
-
-    const link = `${appUrl}/p/${page.slug}?ref=${contact.refToken}`;
-    created.push({
-      id: contact.id,
-      email: contact.email,
-      name: contact.name,
-      refToken: contact.refToken,
-      link,
-    });
-
-    if (sendEmail) {
-      try {
-        await sendSharePageEmail(email, link, page.title, senderName, contact.name ?? undefined);
-      } catch (err) {
-        console.error(`[contacts] Failed to send email to ${email}:`, err);
-      }
-    }
-  }
-
-  // Record the share on the page's activity timeline / share stats.
-  // One event per share action (not per contact) — this is a seller action,
-  // so it's created here rather than exposed on the public event endpoint.
-  if (created.length > 0) {
-    await prisma.pageEvent.create({
-      data: {
-        pageId: id,
-        type: "share",
-        meta: JSON.stringify({ contacts: created.length }),
-      },
-    });
-  }
+  const created = await sharePageWithContacts({
+    page,
+    contacts: contactInputs,
+    sendEmail: !!sendEmail,
+    senderName: access.session?.user?.name ?? "Someone",
+    appUrl: req.nextUrl.origin,
+  });
 
   return NextResponse.json({ contacts: created });
 });
