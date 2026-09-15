@@ -77,7 +77,7 @@ describe("sanitizeDoc", () => {
     expect(String(form1.attrs?.formId)).toMatch(/^form_\d+_[a-z0-9]+$/);
     expect(form2.attrs?.formId).toBe("form_123_abcd");
     expect(yt.attrs).toEqual({
-      src: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      src: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
       provider: "youtube",
     });
     expect(cal.attrs).toEqual({ src: "https://calendly.com/acme/30min", provider: "generic" });

@@ -56,7 +56,8 @@ export default auth((req) => {
     pathname.startsWith("/features") ||
     pathname.startsWith("/use-cases") ||
     pathname.startsWith("/examples") ||
-    pathname.startsWith("/pricing")
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/legal")
   ) {
     // Authenticated users hitting the marketing root get sent straight to the app
     if (pathname === "/" && isLoggedIn) {

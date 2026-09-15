@@ -41,7 +41,7 @@ export function detectProvider(url: string): ProviderInfo {
       return {
         provider: "youtube",
         embedUrl: videoId
-          ? `https://www.youtube.com/embed/${videoId}`
+          ? `https://www.youtube-nocookie.com/embed/${videoId}`
           : url,
         aspectRatio: "16/9",
       };

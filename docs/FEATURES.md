@@ -36,7 +36,8 @@ rate limiting · Tiptap editor · Anthropic (Claude) for AI · Resend for email.
 17. [Admin Console](#17-admin-console)
 18. [Marketing Site](#18-marketing-site)
 19. [Security & Platform](#19-security--platform)
-20. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
+20. [Privacy & Compliance](#20-privacy--compliance-gdpr--uk-gdpr--kvkk--us-state-laws)
+21. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
 
 ---
 
@@ -567,6 +568,78 @@ claimed anywhere on the site.
   tokens are HMAC-signed, short-lived, and single-use.
 
 Data model: [`prisma/schema.prisma`](../prisma/schema.prisma).
+
+---
+
+## 20. Privacy & Compliance (GDPR · UK GDPR · KVKK · US state laws)
+
+What exists in the product today, verified against the code. Legal wording
+lives in [`src/data/legal/`](../src/data/legal/) and renders at `/legal/*`;
+counsel review and the TODO fields in [`entity.ts`](../src/data/legal/entity.ts)
+(legal name, address, country, representatives, VERBİS) are required before
+launch.
+
+**Roles.** Dealbeam is the controller for account holders and website
+visitors, and a processor for the buyers a seller tracks on a shared page.
+
+**Legal pages** ([`documents.ts`](../src/data/legal/documents.ts)): Privacy
+Policy (incl. a US state privacy notice at `#us-state-privacy` and a buyer
+section at `#buyers`), Terms of Service, Cookies & storage (table generated
+from [`cookies.ts`](../src/data/legal/cookies.ts)), Data Processing Addendum
+(Art. 28 terms + sub-processor table from
+[`subprocessors.ts`](../src/data/legal/subprocessors.ts)), and a Turkish
+KVKK Aydınlatma Metni (Art. 10 disclosure + Art. 11 rights + application
+procedure). Linked from the marketing footer, the sign-up form, the buyer
+page footer, the sitemap and `llms.txt`; allowlisted in the middleware.
+
+**Consent and transparency on buyer pages**
+([`buyer-privacy-notice.tsx`](../src/components/buyer-privacy-notice.tsx),
+[`src/lib/buyer-consent.ts`](../src/lib/buyer-consent.ts), tested):
+- A notice bar tells every reader that the sender sees how the page is read,
+  with a link to the buyer section of the policy. Dismissal is remembered per
+  page (`db_privacy_notice_{pageId}`).
+- **Session replay is opt-in for the buyer.** When a seller enables recording,
+  the bar asks "Allow recording / No thanks"; the rrweb recorder mounts only
+  after "granted" (`db_replay_consent_{pageId}`), and the tracker re-checks
+  on every answer. A **Global Privacy Control** signal is honoured as a
+  standing "no" (the question is not asked). rrweb masks all inputs and,
+  via `maskTextClass: "sr-mask"`, the personalised "Made for …" / "Hi …" text.
+- The `Powered by` footer now carries a **Privacy** link that stays on
+  white-label pages.
+- YouTube embeds render from `youtube-nocookie.com`; `db_ref_*` cookies are
+  `secure` in production.
+
+**Data-subject rights for account holders** (Settings → Account):
+- **Export** — `GET /api/account/export` returns a JSON file with profile,
+  memberships, pages (tabs, contacts, action plan, submissions, engagement
+  counts), deals and comments (Art. 15/20; CCPA right to know).
+- **Delete** — `DELETE /api/account` with password + typed `DELETE`
+  ([`account-deletion.ts`](../src/lib/account-deletion.ts), tested): erases
+  the user and cascades pages, buyer data, recordings, contacts, deals and
+  comments; deletes teams where the user is the only member and cancels their
+  Stripe subscription first; refuses (409) when the user owns a team with
+  other members until ownership is transferred.
+
+**Cookies.** Website and app: strictly necessary (Auth.js session/CSRF) and
+functional (theme, view prefs) only → no consent banner. Buyer pages: the
+random `db_visitor_id` (hashed with the page id server-side), `db_ref_*` (30
+days) for personal links, and the two notice/consent keys. No advertising or
+third-party analytics anywhere.
+
+**Known gaps (not yet built)** — flagged for prioritisation:
+- No automatic retention/expiry for buyer analytics, recordings, form
+  submissions or uploaded blobs; deletion is manual (page/contact/account).
+- Google Fonts is loaded from `fonts.googleapis.com` at runtime on
+  published pages (the website and app self-host); self-hosting the buyer
+  fonts would remove that transfer.
+- No audit log for admin actions or impersonation; no email verification at
+  sign-up; share emails to buyers carry no unsubscribe header (they are
+  transactional, sent on the seller's behalf).
+- Rate-limit keys in Upstash use raw IPs / emails (short-lived); hashing
+  them would be cleaner.
+- Team OWNER transfer is required before an owner can delete their account;
+  there is no in-app "transfer ownership" action yet (owners must promote a
+  member and demote themselves via team settings).
 
 ---
 

@@ -45,3 +45,8 @@ No CRM sync (Salesforce, HubSpot), no Slack alerts, no public webhooks or Zapier
 - Use cases: /use-cases
 - Examples: /examples
 - Sign up: /auth/signup
+- Legal: /legal/privacy (privacy policy incl. US state notice), /legal/terms, /legal/cookies, /legal/dpa (data processing addendum + sub-processors), /legal/kvkk (Turkish KVKK disclosure)
+
+## Privacy in one paragraph
+
+Dealbeam is the controller for account holders and website visitors, and a processor for the buyers whose reading a seller tracks on a shared page. Buyer pages set no advertising cookies and load no third-party trackers; reading analytics use a random, per-page-hashed browser id, and session replay is opt-in for the buyer and honours Global Privacy Control. Sub-processors: Neon, Vercel, Stripe, Resend, Upstash, Anthropic, Google Fonts (published pages only). Requests: privacy@dealbeam.com.

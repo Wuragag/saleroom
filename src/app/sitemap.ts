@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { absoluteUrl } from "@/lib/seo"
 import { FEATURES } from "@/data/marketing/features"
+import { LEGAL_DOCUMENTS } from "@/data/legal/documents"
 
 /** Static marketing routes only — app and buyer pages are private. */
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -18,5 +19,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
     priority: 0.7,
   }))
-  return [...top, ...features]
+  const legal: MetadataRoute.Sitemap = LEGAL_DOCUMENTS.map((d) => ({
+    url: absoluteUrl(`/legal/${d.slug}`),
+    lastModified,
+    changeFrequency: "yearly",
+    priority: 0.3,
+  }))
+  return [...top, ...features, ...legal]
 }

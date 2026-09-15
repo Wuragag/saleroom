@@ -102,7 +102,7 @@ describe("renderPubHtml", () => {
         { type: "embed", attrs: { src: "https://www.loom.com/share/abc123DEF", provider: "generic" } },
       ],
     });
-    expect(html).toContain('src="https://www.youtube.com/embed/dQw4w9WgXcQ"');
+    expect(html).toContain('src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"');
     expect(html).toContain('src="https://www.loom.com/embed/abc123DEF"');
   });
 

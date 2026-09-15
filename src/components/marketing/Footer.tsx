@@ -29,6 +29,17 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Start free", href: "/auth/signup" },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy", href: "/legal/privacy" },
+      { label: "Terms", href: "/legal/terms" },
+      { label: "Cookies", href: "/legal/cookies" },
+      { label: "DPA", href: "/legal/dpa" },
+      { label: "KVKK", href: "/legal/kvkk" },
+      { label: "US privacy rights", href: "/legal/privacy#us-state-privacy" },
+    ],
+  },
 ]
 
 export default function Footer() {

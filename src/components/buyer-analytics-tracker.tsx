@@ -22,6 +22,13 @@ import { isPricingTabName } from "@/lib/engagement-score";
 // rrweb is a meaningful chunk (~60KB) — code-split it out of every published
 // page's bundle. It only loads for the small minority of pages that opt into
 // session replay.
+import {
+  REPLAY_CONSENT_EVENT,
+  hasGlobalPrivacyControl,
+  readReplayConsent,
+  shouldRecordSession,
+} from "@/lib/buyer-consent";
+
 const SessionRecorder = dynamic(
   () => import("@/components/session-recorder").then((m) => m.SessionRecorder),
   { ssr: false }
@@ -76,6 +83,26 @@ interface Props {
 }
 
 export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, refToken, recordingEnabled }: Props) {
+  // Session replay is opt-in for the buyer (see BuyerPrivacyNotice): it runs
+  // only with a stored "granted" answer for this page and no GPC signal.
+  const [replayAllowed, setReplayAllowed] = useState(false);
+  useEffect(() => {
+    if (!recordingEnabled) return;
+    const compute = () =>
+      shouldRecordSession({
+        recordingEnabled,
+        consent: readReplayConsent(window.localStorage, pageId),
+        gpc: hasGlobalPrivacyControl(navigator as unknown as { globalPrivacyControl?: unknown }),
+      });
+    setReplayAllowed(compute());
+    const onAnswer = (e: Event) => {
+      const d = (e as CustomEvent<{ pageId: string }>).detail;
+      if (!d || d.pageId === pageId) setReplayAllowed(compute());
+    };
+    window.addEventListener(REPLAY_CONSENT_EVENT, onAnswer);
+    return () => window.removeEventListener(REPLAY_CONSENT_EVENT, onAnswer);
+  }, [pageId, recordingEnabled]);
+
   // Refs are stable across renders — no re-renders needed for tracker state
   const sessionIdRef   = useRef<string | null>(null);
   // Mirrors sessionIdRef as state purely to trigger mounting SessionRecorder
@@ -407,7 +434,7 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
     };
   }, []);
 
-  if (recordingEnabled && recorderSessionId) {
+  if (recordingEnabled && replayAllowed && recorderSessionId) {
     return <SessionRecorder sessionId={recorderSessionId} startChunkIndex={recorderChunkStart} />;
   }
   return null; // purely behavioral, no UI
