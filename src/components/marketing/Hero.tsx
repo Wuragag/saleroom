@@ -2,15 +2,13 @@
 
 import Link from "next/link"
 import { useEffect, useRef } from "react"
-import { BrowserFrame, DashboardVisual } from "./product-ui"
-import { LANDING_METRICS } from "@/data/marketing/landing"
-
-const MONO = "var(--font-mk-mono), ui-monospace, monospace"
+import { HERO, LANDING_FACTS } from "@/data/marketing/landing"
+import { BrowserFrame, DashboardVisual, VISUAL_URLS } from "./product-ui"
 
 /**
- * Product-forward hero: compact headline + CTA over a large, colourful
- * dashboard mock in a browser frame, with two floating UI chips that drift on
- * scroll (rAF parallax, disabled for prefers-reduced-motion).
+ * Product-forward hero: headline + CTAs over a large dashboard mock in a
+ * browser frame, with two floating "signal" chips that drift on scroll
+ * (rAF parallax, off under prefers-reduced-motion).
  */
 export default function Hero() {
   const frameRef = useRef<HTMLDivElement>(null)
@@ -23,104 +21,85 @@ export default function Hero() {
     const onScroll = () => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        const y = window.scrollY
-        if (frameRef.current) frameRef.current.style.transform = `translateY(${y * -0.03}px)`
-        if (chipARef.current) chipARef.current.style.transform = `translateY(${y * -0.11}px)`
-        if (chipBRef.current) chipBRef.current.style.transform = `translateY(${y * -0.07}px)`
+        const y = Math.min(window.scrollY, 900)
+        if (frameRef.current) frameRef.current.style.transform = `translateY(${y * -0.04}px)`
+        if (chipARef.current) chipARef.current.style.transform = `translateY(${y * -0.12}px)`
+        if (chipBRef.current) chipBRef.current.style.transform = `translateY(${y * -0.08}px)`
       })
     }
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
-    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf) }
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      cancelAnimationFrame(raf)
+    }
   }, [])
 
   return (
-    <>
-      <style>{`
-        @keyframes mk-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .mk-hero-fade { opacity: 0; animation: mk-fade-up .6s cubic-bezier(0.16,1,0.3,1) forwards; }
-        @media (prefers-reduced-motion: reduce) { .mk-hero-fade { animation: none; opacity: 1; } }
-        .mk-hero-h1 {
-          font-family: var(--font-serif), Georgia, serif; font-weight: 400;
-          font-size: clamp(40px, 6.4vw, 82px); line-height: 1.0; letter-spacing: -0.02em;
-          margin: 0; text-wrap: balance;
-        }
-        .mk-hero-chip { position: absolute; z-index: 3; will-change: transform; }
-        @media (max-width: 820px) {
-          .mk-hero-chip { display: none !important; }
-          .mk-dash-side { display: none !important; }
-          .mk-dash-grid { grid-template-columns: 1fr !important; }
-          .mk-dash-stats { grid-template-columns: 1fr 1fr !important; }
-          .mk-metrics { gap: 20px 28px !important; }
-        }
-      `}</style>
-
-      <section id="top" style={{ position: "relative", overflow: "hidden", padding: "72px 24px 40px" }}>
-        {/* colour glow */}
-        <div aria-hidden style={{ position: "absolute", inset: 0, background: "var(--mk-glow)", pointerEvents: "none" }} />
-
-        <div className="mk-hero-fade" style={{ position: "relative", zIndex: 2, maxWidth: 900, margin: "0 auto", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--db-text-secondary)", background: "var(--db-surface)", border: "1px solid var(--db-border)", borderRadius: 999, padding: "6px 14px", boxShadow: "var(--db-shadow-1)" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--mk-emerald)" }} />
-            Deal pages that read themselves
-          </span>
-          <h1 className="mk-hero-h1">
-            One page. Every deal,<br /><em>in order</em>.
+    <section id="top" className="mk-hero" aria-labelledby="hero-title">
+      <div className="mk-hero-grid" aria-hidden />
+      <div className="mk-container">
+        <div className="mk-hero-copy">
+          <span className="mk-hero-badge mk-enter" style={{ ["--i" as string]: 0 }}><i aria-hidden />{HERO.eyebrow}</span>
+          <h1 id="hero-title" className="mk-display mk-enter" style={{ ["--i" as string]: 1 }}>
+            {HERO.titleLine1}{" "}<br />{HERO.titleLine2} <em>{HERO.titleAccent}</em>
           </h1>
-          <p style={{ fontSize: 18, lineHeight: 1.6, color: "var(--db-text-secondary)", maxWidth: 540, margin: 0, textWrap: "pretty" }}>
-            Proposal, pricing and next steps become one link your buyer actually
-            reads — and you see every read as it happens.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-            <Link href="/auth/signup" className="mk-cta mk-cta-lg">Create your page</Link>
-            <Link href="#product" style={{ fontFamily: MONO, fontSize: 13, color: "var(--db-text-secondary)", textDecoration: "none", padding: "12px 8px" }}>
-              See it working ↓
-            </Link>
+          <p className="mk-lead mk-enter" style={{ ["--i" as string]: 2, maxWidth: 600 }}>{HERO.subtitle}</p>
+          <div className="mk-hero-ctas mk-enter" style={{ ["--i" as string]: 3 }}>
+            <Link href={HERO.primaryCta.href} className="mk-cta mk-cta-lg">{HERO.primaryCta.label}</Link>
+            <Link href={HERO.secondaryCta.href} className="mk-cta-ghost mk-cta-lg">{HERO.secondaryCta.label} <span aria-hidden>↓</span></Link>
           </div>
+          <p className="mk-small mk-enter" style={{ ["--i" as string]: 4 }}>{HERO.note}</p>
         </div>
 
-        {/* product frame + floating chips */}
-        <div className="mk-hero-fade" id="product" style={{ position: "relative", zIndex: 2, maxWidth: 1000, margin: "48px auto 0", animationDelay: ".12s" }}>
+        <div className="mk-hero-visual mk-enter-rise" style={{ ["--i" as string]: 4 }}>
           <div ref={frameRef} style={{ willChange: "transform" }}>
-            <BrowserFrame url="app.dealbeam.com/pages" live>
+            <BrowserFrame
+              url={VISUAL_URLS.dashboard}
+              live
+              label="The Dealbeam dashboard: a rail with Pages, Deals, Analytics, Submissions, Library and Settings; stat cards for total views, average time on page and live pages; and a grid of deal pages with view counts and Live or Draft status."
+            >
               <DashboardVisual />
             </BrowserFrame>
           </div>
 
-          <div ref={chipARef} className="mk-hero-chip" style={{ right: -14, top: 92 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--db-surface)", border: "1px solid var(--db-border)", borderRadius: 12, boxShadow: "var(--db-shadow-3)", padding: "11px 15px" }}>
-              <span style={{ width: 30, height: 30, borderRadius: "50%", background: "color-mix(in srgb, var(--mk-emerald) 20%, var(--db-surface))", color: "var(--mk-emerald)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>✓</span>
-              <span style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>Acme signed <strong style={{ fontWeight: 600 }}>Q3</strong></span>
-              <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--db-text-muted)" }}>now</span>
+          <div ref={chipARef} className="mk-hero-chip" style={{ right: -22, top: 96 }} aria-hidden>
+            <div className="mk-ui-panel" style={{ display: "flex", alignItems: "center", gap: 10, boxShadow: "var(--db-shadow-3)", padding: "11px 15px", borderRadius: 12 }}>
+              <span className="mk-ui-avatar ink" style={{ width: 28, height: 28, fontSize: 10 }}>MC</span>
+              <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>Maya Chen is reading</span>
+                <span className="mk-ui-muted" style={{ fontSize: 10.5 }}>Pricing · 2m 10s · now</span>
+              </span>
+              <span style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 22, marginLeft: 6 }} data-wg="">
+                {[0.4, 0.7, 0.5, 0.9, 0.65, 1, 0.8].map((h, i) => (
+                  <span key={i} style={{ width: 3, height: `${h * 100}%`, borderRadius: 1, background: "var(--db-text)", transformOrigin: "bottom", animation: "mk-grow 2.6s ease-in-out infinite", animationDelay: `${i * 0.13}s` }} />
+                ))}
+              </span>
             </div>
           </div>
 
-          <div ref={chipBRef} className="mk-hero-chip" style={{ left: -18, bottom: 64 }}>
-            <div style={{ background: "var(--db-surface)", border: "1px solid var(--db-border)", borderRadius: 12, boxShadow: "var(--db-shadow-3)", padding: 14, width: 178 }}>
-              <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--db-text-muted)" }}>Reading now</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                <span style={{ width: 22, height: 22, borderRadius: "50%", background: "color-mix(in srgb, var(--mk-violet) 22%, var(--db-surface))", color: "var(--mk-violet)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 600 }}>MC</span>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>Maya Chen</span>
+          <div ref={chipBRef} className="mk-hero-chip" style={{ left: -26, bottom: 72 }} aria-hidden>
+            <div className="mk-ui-panel" style={{ boxShadow: "var(--db-shadow-3)", padding: 14, width: 190, borderRadius: 12 }}>
+              <span className="mk-ui-label">Northwind · Q3</span>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 6 }}>
+                <span style={{ fontFamily: "var(--mk-serif)", fontSize: 30, lineHeight: 1 }}>92</span>
+                <span className="mk-ui-pill ink" style={{ fontSize: 9.5 }}>High Intent</span>
               </div>
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 26, marginTop: 10 }}>
-                {[0.4, 0.7, 0.5, 0.9, 0.65, 1, 0.8].map((h, i) => (
-                  <span key={i} style={{ flex: 1, height: `${h * 100}%`, borderRadius: 1, background: "var(--mk-violet)", opacity: 0.85, transformOrigin: "bottom", animation: "wg-grow 2.6s ease-in-out infinite", animationDelay: `${i * 0.13}s` }} data-wg="" />
-                ))}
-              </div>
+              <div className="mk-ui-bar" style={{ marginTop: 10 }}><span data-wg="" style={{ width: "92%", animation: "mk-fill 1.6s var(--mk-ease) both" }} /></div>
+              <div className="mk-ui-muted" style={{ fontSize: 10.5, marginTop: 6 }}>3 sessions · pricing viewed · CTA clicked</div>
             </div>
           </div>
         </div>
 
-        {/* metric strip */}
-        <div className="mk-metrics" style={{ position: "relative", zIndex: 2, maxWidth: 900, margin: "48px auto 0", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px 56px", borderTop: "1px solid var(--db-border)", paddingTop: 28 }}>
-          {LANDING_METRICS.map((m) => (
-            <div key={m.label} style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: "var(--font-serif), Georgia, serif", fontSize: 30, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums" }}>{m.value}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.04em", color: "var(--db-text-muted)", marginTop: 2 }}>{m.label}</div>
+        <dl className="mk-facts">
+          {LANDING_FACTS.map((m, i) => (
+            <div key={m.label} className="mk-enter" style={{ ["--i" as string]: 6 + i }}>
+              <dt className="mk-fact-value">{m.value}</dt>
+              <dd className="mk-fact-label" style={{ margin: 0 }}>{m.label}</dd>
             </div>
           ))}
-        </div>
-      </section>
-    </>
+        </dl>
+      </div>
+    </section>
   )
 }

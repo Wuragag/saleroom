@@ -519,13 +519,32 @@ API under [`/api/admin/`](../src/app/api/admin/). Helpers:
 ## 18. Marketing Site
 
 Public, statically-rendered marketing pages under
-[`src/app/(marketing)/`](../src/app/(marketing)/):
+[`src/app/(marketing)/`](../src/app/(marketing)/). A bespoke monochrome
+(black / white / grey) visual system in
+[`marketing.css`](../src/app/(marketing)/marketing.css), independent of the
+app-chrome tokens; light by default, dark opt-in (`data-mk-theme`).
 
-- **Landing page** (hero, problem/solution, comparison, social proof, demo, AI).
-- **Features** index + per-feature detail pages.
+- **Landing page** — hero with a CSS dashboard mock, an interactive product
+  tour (Write · Send · Read · Close; auto-advancing tabs with cross-fade,
+  WAI-ARIA tabs), method (three steps), details grid, template marquee, the
+  stoic interlude, pricing, FAQ and a closing CTA.
+- **Features** index + per-feature detail pages (six features, each with a
+  product visual from [`product-ui.tsx`](../src/components/marketing/product-ui.tsx)).
 - **Pricing** (with FAQ), **Use Cases**, and **Examples**.
+- **Motion** — route transitions via
+  [`template.tsx`](../src/app/(marketing)/template.tsx), reveal-on-scroll,
+  animated mocks; everything honours `prefers-reduced-motion`.
+- **SEO / GEO** — `metadataBase` + canonical / OpenGraph / Twitter metadata,
+  a generated social card ([`opengraph-image.tsx`](../src/app/(marketing)/opengraph-image.tsx)),
+  [`robots.ts`](../src/app/robots.ts), [`sitemap.ts`](../src/app/sitemap.ts),
+  [`public/llms.txt`](../public/llms.txt) for AI crawlers, and JSON-LD
+  (Organization, WebSite, SoftwareApplication with offers, FAQPage,
+  BreadcrumbList) built by the pure helpers in [`src/lib/seo.ts`](../src/lib/seo.ts)
+  (tested). The auth middleware allowlists the crawler files.
 
-Content is data-driven from [`src/data/marketing/`](../src/data/marketing/).
+Content is data-driven from [`src/data/marketing/`](../src/data/marketing/)
+and describes **only built features** — the roadmap items below are no longer
+claimed anywhere on the site.
 
 ---
 
@@ -553,8 +572,8 @@ Data model: [`prisma/schema.prisma`](../prisma/schema.prisma).
 
 ## Roadmap / Not Yet Built
 
-The marketing site references the following, which are **not implemented** in the
-current codebase. They should be treated as roadmap/aspirational:
+The following are **not implemented** in the current codebase and are not
+claimed on the marketing site. Treat them as roadmap/aspirational:
 
 - **CRM sync** (Salesforce, HubSpot) — no integration code exists.
 - **Slack / external notifications** — buyer-engagement alerts are not wired to
