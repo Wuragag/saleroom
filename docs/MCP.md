@@ -7,13 +7,37 @@ share tracked links, and keep the pipeline up to date — always as that rep,
 with that rep's permissions.
 
 - **Endpoint:** `https://<your-app>/api/mcp` (Streamable HTTP, stateless, JSON responses)
-- **Auth:** personal API key as `Authorization: Bearer dbk_…`
-- **Where keys live:** Settings → Integrations (`/settings?tab=integrations`)
+- **Auth, two ways:** OAuth 2.1 (hosted assistants: claude.ai, ChatGPT) or a
+  personal API key as `Authorization: Bearer dbk_…` (developer tools)
+- **Where it's managed:** Settings → Integrations (`/settings?tab=integrations`)
 - **Code:** [`src/app/api/mcp/route.ts`](../src/app/api/mcp/route.ts) (transport),
   [`src/lib/mcp/`](../src/lib/mcp/) (server + tools),
-  [`src/lib/api-keys.ts`](../src/lib/api-keys.ts) (keys)
+  [`src/lib/oauth.ts`](../src/lib/oauth.ts) / [`oauth-server.ts`](../src/lib/oauth-server.ts)
+  (authorization server), [`src/lib/api-keys.ts`](../src/lib/api-keys.ts) (keys)
 
-## Connecting a client
+## Connecting from Claude (claude.ai) or ChatGPT
+
+No keys involved — the user signs in and approves once:
+
+1. **Claude:** Settings → Connectors → *Add custom connector* → paste
+   `https://<your-app>/api/mcp` → *Connect*.
+2. **ChatGPT:** Settings → Connectors → *Advanced* → enable *Developer mode* →
+   *Create* → paste the URL, authentication *OAuth* → *Connect*.
+3. The assistant opens `https://<your-app>/oauth/authorize`; the user signs in
+   (if needed) and clicks *Allow access*. Done — the connector shows up under
+   *Connected apps* in Settings → Integrations, where it can be disconnected.
+
+Under the hood this is standard MCP authorization: the endpoint answers an
+unauthenticated call with `401` + `WWW-Authenticate: Bearer resource_metadata=…`,
+the client reads `/.well-known/oauth-protected-resource` and
+`/.well-known/oauth-authorization-server`, registers itself at
+`/api/oauth/register` (RFC 7591 dynamic registration), runs the
+authorization-code flow with PKCE S256 through `/oauth/authorize` and
+`/api/oauth/token`, and refreshes with rotating refresh tokens. ChatGPT's
+connector mode also expects `search` + `fetch` tools, which the server
+provides alongside the richer ones.
+
+## Connecting a developer tool (API key)
 
 Create a key under Settings → Integrations (it is shown once), then:
 
@@ -80,6 +104,7 @@ result is returned both as readable JSON text and as `structuredContent`.
 | `add_stakeholder` | Buyer-side person on a deal. |
 | `link_page_to_deal` | Attach an existing page to a deal. |
 | `list_contacts` / `list_companies` | The canonical buyer book with warmth. |
+| `search` / `fetch` | Two-step find-then-read over pages and deals (the contract ChatGPT connectors use). |
 
 ### Markdown → page content
 
@@ -91,9 +116,27 @@ fenced code, `---`, pipe tables, and `**bold**` / `*italic*` / `` `code` `` /
 same `sanitizeDoc` the AI composer uses, so MCP-written content can never
 contain a node the editor doesn't know.
 
+## OAuth server details
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /.well-known/oauth-authorization-server` | RFC 8414 metadata (endpoints, `S256`, DCR, supported grants). |
+| `GET /.well-known/oauth-protected-resource` (+ `/api/mcp` suffix) | RFC 9728 resource metadata pointed to by the 401 challenge. |
+| `POST /api/oauth/register` | Dynamic client registration. Open (that's how connectors onboard); a client can't do anything until a user approves it; PKCE is mandatory. Redirect URIs must be https, loopback http, or a private scheme, no fragments. |
+| `GET /oauth/authorize` | Consent page (signed-in users; middleware preserves the query through sign-in). Unknown client / unregistered redirect never redirects; other errors go back to the client per RFC 6749. |
+| `POST /api/oauth/authorize` | The consent decision. Re-validates everything, mints a single-use 10-minute code, returns the redirect URL (navigated by JS so the CSP `form-action` rule isn't tripped). |
+| `POST /api/oauth/token` | `authorization_code` (PKCE verified, code consumed atomically, replay revokes the tokens it issued) and `refresh_token` (rotating). Access tokens live 1 h, refresh tokens 30 days. Public clients (`none`) and `client_secret_basic/post` supported. |
+| `POST /api/oauth/revoke` | RFC 7009. |
+| `GET/DELETE /api/account/connected-apps[/:clientId]` | The user's live grants; disconnect revokes every token for that app. |
+
+Codes, access tokens and refresh tokens are opaque (`dbac_` / `dbat_` / `dbrt_`
++ 40 hex) and stored as SHA-256 hashes only (`OAuthClient`,
+`OAuthAuthorizationCode`, `OAuthToken`). Scopes (`read write`) are advertised
+but advisory: every token acts with the approving user's full permissions.
+
 ## Security model
 
-- **Keys act as their user.** Every tool resolves the key to a user, then goes
+- **Credentials act as their user.** Every tool resolves the key or token to a user, then goes
   through the same centralized ACLs as the REST API — `checkPageAccessFor` /
   `checkDealAccessFor` (the session-free variants of `checkPageAccess` /
   `checkDealAccess`) and the `accessible*Where` list scopes. PRIVATE pages stay
@@ -101,10 +144,11 @@ contain a node the editor doesn't know.
 - **Plan limits apply.** Page, tab and open-deal caps are enforced with the
   same atomic `assertCan*Tx` asserts under the advisory lock; a cap shows up as
   a readable tool error ("Plan limit: …").
-- **Keys are hashed.** Only a SHA-256 hash and a 12-char display prefix are
-  stored (`ApiKey` model); the plaintext is shown once. Up to 10 keys per user;
-  revoking is immediate.
-- **Rate limited** per key (120 requests/min) via the shared Upstash limiter.
+- **Secrets are hashed.** API keys, codes and tokens are stored as SHA-256
+  hashes; plaintext is shown/returned once. Up to 10 keys per user; revoking a
+  key or disconnecting an app is immediate.
+- **Rate limited** per credential on `/api/mcp` (120/min) and per IP on the
+  OAuth endpoints, via the shared Upstash limiter.
 - **Not exposed:** password protection, ownership reassignment, deleting
   pages/deals, billing, team management, AI generation (which spends credits).
   Those stay in the app.
@@ -119,7 +163,8 @@ contain a node the editor doesn't know.
   app's query layer (`deal-queries`, `contact-queries`, `activity-queries`,
   `page-create`, `page-share`), so numbers and behavior match the UI.
 - Tested over the SDK's in-memory transport with Prisma mocked
-  (`src/lib/__tests__/mcp-server.test.ts`).
+  (`src/lib/__tests__/mcp-server.test.ts`); the OAuth rules are pure and
+  tested in `src/lib/__tests__/oauth.test.ts`.
 - Adding a tool: register it in the relevant `register*Tools` with a zod
   `inputSchema`, wrap the handler in `guard()`, gate it with the ACL helper,
   and add its name to the surface test.

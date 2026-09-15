@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, KeyRound, Copy, Check, Trash2, Plug } from "lucide-react";
+import { Loader2, KeyRound, Copy, Check, Trash2, Plug, Sparkles, Unplug } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -40,6 +40,14 @@ interface ApiKeyRow {
 }
 
 type CreatedKey = ApiKeyRow & { token: string };
+
+interface ConnectedApp {
+  clientId: string;
+  name: string;
+  clientUri: string;
+  lastUsedAt: string | null;
+  connectedAt: string;
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Never";
@@ -91,6 +99,9 @@ export function ApiKeysSettings() {
   const [created, setCreated] = useState<CreatedKey | null>(null);
   const [revoking, setRevoking] = useState<ApiKeyRow | null>(null);
   const [revokeBusy, setRevokeBusy] = useState(false);
+  const [apps, setApps] = useState<ConnectedApp[] | null>(null);
+  const [disconnecting, setDisconnecting] = useState<ConnectedApp | null>(null);
+  const [disconnectBusy, setDisconnectBusy] = useState(false);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const endpoint = `${origin}/api/mcp`;
@@ -105,9 +116,34 @@ export function ApiKeysSettings() {
     }
   }, []);
 
+  const loadApps = useCallback(async () => {
+    try {
+      const data = await apiClient.get<{ apps: ConnectedApp[] }>("/api/account/connected-apps");
+      setApps(data.apps);
+    } catch {
+      setApps([]);
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadApps();
+  }, [load, loadApps]);
+
+  async function handleDisconnect() {
+    if (!disconnecting) return;
+    setDisconnectBusy(true);
+    try {
+      await apiClient.delete(`/api/account/connected-apps/${disconnecting.clientId}`);
+      toast.success(`Disconnected ${disconnecting.name}`);
+      setDisconnecting(null);
+      await loadApps();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to disconnect");
+    } finally {
+      setDisconnectBusy(false);
+    }
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -154,20 +190,45 @@ export function ApiKeysSettings() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">
-              Connect an AI assistant (MCP)
+              Use {APP_NAME} from Claude or ChatGPT
             </h3>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {APP_NAME} exposes your pages, pipeline and buyer engagement as a
-              Model Context Protocol server. Claude Code, Claude Desktop, Cursor and
-              other MCP clients can read analytics, draft pages and update deals on
-              your behalf — always with your own permissions.
+              {APP_NAME} is a Model Context Protocol server. Add it as a connector and
+              your AI assistant can draft and publish pages, share tracked links, read
+              buyer engagement and update your pipeline — always with your own
+              permissions, and you approve the connection first.
             </p>
           </div>
         </div>
 
         <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-ai-subtle-foreground" />
+              <span className="text-sm font-medium text-foreground">Hosted assistants (sign in, no keys)</span>
+            </div>
+            <ol className="list-decimal pl-5 space-y-1.5 text-sm text-muted-foreground">
+              <li>
+                <span className="font-medium text-foreground">Claude</span> (claude.ai):
+                Settings → Connectors → <em>Add custom connector</em>, paste the URL below,
+                then click <em>Connect</em> and approve access.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">ChatGPT</span>: Settings →
+                Connectors → <em>Advanced</em> → enable <em>Developer mode</em> → <em>Create</em>,
+                paste the URL, choose OAuth, then approve access.
+              </li>
+            </ol>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground">
+                {endpoint}
+              </code>
+              <CopyButton value={endpoint} label="Copy connector URL" />
+            </div>
+          </div>
+
           <div>
-            <SectionLabel>Endpoint</SectionLabel>
+            <SectionLabel>Developer tools (API key)</SectionLabel>
             <div className="mt-1.5 flex items-center gap-2">
               <code className="flex-1 truncate rounded-lg border border-border bg-muted px-3 py-2 text-xs text-foreground">
                 {endpoint}
@@ -175,7 +236,8 @@ export function ApiKeysSettings() {
               <CopyButton value={endpoint} label="Copy endpoint URL" />
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
-              Authenticate with an API key in the{" "}
+              Same endpoint. Clients without an OAuth flow (Claude Code, Cursor, Claude
+              Desktop via mcp-remote) authenticate with an API key in the{" "}
               <code className="text-2xs">Authorization: Bearer</code> header.
             </p>
           </div>
@@ -230,6 +292,43 @@ export function ApiKeysSettings() {
             </div>
           </div>
         </div>
+      </Card>
+
+      {/* Connected apps (OAuth grants) */}
+      <Card className="p-6">
+        <h3 className="text-sm font-semibold text-foreground mb-1">Connected apps</h3>
+        <p className="text-sm text-muted-foreground mb-5">
+          Assistants you&apos;ve approved through the sign-in flow. Disconnecting revokes
+          their access immediately.
+        </p>
+        {apps === null ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : apps.length === 0 ? (
+          <EmptyState
+            icon={Unplug}
+            title="Nothing connected yet"
+            description="Add the connector URL above in Claude or ChatGPT and approve access."
+            className="py-8"
+          />
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {apps.map((app) => (
+              <li key={app.clientId} className="flex items-center gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-foreground">{app.name}</div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Connected {formatDate(app.connectedAt)} · Last used {formatDate(app.lastUsedAt)}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setDisconnecting(app)}>
+                  Disconnect
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       {/* API keys */}
@@ -335,6 +434,26 @@ export function ApiKeysSettings() {
             <AlertDialogAction onClick={handleRevoke} disabled={revokeBusy}>
               {revokeBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Revoke key
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Disconnect confirm */}
+      <AlertDialog open={!!disconnecting} onOpenChange={(open) => !open && setDisconnecting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect {disconnecting?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will lose access right away. You can reconnect later from the app by
+              approving it again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={disconnectBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDisconnect} disabled={disconnectBusy}>
+              {disconnectBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Disconnect
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

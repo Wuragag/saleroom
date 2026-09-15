@@ -135,8 +135,12 @@ Uploads (PDF/DOCX/PPTX, ≤10 MB) are guarded against decompression bombs.
 ### MCP server (AI-assistant access)
 `/api/mcp` (`src/app/api/mcp/route.ts`) exposes the workspace over the Model
 Context Protocol (Streamable HTTP, stateless; one `McpServer` per request).
-Auth is a personal API key (`Authorization: Bearer dbk_…`, `src/lib/api-keys.ts`,
-managed in Settings → Integrations). Tools live in `src/lib/mcp/*-tools.ts`,
+Auth (`src/lib/mcp/auth.ts`) accepts either an OAuth access token — the app is
+its own OAuth 2.1 authorization server (`src/lib/oauth.ts` pure rules,
+`oauth-server.ts` DB, routes under `/.well-known/`, `/oauth/authorize`,
+`/api/oauth/*`) so claude.ai / ChatGPT can add it as a connector — or a
+personal API key (`dbk_…`, `src/lib/api-keys.ts`); both managed in Settings →
+Integrations. Tools live in `src/lib/mcp/*-tools.ts`,
 are bound to a principal, and **must** gate through the session-free ACL
 variants `checkPageAccessFor` / `checkDealAccessFor` and reuse the `lib/` query
 helpers rather than re-implementing rules. Markdown content goes through

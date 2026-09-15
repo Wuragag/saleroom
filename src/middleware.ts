@@ -39,10 +39,24 @@ export default auth((req) => {
     return NextResponse.redirect(absoluteUrl(req, `/api/ref?${params.toString()}`));
   }
 
-  // Always allow: marketing root, auth pages, public pages, and all API routes (they self-protect)
+  // OAuth consent (/oauth/authorize): the query string carries the client's
+  // request, so a sign-in round trip must preserve it — the generic branch
+  // below only keeps the pathname.
+  if (pathname.startsWith("/oauth/")) {
+    if (!isLoggedIn) {
+      const signInUrl = absoluteUrl(req, "/auth/signin");
+      signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
+      return NextResponse.redirect(signInUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // Always allow: marketing root, auth pages, public pages, discovery
+  // documents, and all API routes (they self-protect)
   if (
     pathname === "/" ||
     pathname.startsWith("/auth") ||
+    pathname.startsWith("/.well-known/") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/invite/") ||

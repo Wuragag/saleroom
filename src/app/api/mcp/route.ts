@@ -1,17 +1,21 @@
 /**
  * /api/mcp — the Dealbeam MCP endpoint (Model Context Protocol, Streamable
- * HTTP transport). Clients such as Claude Code, Claude Desktop (via
- * mcp-remote) and Cursor connect here with a personal API key:
+ * HTTP transport). Two ways in, both `Authorization: Bearer …`:
+ *   - a personal API key (`dbk_…`) for Claude Code, Cursor, Claude Desktop
+ *     via mcp-remote (Settings → Integrations);
+ *   - an OAuth access token (`dbat_…`) for hosted connectors — claude.ai and
+ *     ChatGPT discover /.well-known/oauth-protected-resource from the 401
+ *     challenge below, register a client, and send the user through
+ *     /oauth/authorize.
  *
- *   Authorization: Bearer dbk_…
- *
- * Stateless: every request builds a fresh server bound to the key's user, so
- * it runs fine on serverless and needs no session store. Auth is the API key
- * (Settings → Integrations); rate-limited per key.
+ * Stateless: every request builds a fresh server bound to the caller's user,
+ * so it runs fine on serverless and needs no session store. Rate-limited per
+ * credential.
  */
 import { NextResponse } from "next/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { authenticateApiKey } from "@/lib/api-keys";
+import { authenticateMcpRequest } from "@/lib/mcp/auth";
+import { bearerChallenge } from "@/lib/oauth";
 import { getUserTeamId } from "@/lib/team-auth";
 import { createDealbeamMcpServer } from "@/lib/mcp/server";
 import { rateLimit } from "@/lib/rate-limit";
@@ -23,27 +27,31 @@ export const dynamic = "force-dynamic";
 // Generous for an agent loop, tight enough that a leaked key can't hammer the DB.
 const limiter = rateLimit({ limit: 120, window: "60s", prefix: "rl:mcp" });
 
-function unauthorized(message: string): NextResponse {
+/**
+ * 401 with the RFC 9728 challenge: MCP clients follow `resource_metadata` to
+ * discover the authorization server and start the OAuth flow.
+ */
+function unauthorized(origin: string, message: string): NextResponse {
   return NextResponse.json(
     { error: message },
     {
       status: 401,
-      headers: {
-        "WWW-Authenticate": `Bearer realm="${APP_NAME} MCP", error="invalid_token"`,
-      },
+      headers: { "WWW-Authenticate": bearerChallenge(origin, `${APP_NAME} MCP`, message) },
     }
   );
 }
 
 async function handle(request: Request): Promise<Response> {
-  const principal = await authenticateApiKey(request);
+  const origin = new URL(request.url).origin;
+  const principal = await authenticateMcpRequest(request);
   if (!principal) {
     return unauthorized(
-      "Missing or invalid API key. Create one under Settings → Integrations and send it as 'Authorization: Bearer <key>'."
+      origin,
+      "Missing, expired or invalid credential. Connect via OAuth, or create an API key under Settings > Integrations and send it as 'Authorization: Bearer <key>'."
     );
   }
 
-  const { success } = await limiter.limit(`mcp:${principal.keyId}`);
+  const { success } = await limiter.limit(`mcp:${principal.credentialId}`);
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
@@ -53,7 +61,7 @@ async function handle(request: Request): Promise<Response> {
     const server = createDealbeamMcpServer({
       userId: principal.userId,
       teamId,
-      appUrl: new URL(request.url).origin,
+      appUrl: origin,
     });
     const transport = new WebStandardStreamableHTTPServerTransport({
       // Stateless: no session ids, plain JSON responses (no SSE to keep open).
@@ -64,9 +72,9 @@ async function handle(request: Request): Promise<Response> {
     return await transport.handleRequest(request, {
       authInfo: {
         token: "",
-        clientId: principal.keyId,
+        clientId: principal.credentialId,
         scopes: [],
-        extra: { userId: principal.userId, keyName: principal.keyName },
+        extra: { userId: principal.userId, kind: principal.kind, label: principal.label },
       },
     });
   } catch (err) {

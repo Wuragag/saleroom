@@ -54,6 +54,7 @@ describe("Dealbeam MCP server", () => {
         "add_tab",
         "create_deal",
         "create_page",
+        "fetch",
         "get_deal",
         "get_page",
         "get_page_analytics",
@@ -65,6 +66,7 @@ describe("Dealbeam MCP server", () => {
         "list_deals",
         "list_pages",
         "list_templates",
+        "search",
         "set_tab_content",
         "share_page",
         "update_deal",
@@ -74,7 +76,7 @@ describe("Dealbeam MCP server", () => {
     );
     for (const tool of tools) {
       expect(tool.description, tool.name).toBeTruthy();
-      const isRead = /^(get|list)_/.test(tool.name);
+      const isRead = /^(get|list)_/.test(tool.name) || tool.name === "search" || tool.name === "fetch";
       expect(!!tool.annotations?.readOnlyHint, tool.name).toBe(isRead);
     }
   });
