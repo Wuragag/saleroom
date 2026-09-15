@@ -61,6 +61,8 @@ export interface NewTabInput {
 
 export interface CreatePageInput {
   userId: string;
+  /** The user's team when the caller already resolved it (skips a lookup). */
+  teamId?: string | null;
   title: string;
   /** Seed for the slug; defaults to the title. */
   slugSeed?: string;
@@ -84,7 +86,7 @@ export async function createPageWithTabs(input: CreatePageInput) {
       : [{ name: DEFAULT_TAB_NAME, content: DEFAULT_CONTENT }];
 
   const slug = await uniquePageSlug(input.slugSeed ?? title);
-  const teamId = await getUserTeamId(userId);
+  const teamId = input.teamId !== undefined ? input.teamId : await getUserTeamId(userId);
 
   // New pages start from the team's brand kit (Settings → Branding), falling
   // back to the editorial baseline. Set explicitly because the DB column

@@ -57,6 +57,7 @@ export const POST = withErrorHandler(async (request: Request) => {
   try {
     page = await createPageWithTabs({
       userId: session.user.id,
+      teamId,
       title: templatePageTitle(template.name),
       slugSeed: template.name,
       tabs: tabs.map((tab) => ({ name: tab.label, content: tab.content })),

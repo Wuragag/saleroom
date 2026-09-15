@@ -18,7 +18,7 @@ interface ConsentRequest {
 
 interface Props {
   appName: string;
-  client: { id: string; name: string; uri: string; logoUri: string };
+  client: { id: string; name: string; uri: string; logoUri: string; redirectUri: string };
   user: { name: string; email: string };
   request: ConsentRequest;
 }
@@ -31,7 +31,9 @@ const PERMISSIONS = [
 
 function clientHost(uri: string): string {
   try {
-    return new URL(uri).host;
+    const url = new URL(uri);
+    // Custom-scheme redirects (native apps) have no host; show the scheme.
+    return url.host || url.protocol.replace(/:$/, "");
   } catch {
     return "";
   }
@@ -56,7 +58,10 @@ export function OAuthConsent({ appName, client, user, request }: Props) {
     }
   }
 
-  const host = clientHost(client.uri);
+  // Anyone can register a client with any name, so the consent screen names
+  // the destination the authorization is actually sent to.
+  const redirectHost = clientHost(client.redirectUri);
+  const siteHost = clientHost(client.uri);
 
   return (
     <div className="max-w-md w-full bg-card border border-border rounded-xl p-8">
@@ -68,7 +73,10 @@ export function OAuthConsent({ appName, client, user, request }: Props) {
           <h1 className="text-lg font-semibold text-foreground leading-tight">
             Connect {client.name} to {appName}
           </h1>
-          {host && <p className="text-xs text-muted-foreground truncate">{host}</p>}
+          <p className="text-xs text-muted-foreground truncate">
+            Sends access to <span className="font-medium text-foreground">{redirectHost}</span>
+            {siteHost && siteHost !== redirectHost ? ` · site: ${siteHost}` : ""}
+          </p>
         </div>
       </div>
 
@@ -89,8 +97,9 @@ export function OAuthConsent({ appName, client, user, request }: Props) {
       </ul>
 
       <p className="text-xs text-muted-foreground mb-6">
-        Everything it does is limited to what you can do yourself. You can disconnect
-        it any time from Settings → Integrations.
+        Everything it does is limited to what you can do yourself. Only continue if
+        you started this from <span className="font-medium text-foreground">{redirectHost}</span>.
+        You can disconnect it any time from Settings → Integrations.
       </p>
 
       {error && (

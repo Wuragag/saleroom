@@ -57,11 +57,11 @@ export default async function AuthorizePage({
     resource: first(sp.resource),
   };
 
+  // Middleware already bounces signed-out visitors to sign-in with the full
+  // query preserved; this is only a guard against reaching here without one.
   const session = await auth();
   if (!session?.user?.id) {
-    const query = new URLSearchParams();
-    for (const [k, v] of Object.entries(params)) if (v) query.set(k, v);
-    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/oauth/authorize?${query}`)}`);
+    redirect("/auth/signin");
   }
 
   const origin = await requestOrigin();
@@ -95,6 +95,9 @@ export default async function AuthorizePage({
           name: check.client.name,
           uri: client?.clientUri ?? "",
           logoUri: client?.logoUri ?? "",
+          // The one value the code is actually bound to — shown so a
+          // self-registered client can't hide behind a borrowed name.
+          redirectUri: check.redirectUri,
         }}
         user={{ name: session.user.name ?? "", email: session.user.email ?? "" }}
         request={{

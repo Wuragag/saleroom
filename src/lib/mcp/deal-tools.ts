@@ -78,21 +78,23 @@ export function registerDealTools(server: McpServer, p: McpPrincipal) {
         stageId = resolved.id;
       }
       const all = await listDealsWithRollups(p.userId, p.teamId);
-      const deals = filterDeals(all, {
+      const matching = filterDeals(all, {
         query,
         status: status ?? null,
         stageId,
         ownerId: ownerId ?? null,
         warmth: warmth ?? null,
         closeDate: closeDate ?? null,
-      }).slice(0, limit ?? 50);
-
-      const openValue = deals
+      });
+      // Totals describe every match; only the listing is truncated.
+      const openValue = matching
         .filter((d) => d.status === "OPEN")
         .reduce((sum, d) => sum + (d.value ?? 0), 0);
+      const deals = matching.slice(0, limit ?? 50);
 
       return ok({
-        totalMatching: deals.length,
+        totalMatching: matching.length,
+        returned: deals.length,
         openValue,
         deals: deals.map((d) => ({
           id: d.id,

@@ -41,6 +41,7 @@ CREATE TABLE "OAuthToken" (
     "refreshExpiresAt" TIMESTAMP(3),
     "revokedAt" TIMESTAMP(3),
     "lastUsedAt" TIMESTAMP(3),
+    "grantedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "OAuthToken_pkey" PRIMARY KEY ("id")

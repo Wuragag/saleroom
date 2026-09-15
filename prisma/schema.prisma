@@ -378,6 +378,9 @@ model OAuthToken {
   refreshExpiresAt DateTime?
   revokedAt        DateTime?
   lastUsedAt       DateTime?
+  /// When the user first approved this grant — carried across refresh
+  /// rotations so "Connected since" doesn't drift.
+  grantedAt        DateTime    @default(now())
   createdAt        DateTime    @default(now())
 
   @@index([userId, clientId])

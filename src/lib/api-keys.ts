@@ -17,6 +17,13 @@ export const API_KEY_DISPLAY_CHARS = 12;
 /** Per-user cap — keeps the settings list sane and bounds token sprawl. */
 export const MAX_API_KEYS_PER_USER = 10;
 export const API_KEY_NAME_MAX = 60;
+/** Minimum spacing between lastUsedAt writes for one key. */
+export const LAST_USED_WRITE_INTERVAL_MS = 5 * 60 * 1000;
+
+/** Advisory-lock key serializing key creation for one user (cap enforcement). */
+export function apiKeyLockKey(userId: string): string {
+  return `user:${userId}:api-keys`;
+}
 
 const KEY_RE = /^dbk_[0-9a-f]{40}$/;
 
@@ -78,15 +85,19 @@ export async function authenticateApiKey(
 
   const key = await prisma.apiKey.findUnique({
     where: { keyHash: hashApiKey(token) },
-    select: { id: true, name: true, userId: true },
+    select: { id: true, name: true, userId: true, lastUsedAt: true },
   });
   if (!key) return null;
 
-  prisma.apiKey
-    .update({ where: { id: key.id }, data: { lastUsedAt: new Date() } })
-    .catch(() => {
-      /* best-effort telemetry — never fail auth on it */
-    });
+  // "Last used" renders at day granularity; throttle the write so an agent
+  // loop doesn't turn every tool call into a row update.
+  if (!key.lastUsedAt || Date.now() - key.lastUsedAt.getTime() > LAST_USED_WRITE_INTERVAL_MS) {
+    prisma.apiKey
+      .update({ where: { id: key.id }, data: { lastUsedAt: new Date() } })
+      .catch(() => {
+        /* best-effort telemetry — never fail auth on it */
+      });
+  }
 
   return { userId: key.userId, keyId: key.id, keyName: key.name };
 }

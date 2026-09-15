@@ -19,7 +19,7 @@ import { markdownToDoc } from "@/lib/markdown-to-doc";
 import { sanitizeDoc } from "@/lib/ai-page-generation";
 import { collectDocText, findPagePlaceholders } from "@/lib/page-placeholders";
 import { parseDocJson } from "@/lib/pub-html";
-import { getIntentLabel } from "@/lib/engagement-score";
+import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
 import {
   ok,
@@ -35,6 +35,8 @@ import {
 } from "./util";
 
 const MARKDOWN_MAX = 60_000;
+/** Cap on a stored tab document (mirrors the AI sanitizer's own ceiling). */
+const MAX_TAB_CHARS = 300_000;
 
 /** Markdown → sanitized Tiptap doc, or null when nothing survives. */
 function docFromMarkdown(markdown: string): Record<string, unknown> | null {
@@ -279,6 +281,9 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
             }
           }
           const topTab = [...tabTime.entries()].sort((a, b) => b[1] - a[1])[0];
+          const pricingTabViewed = v.sessions.some((s) =>
+            s.tabViews.some((tv) => isPricingTabName(tv.tabName))
+          );
           return {
             visitorId: v.id,
             name: v.contact?.name ?? null,
@@ -288,7 +293,7 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
             sessions: v.totalSessions,
             totalAttentionSeconds: total,
             engagementScore: v.engagementScore,
-            intent: getIntentLabel(v.engagementScore, v.ctaClicked, false),
+            intent: getIntentLabel(v.engagementScore, v.ctaClicked, pricingTabViewed),
             ctaClicked: v.ctaClicked,
             mostViewedTab: topTab?.[0] ?? null,
             firstSeenAt: iso(v.firstSeenAt),
@@ -351,10 +356,6 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
         newTabs = parsed.map((t) => ({ name: t.label, content: t.content }));
         slugSeed = template.name;
         pageTitle = title || templatePageTitle(template.name);
-        await prisma.template.update({
-          where: { id: templateId },
-          data: { usageCount: { increment: 1 } },
-        });
       } else if (tabs && tabs.length) {
         newTabs = tabs.map((t) => ({
           name: t.name,
@@ -368,6 +369,7 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
       try {
         page = await createPageWithTabs({
           userId: p.userId,
+          teamId: p.teamId,
           title: pageTitle,
           slugSeed,
           tabs: newTabs,
@@ -376,6 +378,15 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
       } catch (err) {
         if (err instanceof SlugCollisionError) return fail(err.message);
         throw err;
+      }
+
+      // Counted only once the page actually exists (a plan-cap failure above
+      // must not inflate "most used").
+      if (templateId) {
+        await prisma.template.update({
+          where: { id: templateId },
+          data: { usageCount: { increment: 1 } },
+        });
       }
 
       if (publish) {
@@ -467,17 +478,20 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
 
       let next: Record<string, unknown> = incoming;
       if (mode === "append") {
+        // Only the incoming markdown is sanitized. The existing content is
+        // kept byte-for-byte: it may hold editor-only nodes (images, synced
+        // blocks) that the AI whitelist would strip.
         const existing = parseDocJson(tab.content);
-        const merged = {
+        next = {
           type: "doc",
           content: [
             ...((existing.content as unknown[]) ?? []),
             ...((incoming.content as unknown[]) ?? []),
           ],
         };
-        const clean = sanitizeDoc(merged);
-        if (!clean) return fail("Combined content is too large.");
-        next = clean as Record<string, unknown>;
+        if (JSON.stringify(next).length > MAX_TAB_CHARS) {
+          return fail("Combined content is too large.");
+        }
       }
 
       const serialized = JSON.stringify(next);

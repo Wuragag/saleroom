@@ -3,9 +3,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import {
   generateApiKey,
+  apiKeyLockKey,
   MAX_API_KEYS_PER_USER,
   API_KEY_NAME_MAX,
 } from "@/lib/api-keys";
+import { withResourceLock } from "@/lib/plan-limits";
 import { withErrorHandler, safeJson } from "@/lib/api-error";
 import { cleanString } from "@/lib/validation";
 
@@ -47,24 +49,25 @@ export const POST = withErrorHandler(async (request: Request) => {
     return NextResponse.json({ error: "Key name is required" }, { status: 400 });
   }
 
-  const count = await prisma.apiKey.count({ where: { userId: session.user.id } });
-  if (count >= MAX_API_KEYS_PER_USER) {
+  const userId = session.user.id;
+  const generated = generateApiKey();
+
+  // Count + create under the per-user advisory lock so concurrent requests
+  // can't race past the cap (same pattern as the plan-limit asserts).
+  const key = await withResourceLock(apiKeyLockKey(userId), async (tx) => {
+    const count = await tx.apiKey.count({ where: { userId } });
+    if (count >= MAX_API_KEYS_PER_USER) return null;
+    return tx.apiKey.create({
+      data: { name, prefix: generated.prefix, keyHash: generated.hash, userId },
+      select: KEY_SELECT,
+    });
+  });
+  if (!key) {
     return NextResponse.json(
       { error: `You can have at most ${MAX_API_KEYS_PER_USER} API keys. Revoke one first.` },
       { status: 400 }
     );
   }
-
-  const generated = generateApiKey();
-  const key = await prisma.apiKey.create({
-    data: {
-      name,
-      prefix: generated.prefix,
-      keyHash: generated.hash,
-      userId: session.user.id,
-    },
-    select: KEY_SELECT,
-  });
 
   return NextResponse.json({ ...key, token: generated.token }, { status: 201 });
 });

@@ -22,6 +22,9 @@ import {
   type RegistrationInput,
 } from "@/lib/oauth";
 
+/** Minimum spacing between lastUsedAt writes for one credential. */
+export const LAST_USED_WRITE_INTERVAL_MS = 5 * 60 * 1000;
+
 // ── Clients ─────────────────────────────────────────────────────────────────
 
 export interface RegisteredClient extends KnownClient {
@@ -137,7 +140,13 @@ export interface IssuedTokens {
 
 export type TokenError = { error: string; description: string };
 
-async function issueTokens(clientId: string, userId: string, scope: string): Promise<IssuedTokens> {
+async function issueTokens(
+  clientId: string,
+  userId: string,
+  scope: string,
+  /** Original approval time, carried over on refresh rotation. */
+  grantedAt: Date = new Date()
+): Promise<IssuedTokens> {
   const access = generateOpaqueToken(ACCESS_TOKEN_PREFIX);
   const refresh = generateOpaqueToken(REFRESH_TOKEN_PREFIX);
   const now = Date.now();
@@ -148,6 +157,7 @@ async function issueTokens(clientId: string, userId: string, scope: string): Pro
       clientId,
       userId,
       scope,
+      grantedAt,
       accessExpiresAt: new Date(now + ACCESS_TOKEN_TTL_SECONDS * 1000),
       refreshExpiresAt: new Date(now + REFRESH_TOKEN_TTL_SECONDS * 1000),
     },
@@ -239,7 +249,7 @@ export async function refreshAccessToken(
   if (rotated.count === 0) {
     return { error: "invalid_grant", description: "Invalid refresh token" };
   }
-  return issueTokens(row.clientId, row.userId, row.scope);
+  return issueTokens(row.clientId, row.userId, row.scope, row.grantedAt);
 }
 
 // ── Resource-server side ────────────────────────────────────────────────────
@@ -261,11 +271,15 @@ export async function authenticateAccessToken(token: string): Promise<AccessToke
   });
   if (!row || row.revokedAt || row.accessExpiresAt.getTime() < Date.now()) return null;
 
-  prisma.oAuthToken
-    .update({ where: { id: row.id }, data: { lastUsedAt: new Date() } })
-    .catch(() => {
-      /* best-effort telemetry */
-    });
+  // "Last used" is displayed at day granularity; throttle the write so an
+  // agent loop doesn't turn every tool call into a row update.
+  if (!row.lastUsedAt || Date.now() - row.lastUsedAt.getTime() > LAST_USED_WRITE_INTERVAL_MS) {
+    prisma.oAuthToken
+      .update({ where: { id: row.id }, data: { lastUsedAt: new Date() } })
+      .catch(() => {
+        /* best-effort telemetry */
+      });
+  }
 
   return {
     userId: row.userId,
@@ -312,17 +326,21 @@ export async function listConnectedApps(userId: string): Promise<ConnectedApp[]>
   for (const t of tokens) {
     const existing = byClient.get(t.clientId);
     const lastUsed = t.lastUsedAt?.toISOString() ?? null;
+    const granted = t.grantedAt.toISOString();
     if (!existing) {
       byClient.set(t.clientId, {
         clientId: t.client.id,
         name: t.client.name,
         clientUri: t.client.clientUri,
         logoUri: t.client.logoUri,
-        connectedAt: t.createdAt.toISOString(),
+        connectedAt: granted,
         lastUsedAt: lastUsed,
       });
-    } else if (lastUsed && (!existing.lastUsedAt || lastUsed > existing.lastUsedAt)) {
-      existing.lastUsedAt = lastUsed;
+    } else {
+      if (granted < existing.connectedAt) existing.connectedAt = granted;
+      if (lastUsed && (!existing.lastUsedAt || lastUsed > existing.lastUsedAt)) {
+        existing.lastUsedAt = lastUsed;
+      }
     }
   }
   return [...byClient.values()];
