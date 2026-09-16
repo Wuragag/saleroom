@@ -18,6 +18,7 @@
  *   NEXT_PUBLIC_SUPPORT_EMAIL   support mailbox (default below)
  */
 import { APP_NAME } from "@/lib/constants"
+import { SITE_URL } from "@/lib/seo"
 
 const env = (key: string) => (process.env[key] ?? "").trim()
 
@@ -38,7 +39,7 @@ export const LEGAL = {
   /** Documents effective date (ISO). */
   effectiveDate: "2026-09-15",
   /** Site origin for absolute references. */
-  site: "https://dealbeam.com",
+  site: SITE_URL,
 }
 
 /** "Registered address: …." or "" when not configured. */

@@ -25,8 +25,21 @@ export default function robots(): MetadataRoute.Robots {
     "/invite/",
     "/auth/",
   ]
+  // Answer-engine and AI-search crawlers are welcome on the marketing pages.
+  // Named explicitly so a future "*" tightening never silently drops them.
+  const aiCrawlers = [
+    "GPTBot", "OAI-SearchBot", "ChatGPT-User",
+    "ClaudeBot", "Claude-SearchBot", "Claude-User", "anthropic-ai",
+    "PerplexityBot", "Perplexity-User",
+    "Google-Extended", "GoogleOther", "Googlebot", "Bingbot",
+    "Applebot", "Applebot-Extended", "DuckAssistBot", "meta-externalagent",
+    "Amazonbot", "CCBot", "cohere-ai", "MistralAI-User", "YouBot",
+  ]
   return {
-    rules: [{ userAgent: "*", allow: ["/", "/llms.txt"], disallow }],
+    rules: [
+      { userAgent: aiCrawlers, allow: ["/", "/llms.txt"], disallow },
+      { userAgent: "*", allow: ["/", "/llms.txt"], disallow },
+    ],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
   }

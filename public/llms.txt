@@ -2,7 +2,9 @@
 
 > Dealbeam is a sales-enablement tool that turns a proposal, its pricing and the next steps into one branded, trackable web page — a "deal page" — shared as a single link. Buyers open it without an account. The seller sees who opened it, which tabs they read, how long they stayed, how far they scrolled, and an intent label per visitor.
 
-Public brand: Dealbeam. Category: sales enablement / digital sales room / proposal software. Interface language: English. Pricing: flat monthly plans, not per seat.
+Public brand: Dealbeam. Category: sales enablement / digital sales room / proposal software / deal page builder. Interface language: English. Pricing: flat monthly plans, not per seat.
+
+Not to be confused with: "DealBeam: Strikethrough Price" (a Shopify app), "Dealbeam AI for Pipedrive" (dealbeamai.com), or "Deal Beam — Venture Intelligence" (VentureOS). This Dealbeam is the deal-page / digital-sales-room product described below.
 
 ## What a deal page is
 

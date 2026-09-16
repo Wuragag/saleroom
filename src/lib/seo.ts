@@ -13,8 +13,17 @@ import { APP_NAME } from "@/lib/constants"
 
 /** Canonical origin for the marketing site, without a trailing slash. */
 export const SITE_URL = normalizeOrigin(
-  process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "https://dealbeam.com",
+  process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "") ||
+    process.env.NEXTAUTH_URL ||
+    "https://dealbeam.com",
 )
+
+/** Optional public profiles for the Organization entity (comma-separated URLs in NEXT_PUBLIC_SOCIAL_LINKS). */
+export const SOCIAL_LINKS = (process.env.NEXT_PUBLIC_SOCIAL_LINKS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter((s) => /^https?:\/\//.test(s))
 
 /** One-line, factual product description reused in metadata and structured data. */
 export const SITE_DESCRIPTION = `${APP_NAME} turns a proposal, its pricing and the next steps into one branded, trackable link — a deal page — and shows the seller exactly who read what, and for how long.`
@@ -49,9 +58,13 @@ export function organizationJsonLd() {
     "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
     name: APP_NAME,
+    alternateName: [`${APP_NAME} deal pages`, `${APP_NAME} digital sales room`],
     url: `${SITE_URL}/`,
     logo: absoluteUrl("/opengraph-image"),
     description: SITE_DESCRIPTION,
+    // Disambiguation for answer engines: several unrelated products share the name.
+    knowsAbout: ["deal pages", "digital sales rooms", "sales proposals", "mutual action plans", "buyer engagement analytics"],
+    ...(SOCIAL_LINKS.length ? { sameAs: SOCIAL_LINKS } : {}),
   }
 }
 
