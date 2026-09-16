@@ -149,6 +149,43 @@ export interface RenderPubHtmlResult {
  * can't be serialized at all yields PUB_RENDER_FALLBACK_HTML, and unknown
  * block types are dropped and reported in `dropped` for the caller to log.
  */
+/**
+ * Sanitizer canary. DOMPurify's behaviour depends on the DOM it is given, and
+ * a happy-dom/DOMPurify version mismatch has already once made `sanitize()`
+ * return its input untouched — silently, with `isSupported === true`. Before
+ * the first render in a process we push a known-bad fragment through the same
+ * pipeline; if any dangerous scheme or handler survives, every page renders
+ * the safe fallback instead of unsanitized HTML, and the failure is logged.
+ */
+const CANARY_INPUT =
+  '<a href="javascript:alert(1)">x</a><img src="x" onerror="alert(1)"><iframe src="javascript:alert(1)"></iframe>';
+let sanitizerHealthy: boolean | null = null;
+
+export function isSanitizerHealthy(): boolean {
+  if (sanitizerHealthy !== null) return sanitizerHealthy;
+  const win = new Window({ settings: HAPPY_DOM_SETTINGS });
+  try {
+    const purify = createDOMPurify(win as unknown as Window & typeof globalThis);
+    const out = purify.sanitize(CANARY_INPUT, PUB_SANITIZE_CONFIG);
+    sanitizerHealthy = !/javascript:/i.test(out) && !/onerror/i.test(out) && purify.isSupported === true;
+  } catch (err) {
+    console.error("[pub-html] sanitizer canary threw:", err);
+    sanitizerHealthy = false;
+  } finally {
+    win.happyDOM.abort();
+    void win.happyDOM.close();
+  }
+  if (!sanitizerHealthy) {
+    console.error("[pub-html] SANITIZER CANARY FAILED — DOMPurify is not sanitizing under happy-dom; rendering fallback for all pages");
+  }
+  return sanitizerHealthy;
+}
+
+/** Test hook: forget the cached canary result. */
+export function __resetSanitizerCanaryForTests(): void {
+  sanitizerHealthy = null;
+}
+
 export function renderPubHtml(
   content: unknown,
   opts: PubExtensionOptions = {}
@@ -156,6 +193,10 @@ export function renderPubHtml(
   const extensions = buildPubExtensions(opts);
   const schema = getSchema(extensions);
   const { doc, dropped } = stripUnknownNodes(content, schema);
+
+  if (!isSanitizerHealthy()) {
+    return { html: PUB_RENDER_FALLBACK_HTML, dropped };
+  }
 
   let html: string;
   const win = new Window({ settings: HAPPY_DOM_SETTINGS });

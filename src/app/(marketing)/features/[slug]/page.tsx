@@ -1,31 +1,30 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { FEATURES } from "@/data/marketing/features"
 import { PageHero, CTABanner } from "@/components/marketing/shared"
-import FeatureMockup from "@/components/marketing/FeatureMockups"
+import { ProductFrame } from "@/components/marketing/product-ui"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
+import { pageTitle } from "@/lib/seo"
 
 export function generateStaticParams() {
   return FEATURES.map((f) => ({ slug: f.slug }))
 }
 
-export function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  // Note: generateMetadata receives params as a Promise in Next.js 15
-  return params.then(({ slug }) => {
-    const feature = FEATURES.find((f) => f.slug === slug)
-    if (!feature) return { title: "Feature — Dealbeam" }
-    return {
-      title: `${feature.title} — Dealbeam`,
-      description: feature.description,
-    }
-  })
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const feature = FEATURES.find((f) => f.slug === slug)
+  if (!feature) return { title: pageTitle("Feature") }
+  const title = pageTitle(feature.title)
+  return {
+    title,
+    description: feature.description,
+    alternates: { canonical: `/features/${feature.slug}` },
+    openGraph: { title, description: feature.description, url: `/features/${feature.slug}` },
+  }
 }
 
-export default async function FeatureDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default async function FeatureDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const feature = FEATURES.find((f) => f.slug === slug)
   if (!feature) notFound()
@@ -35,176 +34,49 @@ export default async function FeatureDetailPage({
 
   return (
     <>
-      <style>{`
-        .sr-cta-pill {
-          transition: opacity 150ms ease;
-        }
-        .sr-cta-pill:hover {
-          opacity: 0.85;
-        }
-        .sr-next-link {
-          transition: opacity 150ms ease;
-        }
-        .sr-next-link:hover {
-          opacity: 0.6;
-        }
-        .sr-highlight-list li {
-          padding: 16px 0;
-          border-bottom: 1px solid var(--db-border);
-          font-family: var(--font-inter), sans-serif;
-          font-size: 16px;
-          color: var(--db-text-secondary);
-          line-height: 1.6;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .sr-highlight-list li::before {
-          content: '';
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: var(--db-text);
-          flex-shrink: 0;
-        }
-        .sr-feature-detail-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 80px;
-          align-items: start;
-        }
-        @media (max-width: 860px) {
-          .sr-feature-detail-grid {
-            grid-template-columns: 1fr !important;
-            gap: 48px !important;
-          }
-        }
-      `}</style>
-
       <PageHero
         label={feature.label}
         heading={feature.detailHeading}
         subtitle={feature.description}
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Features", path: "/features" },
+          { name: feature.title, path: `/features/${feature.slug}` },
+        ]}
       />
 
-      {/* Visual mockup */}
-      <section style={{ padding: "0 0 80px" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 24px" }}>
-          <FeatureMockup slug={slug} />
+      <section aria-label={`${feature.title} in the product`} style={{ padding: "0 0 72px" }}>
+        <div className="mk-container mk-enter-rise" style={{ ["--i" as string]: 3, maxWidth: 1040 }}>
+          <ProductFrame visual={feature.visual} label={`${feature.title}: ${feature.description}`} />
         </div>
       </section>
 
-      <section style={{ padding: "0 0 120px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-          <div className="sr-feature-detail-grid">
-            {/* Detail text */}
+      <section className="mk-section-tight" style={{ paddingTop: 0 }} aria-labelledby="detail-title">
+        <div className="mk-container">
+          <div className="mk-detail-grid">
             <ScrollReveal>
-            <div>
-              <p
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontSize: 17,
-                  color: "var(--db-text-secondary)",
-                  lineHeight: 1.8,
-                  margin: "0 0 40px",
-                }}
-              >
-                {feature.detailBody}
-              </p>
-
-              <Link
-                href="/auth/signup"
-                className="sr-cta-pill"
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  background: "var(--db-accent)",
-                  color: "var(--db-on-accent)",
-                  borderRadius: 100,
-                  padding: "14px 32px",
-                  textDecoration: "none",
-                  display: "inline-block",
-                }}
-              >
-                Try it free
-              </Link>
-            </div>
+              <h2 id="detail-title" className="mk-h3" style={{ marginBottom: 18 }}>{feature.label}, in practice</h2>
+              <p className="mk-body" style={{ fontSize: 16.5, lineHeight: 1.7, marginBottom: 32 }}>{feature.detailBody}</p>
+              <Link href="/auth/signup" className="mk-cta mk-cta-lg">Try it free</Link>
             </ScrollReveal>
-
-            {/* Highlights */}
             <ScrollReveal delay={120}>
-            <div>
-              <h3
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--db-text-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  marginBottom: 16,
-                }}
-              >
-                Key capabilities
-              </h3>
-              <ul
-                className="sr-highlight-list"
-                style={{ listStyle: "none", margin: 0, padding: 0 }}
-              >
-                {feature.highlights.map((h) => (
-                  <li key={h}>{h}</li>
-                ))}
-              </ul>
-            </div>
+              <h2 className="mk-eyebrow" style={{ marginBottom: 8 }}>What is included</h2>
+              <ul className="mk-list">{feature.highlights.map((h) => <li key={h}>{h}</li>)}</ul>
             </ScrollReveal>
           </div>
         </div>
       </section>
 
-      {/* Next feature */}
-      <section
-        style={{
-          padding: "80px 0",
-          borderTop: "1px solid var(--db-border)",
-        }}
-      >
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--db-text-muted)",
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              marginBottom: 16,
-            }}
-          >
-            Next feature
-          </p>
-          <Link
-            href={`/features/${nextFeature.slug}`}
-            className="sr-next-link"
-            style={{
-              fontFamily: "var(--font-serif), serif",
-              fontSize: 32,
-              fontWeight: 400,
-              color: "var(--db-text)",
-              textDecoration: "none",
-              lineHeight: 1.2,
-            }}
-          >
-            {nextFeature.title} &rarr;
+      <section className="mk-section-tight mk-rule" aria-label="Next feature">
+        <div className="mk-container">
+          <p className="mk-eyebrow" style={{ marginBottom: 14 }}>Next</p>
+          <Link href={`/features/${nextFeature.slug}`} className="mk-h2 mk-underline" style={{ textDecoration: "none", display: "inline-block" }}>
+            {nextFeature.title} <span aria-hidden>→</span>
           </Link>
         </div>
       </section>
 
-      <CTABanner
-        heading="Ready to close deals"
-        headingAccent="with confidence?"
-        subtitle="Join 2,400+ account executives who know exactly what their buyers care about."
-      />
+      <CTABanner heading="Ready to see it on a real deal?" subtitle="Free until you need a second page. No credit card required." />
     </>
   )
 }

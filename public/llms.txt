@@ -1,0 +1,52 @@
+# Dealbeam
+
+> Dealbeam is a sales-enablement tool that turns a proposal, its pricing and the next steps into one branded, trackable web page — a "deal page" — shared as a single link. Buyers open it without an account. The seller sees who opened it, which tabs they read, how long they stayed, how far they scrolled, and an intent label per visitor.
+
+Public brand: Dealbeam. Category: sales enablement / digital sales room / proposal software. Interface language: English. Pricing: flat monthly plans, not per seat.
+
+## What a deal page is
+
+A deal page is a web page built in Dealbeam's block editor and split into tabs (for example Overview · Pricing · Timeline · Next steps). It can contain rich text, tables, pricing tables, metrics, embedded video and documents (YouTube, Vimeo, Loom, Google Docs, Airtable, Calendly), lead-capture forms, contact cards, testimonials, banners, synced blocks and a mutual action plan. It is published to a clean URL on the seller's brand, optionally behind a password or an email gate, and optionally with a per-recipient tracking link so engagement is attributed to a named person.
+
+## What Dealbeam tracks
+
+- Opens and true attention time (only visible-tab time counts; background tabs earn nothing)
+- Per-tab dwell time and per-section scroll depth
+- CTA clicks, downloads, form submissions, shares
+- An engagement score (0–100) and an intent label per visitor: High Intent, Warm or Cold
+- An activity timeline per page; email notifications when a new visitor arrives (throttled)
+- Opt-in session replay with all text inputs masked, stored privately
+
+## Other capabilities
+
+- AI Write: describe the deal in one line and a structured draft (title, tabs, pricing, next steps) is built into the live editor
+- Document import: PDF, DOCX or PPTX (≤10 MB) converted into a page
+- Mutual action plans on the page: ordered steps, seller/buyer owner, due dates, target close, live progress
+- A light deals pipeline: custom stages, owners, close dates, time in stage, comments, engagement rolled up per deal (not a CRM)
+- Templates (eight built in: Call Recap, Business Proposal, Mutual Action Plan, Competitor Battle Card, Customer Onboarding, Quarterly Business Review, Executive One-Pager, ROI Case Study) and team-saved templates
+- Synced blocks: edit once, update on every page that uses it
+- Team brand kit (colors, logo, fonts, corners) inherited by new pages; Pro can hide the Dealbeam badge
+
+## Pricing
+
+- Free — $0: 1 page, up to 3 tabs, analytics, AI Write (20 credits/month), 5 open deals
+- Pro — $29/month flat: unlimited pages and tabs, up to 3 members, password protection, hide badge, 20 synced blocks, 300 AI credits/month
+- Team — $79/month flat: everything in Pro, unlimited members and synced blocks, 1,000 AI credits/month
+
+## Not available today
+
+No CRM sync (Salesforce, HubSpot), no Slack alerts, no public webhooks or Zapier, no SSO/SCIM. Calendly and Cal.com are supported as embeds only.
+
+## Pages
+
+- Home: /
+- Features: /features (page-builder, sharing, analytics, ai-content, action-plans, collaboration under /features/)
+- Pricing and FAQ: /pricing
+- Use cases: /use-cases
+- Examples: /examples
+- Sign up: /auth/signup
+- Legal: /legal/privacy (privacy policy incl. US state notice), /legal/terms, /legal/cookies, /legal/dpa (data processing addendum + sub-processors), /legal/kvkk (Turkish KVKK disclosure)
+
+## Privacy in one paragraph
+
+Dealbeam is the controller for account holders and website visitors, and a processor for the buyers whose reading a seller tracks on a shared page. Buyer pages set no advertising cookies and load no third-party trackers; reading analytics use a random, per-page-hashed browser id, and session replay is opt-in for the buyer and honours Global Privacy Control. Sub-processors: Neon, Vercel, Stripe, Resend, Upstash, Anthropic, Google Fonts (published pages only). Requests: privacy@dealbeam.com.

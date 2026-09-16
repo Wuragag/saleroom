@@ -1,100 +1,42 @@
+import type { Metadata } from "next"
 import { USE_CASES } from "@/data/marketing/use-cases"
 import { PageHero, CTABanner } from "@/components/marketing/shared"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
+import { pageTitle } from "@/lib/seo"
 
-export const metadata = {
-  title: "Use Cases — Dealbeam",
-  description: "See how teams use Dealbeam across proposals, onboarding, QBRs, and more.",
+const DESCRIPTION = "How teams use Dealbeam deal pages: sales proposals, mutual action plans, customer onboarding, quarterly business reviews, partnership proposals and investor updates."
+
+export const metadata: Metadata = {
+  title: pageTitle("Use cases"),
+  description: DESCRIPTION,
+  alternates: { canonical: "/use-cases" },
+  openGraph: { title: pageTitle("Use cases"), description: DESCRIPTION, url: "/use-cases" },
 }
 
 export default function UseCasesPage() {
   return (
     <>
-      <style>{`
-        .sr-usecase-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
-        .sr-usecase-card {
-          padding: 36px;
-          background: var(--db-surface);
-          border: 1px solid var(--db-border);
-          border-radius: 16px;
-          transition: border-color 200ms ease;
-        }
-        .sr-usecase-card:hover {
-          border-color: var(--db-border-hover);
-        }
-        @media (max-width: 900px) {
-          .sr-usecase-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 600px) {
-          .sr-usecase-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-
       <PageHero
-        label="Use Cases"
+        label="Use cases"
         heading="One tool,"
-        headingAccent="every revenue moment"
-        subtitle="From first pitch to renewal, Dealbeam keeps your buyers engaged and your team informed."
+        headingAccent="every revenue moment."
+        subtitle="From first pitch to renewal, the same page keeps the buyer informed and the seller honest."
+        crumbs={[{ name: "Home", path: "/" }, { name: "Use cases", path: "/use-cases" }]}
       />
-
-      <section style={{ padding: "0 0 120px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-          <div className="sr-usecase-grid">
+      <section className="mk-section-tight" style={{ paddingTop: 8 }} aria-label="Use cases">
+        <div className="mk-container">
+          <div className="mk-grid-3">
             {USE_CASES.map((uc, i) => (
-              <ScrollReveal key={uc.title} delay={i * 80}>
-              <div className="sr-usecase-card">
-                <p
-                  style={{
-                    fontFamily: "var(--font-inter), sans-serif",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--db-text-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    marginBottom: 12,
-                  }}
-                >
-                  {uc.audience}
-                </p>
-                <h3
-                  style={{
-                    fontFamily: "var(--font-serif), serif",
-                    fontSize: 24,
-                    fontWeight: 400,
-                    color: "var(--db-text)",
-                    lineHeight: 1.2,
-                    margin: "0 0 12px",
-                  }}
-                >
-                  {uc.title}
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "var(--font-inter), sans-serif",
-                    fontSize: 15,
-                    color: "var(--db-text-secondary)",
-                    lineHeight: 1.7,
-                    margin: 0,
-                  }}
-                >
-                  {uc.description}
-                </p>
-              </div>
+              <ScrollReveal key={uc.title} as="article" className="mk-card mk-card-hover" delay={(i % 3) * 80} distance={18} style={{ padding: "30px 30px 32px" }}>
+                <p className="mk-eyebrow" style={{ margin: "0 0 12px" }}>{uc.audience}</p>
+                <h2 className="mk-h3" style={{ fontSize: 24, marginBottom: 10 }}>{uc.title}</h2>
+                <p className="mk-body" style={{ fontSize: 14.5 }}>{uc.description}</p>
               </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
-
-      <CTABanner
-        heading="Find your use case?"
-        headingAccent="Start building today."
-        subtitle="Create your first page in under 5 minutes. No credit card required."
-      />
+      <CTABanner heading="Found yours?" headingAccent="Build it today." subtitle="Your first page is free. No credit card required." />
     </>
   )
 }

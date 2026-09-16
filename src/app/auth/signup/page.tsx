@@ -242,7 +242,10 @@ export default function SignUpPage() {
         </Button>
 
         <p className="text-2xs leading-relaxed text-tertiary">
-          By creating a workspace you agree to our Terms and Privacy Policy.
+          By creating a workspace you agree to our{" "}
+          <Link href="/legal/terms" className="underline underline-offset-2 hover:text-foreground">Terms of Service</Link>{" "}
+          and{" "}
+          <Link href="/legal/privacy" className="underline underline-offset-2 hover:text-foreground">Privacy Policy</Link>.
         </p>
       </form>
 

@@ -41,6 +41,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const res = NextResponse.redirect(target);
   res.cookies.set(`db_ref_${contact.pageId}`, token, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     path: "/p/",
     sameSite: "lax",
     maxAge: 30 * 24 * 60 * 60, // 30 days

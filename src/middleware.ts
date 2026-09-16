@@ -51,19 +51,26 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Always allow: marketing root, auth pages, public pages, discovery
-  // documents, and all API routes (they self-protect)
+  // Always allow: marketing root, auth pages, public pages, crawler files,
+  // discovery documents (robots/sitemap/llms/OG images, OAuth metadata under
+  // .well-known), and all API routes (they self-protect).
   if (
     pathname === "/" ||
-    pathname.startsWith("/auth") ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/llms.txt" ||
     pathname.startsWith("/.well-known/") ||
+    pathname.startsWith("/opengraph-image") ||
+    pathname.startsWith("/twitter-image") ||
+    pathname.startsWith("/auth") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/invite/") ||
     pathname.startsWith("/features") ||
     pathname.startsWith("/use-cases") ||
     pathname.startsWith("/examples") ||
-    pathname.startsWith("/pricing")
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/legal")
   ) {
     // Authenticated users hitting the marketing root get sent straight to the app
     if (pathname === "/" && isLoggedIn) {

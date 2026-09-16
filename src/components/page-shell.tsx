@@ -148,6 +148,25 @@ export function PageShell({
             Powered by {APP_NAME}
           </a>
         )}
+        {/* Transparency link is not part of branding: it stays on white-label pages too. */}
+        <a
+          href="/legal/privacy#buyers"
+          target="_blank"
+          rel="noopener"
+          className="select-none"
+          style={{
+            display: "inline-block",
+            marginLeft: showBranding ? "1.25rem" : 0,
+            fontFamily: "var(--font-dm-sans, sans-serif)",
+            fontSize: "0.6875rem",
+            fontWeight: 500,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--pub-muted-color)",
+          }}
+        >
+          Privacy
+        </a>
       </footer>
 
       {trailing}
