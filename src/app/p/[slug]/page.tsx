@@ -13,6 +13,7 @@ import { PubCover } from "@/components/pub-cover";
 import { buildPageHero } from "@/components/pub-hero";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PublishedFormHydrator } from "@/components/published-form";
+import { BuyerPrivacyNotice } from "@/components/buyer-privacy-notice";
 import { BuyerAnalyticsTracker } from "@/components/buyer-analytics-tracker";
 import { MapViewer } from "@/components/map-viewer";
 import { PubFontLinks } from "@/components/pub-font-links";
@@ -272,7 +273,7 @@ export default async function PublishedPage({
               style={{ maxWidth }}
             >
               <span
-                className="text-xs font-semibold px-3 py-1 rounded-full"
+                className="sr-mask text-xs font-semibold px-3 py-1 rounded-full"
                 style={{
                   fontFamily: "var(--pub-font-heading, var(--pub-font-body, sans-serif))",
                   background: `${accentColor}1a`,
@@ -293,7 +294,7 @@ export default async function PublishedPage({
             style={{ paddingBottom: "48px", borderBottom: "1px solid var(--pub-divider)" }}
           >
             <p
-              className="pub-title"
+              className="pub-title sr-mask"
               style={{
                 fontFamily: "var(--pub-font-body, inherit)",
                 fontSize: "clamp(1.875rem, 4.5vw, 2.75rem)",
@@ -334,6 +335,7 @@ export default async function PublishedPage({
             recordingEnabled={page.recordingEnabled}
           />
           <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />
+          <BuyerPrivacyNotice pageId={page.id} recordingEnabled={page.recordingEnabled} accentColor={accentColor} />
         </>
       }
     >

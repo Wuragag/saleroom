@@ -1,195 +1,70 @@
+import type { Metadata } from "next"
 import { EXAMPLES } from "@/data/marketing/examples"
 import { PageHero, CTABanner } from "@/components/marketing/shared"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
+import { APP_DOMAIN } from "@/lib/constants"
+import { pageTitle } from "@/lib/seo"
 
-export const metadata = {
-  title: "Examples — Dealbeam",
-  description: "See real pages built with Dealbeam — proposals, onboarding guides, investor updates, and more.",
+const DESCRIPTION = "Example Dealbeam deal pages: enterprise proposals, customer onboarding, investor updates, QBRs, mutual action plans and agency pitches — each split into tabs a buyer expects."
+
+export const metadata: Metadata = {
+  title: pageTitle("Examples"),
+  description: DESCRIPTION,
+  alternates: { canonical: "/examples" },
+  openGraph: { title: pageTitle("Examples"), description: DESCRIPTION, url: "/examples" },
 }
 
-function ExampleCard({ title, category, description, tabs }: {
-  title: string
-  category: string
-  description: string
-  tabs: string[]
-}) {
+const TONES = ["ink", "paper", "dim"] as const
+
+function ExampleCard({ title, category, description, tabs, tone }: { title: string; category: string; description: string; tabs: string[]; tone: (typeof TONES)[number] }) {
   return (
-    <div
-      className="sr-example-card"
-      style={{
-        background: "var(--db-surface)",
-        border: "1px solid var(--db-border)",
-        borderRadius: 16,
-        overflow: "hidden",
-        transition: "border-color 200ms ease, box-shadow 200ms ease",
-      }}
-    >
-      {/* Mini browser mockup */}
-      <div style={{ borderBottom: "1px solid var(--db-border)" }}>
-        <div
-          style={{
-            padding: "12px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          {["#FF5F57", "#FFBD2E", "#28CA42"].map((color) => (
-            <span
-              key={color}
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: color,
-                opacity: 0.7,
-              }}
-            />
-          ))}
-          <span
-            style={{
-              flex: 1,
-              marginLeft: 8,
-              background: "var(--db-surface-dim)",
-              borderRadius: 6,
-              padding: "4px 12px",
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 11,
-              color: "var(--db-text-muted)",
-            }}
-          >
-            dealbeam.app/p/...
-          </span>
-        </div>
-
-        {/* Tabs preview */}
-        <div
-          style={{
-            display: "flex",
-            borderTop: "1px solid var(--db-border)",
-          }}
-        >
-          {tabs.map((tab, i) => (
-            <div
-              key={tab}
-              style={{
-                padding: "8px 14px",
-                fontFamily: "var(--font-inter), sans-serif",
-                fontSize: 11,
-                color: i === 0 ? "var(--db-text)" : "var(--db-text-muted)",
-                fontWeight: i === 0 ? 600 : 400,
-                borderBottom: i === 0 ? "2px solid var(--db-text)" : "2px solid transparent",
-              }}
-            >
-              {tab}
-            </div>
-          ))}
-        </div>
-
-        {/* Content placeholder */}
-        <div style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 6 }}>
-          {[100, 80, 90, 60].map((w, i) => (
-            <div
-              key={i}
-              style={{
-                width: `${w}%`,
-                height: 6,
-                borderRadius: 3,
-                background: "var(--db-surface-dim)",
-              }}
-            />
-          ))}
+    <article className="mk-card mk-card-hover mk-example">
+      <div className="mk-example-shot" aria-hidden>
+        <div className="mk-example-page">
+          <div className="mk-frame-bar" style={{ padding: "8px 12px" }}>
+            <span className="mk-frame-dots"><span /><span /><span /></span>
+            <span className="mk-frame-url" style={{ fontSize: 10 }}>{APP_DOMAIN}/p/{title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}</span>
+          </div>
+          <div className={`mk-tpl-cover ${tone}`} style={{ height: 64, padding: "10px 14px", justifyContent: "flex-end" }}>
+            <span className="t" style={{ fontSize: 16 }}>{title}</span>
+          </div>
+          <div className="mk-example-tabs">{tabs.map((t) => <span key={t}>{t}</span>)}</div>
+          <div style={{ padding: "12px 14px 0", display: "flex", flexDirection: "column", gap: 6 }}>
+            {[96, 80, 88, 58].map((w, i) => <span key={i} className="mk-ui-line soft" style={{ width: `${w}%`, height: 6 }} />)}
+          </div>
         </div>
       </div>
-
-      {/* Card info */}
-      <div style={{ padding: "24px 24px 28px" }}>
-        <p
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: 11,
-            fontWeight: 600,
-            color: "var(--db-text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 8,
-          }}
-        >
-          {category}
-        </p>
-        <h3
-          style={{
-            fontFamily: "var(--font-serif), serif",
-            fontSize: 20,
-            fontWeight: 400,
-            color: "var(--db-text)",
-            lineHeight: 1.3,
-            margin: "0 0 8px",
-          }}
-        >
-          {title}
-        </h3>
-        <p
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: 14,
-            color: "var(--db-text-secondary)",
-            lineHeight: 1.6,
-            margin: 0,
-          }}
-        >
-          {description}
-        </p>
+      <div style={{ padding: "22px 24px 26px" }}>
+        <p className="mk-eyebrow" style={{ margin: "0 0 8px" }}>{category}</p>
+        <h3 className="mk-h3" style={{ fontSize: 22, marginBottom: 8 }}>{title}</h3>
+        <p className="mk-body" style={{ fontSize: 14 }}>{description}</p>
       </div>
-    </div>
+    </article>
   )
 }
 
 export default function ExamplesPage() {
   return (
     <>
-      <style>{`
-        .sr-examples-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
-        .sr-example-card:hover {
-          border-color: var(--db-border-hover) !important;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-        }
-        @media (max-width: 900px) {
-          .sr-examples-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 600px) {
-          .sr-examples-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-
       <PageHero
         label="Examples"
-        heading="See what you can build"
-        headingAccent="with Dealbeam"
-        subtitle="Real page templates for proposals, onboarding, investor updates, and everything in between."
+        heading="What a deal page"
+        headingAccent="looks like."
+        subtitle="Six pages the way sellers actually build them — each with the tabs a buyer expects and nothing they don't."
+        crumbs={[{ name: "Home", path: "/" }, { name: "Examples", path: "/examples" }]}
       />
-
-      <section style={{ padding: "0 0 120px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-          <div className="sr-examples-grid">
+      <section className="mk-section-tight" style={{ paddingTop: 8 }} aria-label="Example pages">
+        <div className="mk-container">
+          <div className="mk-grid-3">
             {EXAMPLES.map((ex, i) => (
-              <ScrollReveal key={ex.title} delay={i * 80}>
-                <ExampleCard {...ex} />
+              <ScrollReveal key={ex.title} delay={(i % 3) * 80} distance={18}>
+                <ExampleCard {...ex} tone={TONES[i % TONES.length]} />
               </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
-
-      <CTABanner
-        heading="Inspired?"
-        headingAccent="Start creating your own."
-        subtitle="Build your first page in under 5 minutes. Free forever, no credit card required."
-      />
+      <CTABanner heading="Start from one of these," headingAccent="or from a blank page." subtitle="Your first page is free. No credit card required." />
     </>
   )
 }

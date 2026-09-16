@@ -136,6 +136,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.impersonatedByEmail = u.impersonatedByEmail;
         }
       }
+      // Deleted (or otherwise vanished) accounts must not keep working on
+      // other devices for the remaining life of a 30-day JWT: re-check that
+      // the user row still exists at most every 10 minutes and, if not,
+      // return null so Auth.js invalidates the session.
+      const now = Date.now();
+      const verifiedAt = typeof token.verifiedAt === "number" ? token.verifiedAt : 0;
+      if (token.id && !user && now - verifiedAt > 10 * 60 * 1000) {
+        const exists = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { id: true },
+        });
+        if (!exists) return null;
+        token.verifiedAt = now;
+      } else if (user) {
+        token.verifiedAt = now;
+      }
       // When client calls update(), refresh user data from DB
       if (trigger === "update" && token.id) {
         const fresh = await prisma.user.findUnique({

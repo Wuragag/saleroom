@@ -1,61 +1,53 @@
 import Link from "next/link"
-import { LANDING_TEMPLATES } from "@/data/marketing/landing"
+import { LANDING_TEMPLATES, type LandingTemplate } from "@/data/marketing/landing"
 
-const SERIF = "var(--font-serif), Georgia, serif"
-const MONO = "var(--font-mk-mono), ui-monospace, monospace"
-
-/** A single deal-page cover card (coloured header + mini page body). */
-function CoverCard({ title, kind, from, to }: { title: string; kind: string; from: string; to: string }) {
-  return (
-    <div className="mk-tpl-card" style={{ width: 236, flexShrink: 0, borderRadius: 12, overflow: "hidden", border: "1px solid var(--db-border)", background: "var(--db-surface)", boxShadow: "var(--db-shadow-1)" }}>
-      <div style={{ height: 118, background: `linear-gradient(130deg, var(${from}), var(${to}))`, position: "relative", padding: 14, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-        <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)" }}>{kind}</span>
-        <span style={{ fontFamily: SERIF, fontSize: 19, lineHeight: 1.15, color: "#fff", letterSpacing: "-0.01em" }}>{title}</span>
+function TemplateCard({ t, decorative }: { t: LandingTemplate; decorative?: boolean }) {
+  const inner = (
+    <>
+      <div className={`mk-tpl-cover ${t.tone}`}>
+        <span className="k">{t.kind}</span>
+        <span className="t">{t.title}</span>
       </div>
-      <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 7 }}>
-        {[92, 78, 64].map((w, i) => (
-          <span key={i} style={{ height: 6, borderRadius: 3, width: `${w}%`, background: "var(--db-surface-dim)" }} />
-        ))}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
-          <span style={{ fontFamily: MONO, fontSize: 9.5, color: "var(--db-text-muted)" }}>Use template</span>
-          <span style={{ color: "var(--db-text-muted)" }}>→</span>
+      <div className="mk-tpl-body">
+        <div className="mk-tpl-tabs">{t.tabs.map((tab) => <span key={tab}>{tab}</span>)}</div>
+        <span className="mk-ui-line soft" style={{ display: "block", width: "88%" }} />
+        <span className="mk-ui-line soft" style={{ display: "block", width: "64%", marginTop: 6 }} />
+        <div className="mk-ui-row" style={{ justifyContent: "space-between", marginTop: 12 }}>
+          <span className="mk-ui-label">Use template</span><span className="mk-ui-muted" aria-hidden>→</span>
         </div>
       </div>
-    </div>
+    </>
   )
+  if (decorative) return <div className="mk-tpl" aria-hidden>{inner}</div>
+  return <Link href="/auth/signup" className="mk-tpl" aria-label={`Start from the ${t.title} template`}>{inner}</Link>
 }
 
+/**
+ * Eight seeded templates as an endless marquee (the set is rendered twice for
+ * a seamless -50% loop; the copy is aria-hidden so links aren't duplicated).
+ */
 export default function TemplateGallery() {
-  // duplicated set for a seamless -50% marquee that never runs dry
-  const track = [...LANDING_TEMPLATES, ...LANDING_TEMPLATES]
   return (
-    <>
-      <style>{`
-        .mk-tpl-marquee:hover .mk-tpl-track { animation-play-state: paused; }
-        .mk-tpl-card { transition: transform .2s ease, box-shadow .2s ease; }
-        .mk-tpl-card:hover { transform: translateY(-4px); box-shadow: var(--db-shadow-2); }
-        @media (prefers-reduced-motion: reduce) { .mk-tpl-track { animation: none !important; } }
-      `}</style>
-      <section style={{ padding: "72px 0 88px", borderTop: "1px solid var(--db-border)" }}>
-        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginBottom: 28 }}>
+    <section id="templates" className="mk-section-tight" aria-labelledby="templates-title" style={{ overflow: "hidden" }}>
+      <div className="mk-container">
+        <div className="mk-chapter">
+          <span className="mk-eyebrow">04 &mdash; Templates</span>
+          <span className="mk-eyebrow">Eight built in · save your own</span>
+        </div>
+        <div className="mk-chapter-head split" style={{ paddingBottom: 32 }}>
+          <h2 id="templates-title" className="mk-h2">Start from a <em>proven page.</em></h2>
           <div>
-            <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--db-text-muted)" }}>01 — Templates</span>
-            <h2 style={{ fontFamily: SERIF, fontWeight: 400, fontSize: "clamp(30px, 4vw, 44px)", letterSpacing: "-0.015em", lineHeight: 1.05, margin: "10px 0 0" }}>
-              Start from a <em>proven page</em>.
-            </h2>
-          </div>
-          <Link href="/examples" className="mk-plan-link" style={{ fontFamily: MONO, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--db-text-secondary)", textDecoration: "none", whiteSpace: "nowrap" }}>
-            Browse all →
-          </Link>
-        </div>
-        <div className="mk-tpl-marquee" style={{ overflow: "hidden", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent)" }}>
-          <div className="mk-tpl-track" style={{ display: "flex", gap: 18, width: "max-content", padding: "0 24px", animation: "wg-marquee 46s linear infinite" }}>
-            {track.map((t, i) => (
-              <CoverCard key={i} {...t} />
-            ))}
+            <p className="mk-lead" style={{ maxWidth: 440 }}>Call recap to ROI study. Each one already has the tabs a buyer expects; you supply what is true about this deal.</p>
+            <Link href="/examples" className="mk-arrow" style={{ marginTop: 16 }}>See examples <span aria-hidden>→</span></Link>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+      <div className="mk-marquee">
+        <div className="mk-marquee-track">
+          {LANDING_TEMPLATES.map((t) => <TemplateCard key={t.title} t={t} />)}
+          {LANDING_TEMPLATES.map((t) => <TemplateCard key={`${t.title}-dup`} t={t} decorative />)}
+        </div>
+      </div>
+    </section>
   )
 }

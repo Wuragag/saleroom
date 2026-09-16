@@ -39,9 +39,17 @@ export default auth((req) => {
     return NextResponse.redirect(absoluteUrl(req, `/api/ref?${params.toString()}`));
   }
 
-  // Always allow: marketing root, auth pages, public pages, and all API routes (they self-protect)
+  // Always allow: marketing root, auth pages, public pages, crawler files, and
+  // all API routes (they self-protect). robots/sitemap/llms/OG images must be
+  // reachable unauthenticated or search + AI crawlers get bounced to sign-in.
   if (
     pathname === "/" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/llms.txt" ||
+    pathname.startsWith("/.well-known/") ||
+    pathname.startsWith("/opengraph-image") ||
+    pathname.startsWith("/twitter-image") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/api/") ||
@@ -49,7 +57,8 @@ export default auth((req) => {
     pathname.startsWith("/features") ||
     pathname.startsWith("/use-cases") ||
     pathname.startsWith("/examples") ||
-    pathname.startsWith("/pricing")
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/legal")
   ) {
     // Authenticated users hitting the marketing root get sent straight to the app
     if (pathname === "/" && isLoggedIn) {

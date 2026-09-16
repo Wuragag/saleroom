@@ -76,6 +76,7 @@ export const POST = withErrorHandler(async (
     const cookieStore = await cookies();
     cookieStore.set(`db_ref_${pageId}`, contact.refToken, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       path: "/p/",
       sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60, // 30 days

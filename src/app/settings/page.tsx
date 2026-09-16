@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { AccountSettings } from "@/components/account-settings";
+import { AccountDangerZone } from "@/components/account-danger-zone";
 import { TeamSettings } from "@/components/team-settings";
 import { BillingSettings } from "@/components/billing-settings";
 import { BrandingSettings } from "@/components/branding-settings";
@@ -70,7 +71,12 @@ function SettingsContent() {
       </div>
 
       {/* Tab content */}
-      {activeTab === "account" && <AccountSettings />}
+      {activeTab === "account" && (
+        <div className="space-y-6">
+          <AccountSettings />
+          <AccountDangerZone />
+        </div>
+      )}
       {activeTab === "team" && <TeamSettings />}
       {activeTab === "billing" && <BillingSettings />}
       {activeTab === "branding" && <BrandingSettings />}

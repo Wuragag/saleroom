@@ -1,61 +1,49 @@
+import type { Metadata } from "next"
 import { FEATURES } from "@/data/marketing/features"
 import { PageHero, FeatureCard, CTABanner } from "@/components/marketing/shared"
+import { ProductFrame } from "@/components/marketing/product-ui"
 import ScrollReveal from "@/components/marketing/ScrollReveal"
+import { pageTitle } from "@/lib/seo"
 
-export const metadata = {
-  title: "Features — Dealbeam",
-  description: "Everything you need to create, share, and track winning proposals.",
+const DESCRIPTION = "Everything Dealbeam does, and nothing it doesn't: the page builder, sharing and access gates, buyer intelligence, AI Write and import, mutual action plans and deals, teams and brand."
+
+export const metadata: Metadata = {
+  title: pageTitle("Features"),
+  description: DESCRIPTION,
+  alternates: { canonical: "/features" },
+  openGraph: { title: pageTitle("Features"), description: DESCRIPTION, url: "/features" },
 }
 
 export default function FeaturesPage() {
   return (
     <>
-      <style>{`
-        .sr-features-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
-        .sr-feature-card:hover {
-          border-color: var(--db-border-hover) !important;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-        }
-        @media (max-width: 900px) {
-          .sr-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 600px) {
-          .sr-features-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-
       <PageHero
         label="Features"
-        heading="Everything you need to"
-        headingAccent="close with confidence"
-        subtitle="From building beautiful proposals to tracking every buyer interaction — Dealbeam gives you the tools to win."
+        heading="Everything the deal needs."
+        headingAccent="Nothing it doesn't."
+        subtitle="Six surfaces, each documented and shipped. Pick one to see it in detail."
+        crumbs={[{ name: "Home", path: "/" }, { name: "Features", path: "/features" }]}
       />
-
-      <section style={{ padding: "0 0 120px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-          <div className="sr-features-grid">
+      <section className="mk-section-tight" style={{ paddingTop: 8 }} aria-label="Feature list">
+        <div className="mk-container">
+          <div className="mk-grid-2">
             {FEATURES.map((f, i) => (
-              <ScrollReveal key={f.slug} delay={i * 80}>
+              <ScrollReveal key={f.slug} delay={(i % 2) * 90} distance={18}>
                 <FeatureCard
                   title={f.title}
                   description={f.description}
                   label={f.label}
                   href={`/features/${f.slug}`}
+                  preview={<ProductFrame visual={f.visual} live={false} />}
                 />
               </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
-
       <CTABanner
-        heading="Ready to win more deals"
-        headingAccent="with less effort?"
-        subtitle="Join 2,400+ account executives who close with confidence."
+        heading="See it with your own deal."
+        subtitle="Free until you need a second page. No credit card, no buyer login."
       />
     </>
   )

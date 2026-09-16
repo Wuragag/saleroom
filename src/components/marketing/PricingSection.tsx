@@ -1,118 +1,57 @@
 import Link from "next/link"
 import { PRICING_TIERS } from "@/data/marketing/pricing"
-import ScrollReveal from "@/components/marketing/ScrollReveal"
+import ScrollReveal from "./ScrollReveal"
 
 /**
- * "Terms" — pricing as a ruled table, not floating cards. Real tiers from
+ * "Terms" — pricing as a ruled table, not floating cards. Tiers come from
  * src/data/marketing/pricing.ts; the highlighted tier gets a surface fill.
+ * `chapter` renders the landing-page chapter header; the /pricing page
+ * supplies its own hero instead.
  */
-export default function PricingSection() {
+export default function PricingSection({ chapter = true }: { chapter?: boolean }) {
   return (
-    <>
-      <style>{`
-        .mk-plan-col {
-          display: flex;
-          flex-direction: column;
-          padding: 32px 28px 28px;
-          border-left: 1px solid var(--db-border);
-        }
-        .mk-plan-col:first-child { border-left: none; }
-        .mk-plan-link {
-          font-family: var(--font-mk-mono), ui-monospace, monospace;
-          font-size: 12px; font-weight: 500;
-          letter-spacing: 0.1em; text-transform: uppercase;
-          color: var(--db-text);
-          text-decoration: none;
-        }
-        .mk-plan-link:hover { text-decoration: underline; text-underline-offset: 4px; }
-        @media (max-width: 900px) {
-          .mk-plans { grid-template-columns: 1fr !important; }
-          .mk-plan-col { border-left: none !important; border-top: 1px solid var(--db-border); padding: 28px 20px !important; }
-          .mk-plan-col:first-child { border-top: none; }
-        }
-      `}</style>
-      <section id="pricing" style={{ maxWidth: 1120, margin: "0 auto", padding: "88px 24px 104px" }}>
-        <div className="mk-chapter">
-          <span className="mk-eyebrow">04 &mdash; Terms</span>
-          <span className="mk-eyebrow">Nothing to negotiate</span>
-        </div>
-
-        <h2 className="mk-h2" style={{ padding: "28px 0 36px", maxWidth: 640 }}>
-          Three plans. No <em>tiers of tiers</em>.
-        </h2>
-
-        <ScrollReveal distance={24}>
-        <div
-          className="mk-plans"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            borderTop: "1px solid var(--db-text)",
-            borderBottom: "1px solid var(--db-border)",
-          }}
-        >
-          {PRICING_TIERS.map((tier) => (
-            <div
-              key={tier.name}
-              className="mk-plan-col"
-              style={tier.highlighted ? { background: "var(--db-surface)" } : undefined}
-            >
-              <span className="mk-eyebrow" style={{ color: "var(--db-text)" }}>
-                {tier.name}
-                {tier.highlighted && (
-                  <span style={{ color: "var(--db-text-muted)" }}> &mdash; most chosen</span>
-                )}
-              </span>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "22px 0 6px" }}>
-                <span
-                  style={{
-                    fontFamily: "var(--font-serif), Georgia, serif",
-                    fontSize: 60,
-                    letterSpacing: "-0.02em",
-                    lineHeight: 1,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {tier.price}
-                </span>
-                <span className="mk-eyebrow">{tier.period}</span>
-              </div>
-              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--db-text-secondary)", margin: "0 0 22px" }}>
-                {tier.description}
-              </p>
-              <div style={{ borderTop: "1px solid var(--db-border)", marginBottom: 24 }}>
-                {tier.features.map((point) => (
-                  <div
-                    key={point}
-                    style={{
-                      fontSize: 13.5,
-                      lineHeight: 1.5,
-                      color: "var(--db-text-secondary)",
-                      padding: "9px 0",
-                      borderBottom: "1px solid var(--db-border)",
-                    }}
-                  >
-                    {point}
-                  </div>
-                ))}
-              </div>
-              {tier.highlighted ? (
-                <Link href="/auth/signup" className="mk-cta" style={{ alignSelf: "flex-start", marginTop: "auto" }}>
-                  {tier.cta}
-                </Link>
-              ) : (
-                <Link href="/auth/signup" className="mk-plan-link" style={{ marginTop: "auto", paddingBottom: 10 }}>
-                  {tier.cta} &rarr;
-                </Link>
-              )}
+    <section id="pricing" className={chapter ? "mk-section" : "mk-section-tight"} aria-labelledby="pricing-title">
+      <div className="mk-container">
+        {chapter && (
+          <>
+            <div className="mk-chapter">
+              <span className="mk-eyebrow">06 &mdash; Terms</span>
+              <span className="mk-eyebrow">Nothing per seat</span>
             </div>
-          ))}
-        </div>
+            <div className="mk-chapter-head split">
+              <h2 id="pricing-title" className="mk-h2">Three plans. <em>No tiers of tiers.</em></h2>
+              <p className="mk-lead" style={{ maxWidth: 440 }}>Start on Free. Move up when the second deal needs a page. Cancel from Settings whenever you like.</p>
+            </div>
+          </>
+        )}
+        {!chapter && <h2 id="pricing-title" className="mk-h2" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Plans</h2>}
+        <ScrollReveal distance={20}>
+          <div className="mk-plans">
+            {PRICING_TIERS.map((tier) => (
+              <div key={tier.name} className={`mk-plan${tier.highlighted ? " hi" : ""}`}>
+                <span className="mk-eyebrow" style={{ color: "var(--db-text)" }}>
+                  {tier.name}
+                  {tier.highlighted && <span style={{ color: "var(--db-text-muted)" }}> &mdash; most chosen</span>}
+                </span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "22px 0 6px" }}>
+                  <span className="mk-plan-price">{tier.price}</span>
+                  <span className="mk-eyebrow">{tier.period}</span>
+                </div>
+                <p className="mk-body" style={{ fontSize: 14, margin: "0 0 22px" }}>{tier.description}</p>
+                <div className="mk-plan-feat">
+                  {tier.features.map((point) => <div key={point}>{point}</div>)}
+                </div>
+                {tier.highlighted ? (
+                  <Link href="/auth/signup" className="mk-cta" style={{ alignSelf: "flex-start", marginTop: "auto" }}>{tier.cta}</Link>
+                ) : (
+                  <Link href="/auth/signup" className="mk-arrow" style={{ marginTop: "auto", paddingBottom: 12 }}>{tier.cta} <span aria-hidden>→</span></Link>
+                )}
+              </div>
+            ))}
+          </div>
         </ScrollReveal>
-        <span className="mk-eyebrow" style={{ display: "block", marginTop: 16 }}>
-          Prices are final. There is nothing to negotiate.
-        </span>
-      </section>
-    </>
+        <span className="mk-eyebrow" style={{ display: "block", marginTop: 16 }}>Prices are final. There is nothing to negotiate.</span>
+      </div>
+    </section>
   )
 }

@@ -1,0 +1,7 @@
+# Vulnerability disclosure policy for Dealbeam (RFC 9116)
+Contact: mailto:security@dealbeam.com
+Contact: mailto:privacy@dealbeam.com
+Expires: 2027-09-15T00:00:00.000Z
+Preferred-Languages: en, tr
+Canonical: https://dealbeam.com/.well-known/security.txt
+Policy: https://dealbeam.com/legal/privacy#security

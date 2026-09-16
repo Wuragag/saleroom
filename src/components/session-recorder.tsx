@@ -124,6 +124,9 @@ export function SessionRecorder({ sessionId, startChunkIndex = 0 }: Props) {
         bufferRef.current.push(event);
       },
       maskAllInputs: true,
+      // Personalised text ("Made for {name}", email gate) is masked as well —
+      // the seller already knows the buyer; the recording needs no names.
+      maskTextClass: "sr-mask",
       blockClass: "sr-no-record",
       sampling: {
         mousemove: 100, // ms throttle — bounds event volume
