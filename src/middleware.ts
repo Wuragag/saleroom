@@ -39,9 +39,21 @@ export default auth((req) => {
     return NextResponse.redirect(absoluteUrl(req, `/api/ref?${params.toString()}`));
   }
 
-  // Always allow: marketing root, auth pages, public pages, crawler files, and
-  // all API routes (they self-protect). robots/sitemap/llms/OG images must be
-  // reachable unauthenticated or search + AI crawlers get bounced to sign-in.
+  // OAuth consent (/oauth/authorize): the query string carries the client's
+  // request, so a sign-in round trip must preserve it — the generic branch
+  // below only keeps the pathname.
+  if (pathname.startsWith("/oauth/")) {
+    if (!isLoggedIn) {
+      const signInUrl = absoluteUrl(req, "/auth/signin");
+      signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
+      return NextResponse.redirect(signInUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // Always allow: marketing root, auth pages, public pages, crawler files,
+  // discovery documents (robots/sitemap/llms/OG images, OAuth metadata under
+  // .well-known), and all API routes (they self-protect).
   if (
     pathname === "/" ||
     pathname === "/robots.txt" ||

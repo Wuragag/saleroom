@@ -36,8 +36,9 @@ rate limiting · Tiptap editor · Anthropic (Claude) for AI · Resend for email.
 17. [Admin Console](#17-admin-console)
 18. [Marketing Site](#18-marketing-site)
 19. [Security & Platform](#19-security--platform)
-20. [Privacy & Compliance](#20-privacy--compliance-gdpr--uk-gdpr--kvkk--us-state-laws)
-21. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
+20. [MCP Server & API Keys](#20-mcp-server--api-keys)
+21. [Privacy & Compliance](#21-privacy--compliance-gdpr--uk-gdpr--kvkk--us-state-laws)
+22. [Roadmap / Not Yet Built](#roadmap--not-yet-built)
 
 ---
 
@@ -565,7 +566,8 @@ claimed anywhere on the site.
   a referrer policy set in [`next.config.mjs`](../next.config.mjs); embeds limited
   to an allowlist of providers.
 - **Secrets & billing** — Stripe webhooks are signature-verified; impersonation
-  tokens are HMAC-signed, short-lived, and single-use.
+  tokens are HMAC-signed, short-lived, and single-use; API keys and OAuth
+  tokens are stored hashed and act strictly as their user (see §20).
 - **Sanitizer canary** — DOMPurify's behaviour depends on the DOM it runs in,
   and a DOMPurify ≥ 3.4.7 / happy-dom pairing has been observed to return input
   *unsanitized* while reporting `isSupported`. `renderPubHtml` therefore pushes
@@ -591,7 +593,50 @@ Data model: [`prisma/schema.prisma`](../prisma/schema.prisma).
 
 ---
 
-## 20. Privacy & Compliance (GDPR · UK GDPR · KVKK · US state laws)
+## 20. MCP Server & API Keys
+
+AI assistants can work inside a rep's workspace through a
+[Model Context Protocol](https://modelcontextprotocol.io) server — full guide in
+[`docs/MCP.md`](./MCP.md).
+
+- **Endpoint** `/api/mcp` (Streamable HTTP, stateless JSON) —
+  [`src/app/api/mcp/route.ts`](../src/app/api/mcp/route.ts). One server per
+  request, bound to the calling user, so it runs on serverless with no session
+  store.
+- **Works as a connector in claude.ai and ChatGPT** — the app is its own OAuth
+  2.1 authorization server ([`src/lib/oauth.ts`](../src/lib/oauth.ts),
+  [`oauth-server.ts`](../src/lib/oauth-server.ts)): RFC 8414 / 9728 discovery
+  under `/.well-known/`, dynamic client registration, a consent page at
+  [`/oauth/authorize`](../src/app/oauth/authorize/page.tsx), PKCE-only code
+  exchange and rotating refresh tokens at `/api/oauth/*`. Users paste the
+  endpoint URL into the assistant's Connectors settings, sign in, approve, and
+  manage grants under *Connected apps* (`OAuthClient` / `OAuthAuthorizationCode`
+  / `OAuthToken` models, hashes only).
+- **Personal API keys** (Settings → Integrations, `ApiKey` model) — `dbk_…`
+  secrets stored only as a SHA-256 hash with a display prefix, shown once,
+  revocable, max 10 per user, rate-limited per key
+  ([`src/lib/api-keys.ts`](../src/lib/api-keys.ts),
+  [`api-keys-settings`](../src/components/api-keys-settings.tsx)). The settings
+  tab includes ready-to-paste snippets for Claude Code, Cursor-style JSON
+  configs and Claude Desktop (via `mcp-remote`).
+- **23 tools** ([`src/lib/mcp/`](../src/lib/mcp/)): workspace orientation,
+  recent buyer activity, pages (list/get/analytics/create/add tab/write
+  markdown/update settings/share tracked links/action plan), deals
+  (list/get/create/update/comment/stakeholder/link page), contacts & companies,
+  plus `search` / `fetch` (the pair ChatGPT's connector mode requires).
+  Reads carry `readOnlyHint`; results come back as text + `structuredContent`.
+- **Markdown in, Tiptap out** —
+  [`src/lib/markdown-to-doc.ts`](../src/lib/markdown-to-doc.ts) converts a
+  strict markdown subset to editor JSON, then `sanitizeDoc` (the AI composer's
+  whitelist) runs on it.
+- **Same permissions as the app** — every tool uses the session-free ACL
+  variants `checkPageAccessFor` / `checkDealAccessFor` and the shared list
+  scopes, and the atomic plan-limit asserts. Not exposed: password protection,
+  ownership reassignment, deletes, billing, team management, AI generation.
+
+---
+
+## 21. Privacy & Compliance (GDPR · UK GDPR · KVKK · US state laws)
 
 What exists in the product today, verified against the code. Legal wording
 lives in [`src/data/legal/`](../src/data/legal/) and renders at `/legal/*`;

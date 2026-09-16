@@ -86,14 +86,17 @@ canonical example):
 
 ### Authorization model (multi-tenant)
 - **Page access is centralized in `checkPageAccess(pageId, action)`**
-  (`src/lib/team-auth.ts`) — never re-implement page ACL inline. Rules: `PRIVATE`
+  (`src/lib/team-auth.ts`) — never re-implement page ACL inline.
+  `checkPageAccessFor(userId, pageId, action)` is the same check for an
+  explicit principal (API-key callers); the session version wraps it. Rules: `PRIVATE`
   pages are creator-only; `TEAM` pages are visible to all members, editable unless
   edit-locked by another user (`lockedById`), deletable only by creator or team
   OWNER.
 - Teams have OWNER/MEMBER roles. `requireTeamOwner(teamId?)` and
   `getUserTeamId(userId)` (deterministic: earliest-joined team) are the helpers.
 - **Deal access is centralized in `checkDealAccess(dealId, action)`**
-  (`src/lib/deal-auth.ts`), mirroring the page ACL: deals are team-visible
+  (`src/lib/deal-auth.ts`; `checkDealAccessFor` for an explicit user),
+  mirroring the page ACL: deals are team-visible
   (view/edit any member; delete = deal owner or team OWNER; teamless =
   owner-only). List scoping via `accessibleDealWhere`.
 - **Admin**: `isAdmin` is enriched into the JWT but **always re-read from the DB**
@@ -128,6 +131,22 @@ Uploads (PDF/DOCX/PPTX, ≤10 MB) are guarded against decompression bombs.
   `SessionRecording`) — identity-aware engagement, per-tab dwell, scroll depth,
   engagement scoring/intent (`engagement-score.ts`, `section-engagement.ts`), and
   opt-in rrweb session replay stored in Postgres. Access follows page visibility.
+
+### MCP server (AI-assistant access)
+`/api/mcp` (`src/app/api/mcp/route.ts`) exposes the workspace over the Model
+Context Protocol (Streamable HTTP, stateless; one `McpServer` per request).
+Auth (`src/lib/mcp/auth.ts`) accepts either an OAuth access token — the app is
+its own OAuth 2.1 authorization server (`src/lib/oauth.ts` pure rules,
+`oauth-server.ts` DB, routes under `/.well-known/`, `/oauth/authorize`,
+`/api/oauth/*`) so claude.ai / ChatGPT can add it as a connector — or a
+personal API key (`dbk_…`, `src/lib/api-keys.ts`); both managed in Settings →
+Integrations. Tools live in `src/lib/mcp/*-tools.ts`,
+are bound to a principal, and **must** gate through the session-free ACL
+variants `checkPageAccessFor` / `checkDealAccessFor` and reuse the `lib/` query
+helpers rather than re-implementing rules. Markdown content goes through
+`src/lib/markdown-to-doc.ts` then `sanitizeDoc`. Full guide: `docs/MCP.md`;
+surface pinned by `src/lib/__tests__/mcp-server.test.ts` (add new tool names
+there).
 
 ### Shared library (`src/lib/`)
 Pure, testable business logic lives here (engagement scoring, visible-time,

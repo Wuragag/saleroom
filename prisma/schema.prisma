@@ -75,6 +75,9 @@ model User {
   dealComments        DealComment[]
   companies           Company[]
   contacts            Contact[]
+  apiKeys             ApiKey[]
+  oauthCodes          OAuthAuthorizationCode[]
+  oauthTokens         OAuthToken[]
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }
@@ -321,6 +324,83 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+/// OAuth 2.1 client (RFC 7591 dynamic registration) — the record behind a
+/// "Connected app" such as claude.ai or ChatGPT. `secretHash` is null for
+/// public clients (token_endpoint_auth_method = none); PKCE is mandatory for all.
+model OAuthClient {
+  id                      String                   @id @default(cuid())
+  name                    String
+  secretHash              String?
+  redirectUris            String // JSON array of absolute URIs
+  tokenEndpointAuthMethod String                   @default("none")
+  clientUri               String                   @default("")
+  logoUri                 String                   @default("")
+  codes                   OAuthAuthorizationCode[]
+  tokens                  OAuthToken[]
+  createdAt               DateTime                 @default(now())
+}
+
+/// Short-lived, single-use authorization code (only its hash is stored).
+model OAuthAuthorizationCode {
+  id                  String      @id @default(cuid())
+  codeHash            String      @unique
+  clientId            String
+  client              OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  redirectUri         String
+  codeChallenge       String
+  codeChallengeMethod String      @default("S256")
+  scope               String      @default("")
+  resource            String?
+  expiresAt           DateTime
+  usedAt              DateTime?
+  createdAt           DateTime    @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Issued access + refresh token pair (hashes only). Refresh rotates: the old
+/// row is revoked and a new one created.
+model OAuthToken {
+  id               String      @id @default(cuid())
+  accessTokenHash  String      @unique
+  refreshTokenHash String?     @unique
+  clientId         String
+  client           OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope            String      @default("")
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime?
+  revokedAt        DateTime?
+  lastUsedAt       DateTime?
+  /// When the user first approved this grant — carried across refresh
+  /// rotations so "Connected since" doesn't drift.
+  grantedAt        DateTime    @default(now())
+  createdAt        DateTime    @default(now())
+
+  @@index([userId, clientId])
+  @@index([clientId])
+}
+
+/// Personal API key for programmatic access (the MCP server). Only the
+/// SHA-256 hash is stored; the plaintext is shown once at creation. `prefix`
+/// is the visible first characters so users can tell keys apart.
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  prefix     String
+  keyHash    String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // ──── Synced Content Blocks ────
