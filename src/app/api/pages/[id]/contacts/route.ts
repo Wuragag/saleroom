@@ -29,22 +29,40 @@ export const GET = withErrorHandler(async (
           totalSessions: true,
           lastSeenAt: true,
           ctaClicked: true,
+          referredByContactId: true,
+          referredBy: { select: { name: true, email: true } },
           sessions: {
             select: {
               tabViews: { select: { tabName: true } },
             },
           },
         },
+        orderBy: { firstSeenAt: "asc" },
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
   const rows = contacts.map((c) => {
-    const v = c.visitors[0]; // a contact maps to at most one visitor per page
-    const pricingTabViewed = v?.sessions.some((s) =>
-      s.tabViews.some((tv) => isPricingTabName(tv.tabName))
-    ) ?? false;
+    // A contact can own several browsers (phone + laptop, or a re-identified
+    // forward), so engagement is aggregated across all of them.
+    const vs = c.visitors;
+    const engagementScore = vs.reduce((m, v) => Math.max(m, v.engagementScore), 0);
+    const totalSessions = vs.reduce((n, v) => n + v.totalSessions, 0);
+    const lastSeenAt = vs.reduce<Date | null>(
+      (m, v) => (!m || v.lastSeenAt > m ? v.lastSeenAt : m),
+      null
+    );
+    const ctaClicked = vs.some((v) => v.ctaClicked);
+    const pricingTabViewed = vs.some((v) =>
+      v.sessions.some((s) => s.tabViews.some((tv) => isPricingTabName(tv.tabName)))
+    );
+    // The first browser we saw for this contact tells us how they got here.
+    const first = vs[0];
+    const forwardedFrom =
+      first?.referredBy && first.referredByContactId !== c.id
+        ? { name: first.referredBy.name, email: first.referredBy.email }
+        : null;
 
     return {
       id: c.id,
@@ -53,12 +71,16 @@ export const GET = withErrorHandler(async (
       company: c.company,
       refToken: c.refToken,
       createdAt: c.createdAt.toISOString(),
-      engagementScore: v?.engagementScore ?? 0,
-      totalSessions: v?.totalSessions ?? 0,
-      lastSeenAt: v?.lastSeenAt?.toISOString() ?? null,
-      intent: v
-        ? getIntentLabel(v.engagementScore, v.ctaClicked, pricingTabViewed)
+      engagementScore,
+      totalSessions,
+      lastSeenAt: lastSeenAt?.toISOString() ?? null,
+      intent: vs.length > 0
+        ? getIntentLabel(engagementScore, ctaClicked, pricingTabViewed)
         : null,
+      source: c.source,
+      verified: !!c.verifiedAt,
+      forwardedFrom,
+      deviceCount: vs.length,
     };
   });
 

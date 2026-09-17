@@ -22,6 +22,13 @@ import { getTeamBrandKit } from "@/lib/brand-kit";
 import { getTeamPlan, PLAN_LIMITS } from "@/lib/plan-limits";
 import { parseDocJson, renderPubHtml } from "@/lib/pub-html";
 import { serializeMap } from "@/lib/map-serialize";
+import {
+  parseRefCookie,
+  refCookieName,
+  legacyRefCookieName,
+  viaCookieName,
+} from "@/lib/page-gate";
+import { signIdentityAssertion } from "@/lib/gate-token";
 
 // This route renders per request: it reads cookies (ref + password tokens)
 // and search params, which opt Next out of static caching regardless of
@@ -88,7 +95,7 @@ export default async function PublishedPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ name?: string; company?: string; ref?: string }>;
+  searchParams: Promise<{ name?: string; company?: string; ref?: string; gate?: string }>;
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
@@ -104,22 +111,59 @@ export default async function PublishedPage({
   // page — a searchParams-conditional redirect() here didn't consistently
   // take effect once `revalidate` was in play.
 
-  // Read existing ref cookie (set by /api/ref on a prior visit). Fall back to
-  // the legacy `sr_` cookie name (pre-Dealbeam rebrand) so in-flight refs survive.
+  // Two cookies (see src/lib/page-gate.ts): the identity cookie says who this
+  // browser is; the referrer cookie says whose personal link it came through.
+  // Fall back to the legacy `sr_` name (pre-Dealbeam rebrand) so in-flight
+  // refs survive.
   const cookieStore = await cookies();
-  const refToken: string | null =
-    cookieStore.get(`db_ref_${page.id}`)?.value ??
-    cookieStore.get(`sr_ref_${page.id}`)?.value ??
-    null;
+  let identity =
+    parseRefCookie(cookieStore.get(refCookieName(page.id))?.value) ??
+    parseRefCookie(cookieStore.get(legacyRefCookieName(page.id))?.value);
+  const viaToken = cookieStore.get(viaCookieName(page.id))?.value ?? null;
+
+  // A gated page must not be unlocked by an identity that no longer exists
+  // (the seller removed and re-shared the contact): resolve it first.
+  if (page.requireEmail && identity) {
+    const stillValid = await prisma.pageContact.findFirst({
+      where: { refToken: identity.token, pageId: page.id },
+      select: { id: true },
+    });
+    if (!stillValid) identity = null;
+  }
+  const refToken = identity?.token ?? null;
+  // Server-signed so the tracker can't assert a token it merely knows.
+  const refProof = identity ? signIdentityAssertion(page.id, identity.token, identity.source) : null;
 
   // ── Email gate ──
   if (page.requireEmail && !refToken) {
-    // No valid ref → show email gate, themed like the page behind it
+    // No identity → show email gate, themed like the page behind it. Only a
+    // verify-mode gate is prefilled from the referrer's contact: there the
+    // address is proven before it counts, whereas on a plain gate a prefill
+    // would let whoever holds a forwarded link press Continue as the
+    // recipient — exactly the misattribution forward detection exists for.
     const { EmailGate } = await import("@/components/email-gate");
+    const viaContact =
+      page.verifyEmail && viaToken
+        ? await prisma.pageContact.findFirst({
+            where: { refToken: viaToken, pageId: page.id },
+            select: { email: true, name: true },
+          })
+        : null;
+    const gateNotice =
+      resolvedSearchParams.gate === "expired"
+        ? "That link has expired or was already used. Enter your email to get a new one."
+        : resolvedSearchParams.gate === "restricted"
+          ? "This page is restricted to specific email domains. Please use your work email."
+          : null;
     return (
       <EmailGate
         pageId={page.id}
         slug={page.slug}
+        verifyEmail={page.verifyEmail}
+        viaToken={viaToken ?? undefined}
+        prefillEmail={viaContact?.email}
+        prefillName={viaContact?.name ?? undefined}
+        initialError={gateNotice}
         pageStyle={{
           accentColor: page.accentColor,
           background: page.background,
@@ -332,6 +376,9 @@ export default async function PublishedPage({
             initialTabId={tabs[0]?.id}
             initialTabName={tabs[0]?.name}
             refToken={refToken ?? undefined}
+            refSource={identity?.source}
+            refProof={refProof ?? undefined}
+            viaToken={viaToken ?? undefined}
             recordingEnabled={page.recordingEnabled}
           />
           <PublishedFormHydrator pageId={page.id} accentColor={accentColor} />

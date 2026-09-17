@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserTeamId } from "@/lib/team-auth";
 import { extractEmailFromFormData } from "@/lib/timeline-utils";
 import { withErrorHandler } from "@/lib/api-error";
+import { isForwardedVisitor } from "@/lib/page-gate";
 import type { TimelineEvent, TimelineEventType, TimelineVisitor } from "@/types";
 
 function getRangeDate(range: string): Date | null {
@@ -99,7 +100,18 @@ export const GET = withErrorHandler(async (
           ...(visitorIds ? { visitorId: { in: visitorIds } } : {}),
           ...dateFilter("startedAt"),
         },
-        include: { visitor: { select: { id: true, visitorHash: true, contact: { select: { email: true, name: true } } } } },
+        include: {
+          visitor: {
+            select: {
+              id: true,
+              visitorHash: true,
+              contactId: true,
+              referredByContactId: true,
+              contact: { select: { email: true, name: true } },
+              referredBy: { select: { email: true, name: true } },
+            },
+          },
+        },
         orderBy: { startedAt: "desc" },
         take: limit + 1,
       }),
@@ -201,7 +213,13 @@ export const GET = withErrorHandler(async (
         visitorHash: s.visitor.visitorHash.slice(0, 8),
         visitorId: s.visitor.id,
         visitorEmail: s.visitor.contact?.email ?? null,
-        detail: { ...(s.visitor.contact?.name ? { contactName: s.visitor.contact.name } : {}) },
+        detail: {
+          ...(s.visitor.contact?.name ? { contactName: s.visitor.contact.name } : {}),
+          // Opened someone else's personal link — a forward / new stakeholder.
+          ...(isForwardedVisitor(s.visitor) && s.visitor.referredBy
+            ? { via: s.visitor.referredBy.name || s.visitor.referredBy.email }
+            : {}),
+        },
         isSeller: false,
       });
     }

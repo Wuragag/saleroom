@@ -29,9 +29,16 @@ export function activityPredicate(item: ActivityFeedItem): string {
       ? ` for ${formatDuration(item.detail.duration)}`
       : "";
 
+  // A first visit through someone else's personal link is a forward — the
+  // most useful thing the feed can say about a new stakeholder.
+  const via =
+    typeof item.detail.via === "string" && item.detail.via
+      ? ` via ${item.detail.via}'s link`
+      : "";
+
   switch (item.type) {
     case "first_visit":
-      return `opened ${page}${dur}`;
+      return `opened ${page}${via}${dur}`;
     case "return_visit":
       return `came back to ${page}${dur}`;
     case "cta_clicked":

@@ -7,6 +7,7 @@ import { withErrorHandler } from "@/lib/api-error";
 import { validatePageStylePatch } from "@/lib/page-style-validation";
 import bcrypt from "bcryptjs";
 import slugify from "slugify";
+import { normalizeDomains } from "@/lib/page-gate";
 
 function generateSlug(title: string): string {
   const base = slugify(title, { lower: true, strict: true });
@@ -139,6 +140,16 @@ export const PUT = withErrorHandler(async (
   if (body.tags !== undefined) updateData.tags = body.tags;
   if (body.visibility !== undefined) updateData.visibility = body.visibility;
   if (body.requireEmail !== undefined) updateData.requireEmail = !!body.requireEmail;
+  if (body.verifyEmail !== undefined) updateData.verifyEmail = !!body.verifyEmail;
+  if (body.allowedDomains !== undefined) {
+    // Accepts an array or a pasted comma-separated string; invalid entries
+    // are dropped rather than rejected so a typo never blocks the save.
+    updateData.allowedDomains = normalizeDomains(
+      Array.isArray(body.allowedDomains) || typeof body.allowedDomains === "string"
+        ? body.allowedDomains
+        : []
+    );
+  }
 
   const page = await prisma.page.update({
     where: { id },

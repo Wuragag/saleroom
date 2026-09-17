@@ -30,7 +30,9 @@ function getDescription(event: TimelineEvent): string {
   const cfg = TIMELINE_EVENT_CONFIG[event.type];
   switch (event.type) {
     case "first_visit":
-      return "First visit";
+      return event.detail.via
+        ? `First visit via ${event.detail.via}'s link`
+        : "First visit";
     case "return_visit":
       return event.detail.totalSessions
         ? `Return visit (session #${event.detail.totalSessions})`

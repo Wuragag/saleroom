@@ -133,6 +133,12 @@ export interface BuyerVisitorRow {
   intent: IntentLabel;
   contactName?: string | null;
   contactEmail?: string | null;
+  /** How the identity was established; null while unidentified. */
+  identitySource?: "LINK" | "GATE" | "VERIFIED" | null;
+  /** The contact proved the address via magic link. */
+  verified?: boolean;
+  /** Whose personal link this browser came through, when that isn't the visitor themselves. */
+  forwardedFrom?: { name: string | null; email: string } | null;
   sections: SectionEngagement[];
   sessionsList: BuyerSessionSummary[];
 }
@@ -148,6 +154,13 @@ export interface PageContactRow {
   totalSessions: number;
   lastSeenAt: string | null;
   intent: IntentLabel | null;
+  /** SHARE = seller added; GATE = self-identified at the email gate. */
+  source: "SHARE" | "GATE";
+  verified: boolean;
+  /** Set when this contact first appeared through another contact's link. */
+  forwardedFrom?: { name: string | null; email: string } | null;
+  /** Distinct browsers/devices attributed to this contact. */
+  deviceCount: number;
 }
 
 export interface BuyerAnalyticsSummary {

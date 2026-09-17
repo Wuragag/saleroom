@@ -51,6 +51,22 @@ enum DealStatus {
   LOST
 }
 
+// How a BuyerVisitor got linked to a PageContact.
+// LINK     — first browser to open the contact's personal ?ref= link
+// GATE     — typed their email at the gate (self-declared, unverified)
+// VERIFIED — completed the magic-link email verification
+enum IdentitySource {
+  LINK
+  GATE
+  VERIFIED
+}
+
+// How a PageContact record came to exist.
+enum ContactSource {
+  SHARE
+  GATE
+}
+
 // ──── Models ────
 
 model User {
@@ -212,6 +228,11 @@ model Page {
   buyerVisitors BuyerVisitor[]
   contacts     PageContact[]
   requireEmail Boolean        @default(false)
+  // Email-gate modifiers (only meaningful while requireEmail is on):
+  // verifyEmail sends a magic link instead of trusting the typed address;
+  // allowedDomains restricts the gate to specific email domains.
+  verifyEmail    Boolean      @default(false)
+  allowedDomains String[]     @default([])
   mutualActionPlan MutualActionPlan?
   font          String         @default("inter")
   headingFont   String         @default("") // "" = follow body font
@@ -423,18 +444,35 @@ model SyncedBlock {
 // ──── Page Contacts (share tracking) ────
 
 model PageContact {
-  id        String         @id @default(cuid())
-  pageId    String
-  page      Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  email     String
-  name      String?
-  company   String?
-  refToken  String         @unique
-  visitors  BuyerVisitor[]
-  createdAt DateTime       @default(now())
+  id         String         @id @default(cuid())
+  pageId     String
+  page       Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  email      String
+  name       String?
+  company    String?
+  refToken   String         @unique
+  // SHARE = the seller added them; GATE = they identified themselves at the
+  // email gate (possibly after arriving through someone else's link).
+  source     ContactSource  @default(SHARE)
+  // Set only by the magic-link verify route — proof the address is theirs.
+  verifiedAt DateTime?
+  visitors   BuyerVisitor[] @relation("VisitorIdentity")
+  // Visitors whose browser arrived through this contact's personal link.
+  referredVisitors BuyerVisitor[] @relation("VisitorReferral")
+  createdAt  DateTime       @default(now())
 
   @@unique([pageId, email])
   @@index([pageId])
+}
+
+// A magic-link token that has been redeemed. Tokens are HMAC-signed and
+// stateless; this table is what makes them single-use. Rows are pruned once
+// the token would have expired anyway.
+model GateTokenUse {
+  nonce     String   @id
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 // ──── Deals (lightweight pipeline on top of rooms — deliberately not a CRM) ────
@@ -562,8 +600,15 @@ model BuyerVisitor {
   visitorHash     String
   pageId          String
   page            Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  // Who we believe this browser is (null = unidentified).
   contactId       String?
-  contact         PageContact?   @relation(fields: [contactId], references: [id])
+  contact         PageContact?   @relation("VisitorIdentity", fields: [contactId], references: [id])
+  // How the identity was established; null while unidentified.
+  identitySource  IdentitySource?
+  // Whose personal link brought this browser here. Differs from contactId
+  // (or is set while contactId is null) when a link was forwarded.
+  referredByContactId String?
+  referredBy      PageContact?   @relation("VisitorReferral", fields: [referredByContactId], references: [id], onDelete: SetNull)
   sessions        BuyerSession[]
   firstSeenAt     DateTime       @default(now())
   lastSeenAt      DateTime       @default(now())
@@ -574,6 +619,7 @@ model BuyerVisitor {
   @@unique([visitorHash, pageId])
   @@index([pageId])
   @@index([contactId])
+  @@index([referredByContactId])
 }
 
 model BuyerSession {
