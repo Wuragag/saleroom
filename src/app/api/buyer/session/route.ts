@@ -2,9 +2,19 @@
  * POST /api/buyer/session
  *
  * Start or resume a buyer session.
- * Body: { visitorId: string; pageId: string }
+ * Body: { visitorId: string; pageId: string; refToken?; refSource?; refProof?; viaToken? }
  *   visitorId — UUID generated client-side, stored in localStorage
  *   pageId    — public page ID
+ *   refToken  — identity: contact this browser is known to be (identity cookie)
+ *   refSource — how that identity was issued: "link" | "gate" | "verified"
+ *   refProof  — server signature over (page, token, source) issued by the
+ *               published page; identity is ignored without a valid one, so a
+ *               client can't assert a token it merely knows (a forwarded link)
+ *   viaToken  — referrer: whose personal link this browser arrived through
+ *
+ * Identity is set once and never overwritten; the referrer is recorded even
+ * when identity is unknown so a forwarded link shows up as
+ * "unidentified · via <contact>" (see src/lib/page-gate.ts).
  *
  * Returns: { sessionId, visitorDbId, isReturn }
  */
@@ -17,6 +27,9 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { withErrorHandler } from "@/lib/api-error";
 import { isBotUserAgent } from "@/lib/bot-detect";
 import { sendViewNotificationEmail } from "@/lib/email";
+import { resolveIdentitySource, isForwardedVisitor, type RefCookieSource } from "@/lib/page-gate";
+import { verifyIdentityAssertion } from "@/lib/gate-token";
+import type { IdentitySource } from "@/generated/prisma";
 
 // 30-minute inactivity window (ms)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -46,10 +59,13 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     }
 
     const body = await req.json();
-    const { visitorId, pageId, refToken } = body as {
+    const { visitorId, pageId, refToken, refSource, refProof, viaToken } = body as {
       visitorId?: string;
       pageId?: string;
       refToken?: string;
+      refSource?: string;
+      refProof?: string;
+      viaToken?: string;
     };
 
     if (!visitorId || !pageId) {
@@ -70,15 +86,37 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    // Resolve refToken to a contactId (if valid)
+    // Resolve identity (refToken) and referrer (viaToken) to contacts on
+    // this page. Tokens for another page are ignored, not errors.
     let contactId: string | null = null;
-    if (refToken) {
-      const contact = await prisma.pageContact.findUnique({
-        where: { refToken },
-        select: { id: true, pageId: true },
+    let identitySource: IdentitySource | null = null;
+    let referredByContactId: string | null = null;
+
+    // Identity counts only with the page's signature over it.
+    const source: RefCookieSource =
+      refSource === "gate" || refSource === "verified" ? refSource : "link";
+    const attestedToken =
+      refToken && verifyIdentityAssertion(pageId, refToken, source, refProof) ? refToken : null;
+
+    const tokens = [attestedToken, viaToken].filter((t): t is string => typeof t === "string" && !!t);
+    if (tokens.length > 0) {
+      const found = await prisma.pageContact.findMany({
+        where: { refToken: { in: tokens }, pageId },
+        select: { id: true, refToken: true, verifiedAt: true },
       });
-      if (contact?.pageId === pageId) {
-        contactId = contact.id;
+      const identity = found.find((c) => c.refToken === attestedToken);
+      if (identity) {
+        contactId = identity.id;
+        identitySource = resolveIdentitySource(source, !!identity.verifiedAt);
+      }
+      const referrer = found.find((c) => c.refToken === viaToken);
+      if (referrer) {
+        referredByContactId = referrer.id;
+      } else if (identity && !viaToken && source === "link") {
+        // Legacy cookie (issued before the referrer cookie existed): a bare
+        // link claim did come through that link. Gate-typed identities with
+        // no referrer stay unreferred — no link was involved.
+        referredByContactId = identity.id;
       }
     }
 
@@ -95,6 +133,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
           visitorHash,
           pageId,
           contactId,
+          identitySource,
+          referredByContactId,
           firstSeenAt: now,
           lastSeenAt: now,
           totalSessions: 0,
@@ -103,13 +143,24 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         },
       });
 
-      // If visitor exists but has no contact, link them now
+      // Fill in what a returning browser has since told us. Identity is
+      // write-once (an established claim is never re-pointed); the referrer
+      // is recorded the first time we learn it.
+      const patch: { contactId?: string; identitySource?: IdentitySource; referredByContactId?: string } = {};
       if (contactId && !visitor.contactId) {
-        await tx.buyerVisitor.update({
-          where: { id: visitor.id },
-          data: { contactId },
-        });
+        patch.contactId = contactId;
+        if (identitySource) patch.identitySource = identitySource;
       }
+      if (referredByContactId && !visitor.referredByContactId) {
+        patch.referredByContactId = referredByContactId;
+      }
+      if (Object.keys(patch).length > 0) {
+        await tx.buyerVisitor.update({ where: { id: visitor.id }, data: patch });
+      }
+      const effective = {
+        contactId: visitor.contactId ?? patch.contactId ?? null,
+        referredByContactId: visitor.referredByContactId ?? patch.referredByContactId ?? null,
+      };
 
       // Check for a recent session (within timeout window)
       const recentSession = await tx.buyerSession.findFirst({
@@ -139,7 +190,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
           _max: { chunkIndex: true },
         });
         const recordingChunkCount = (recordingChunkMax._max.chunkIndex ?? -1) + 1;
-        return { session: recentSession, visitor, isNew: false, tabViews, recordingChunkCount };
+        return { session: recentSession, visitor, effective, isNew: false, tabViews, recordingChunkCount };
       }
 
       // New session
@@ -161,7 +212,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         data: { totalSessions: { increment: 1 } },
       });
 
-      return { session, visitor, isNew: true };
+      return { session, visitor, effective, isNew: true };
     });
 
     // Notify the page owner of a genuinely new session (opt-in, throttled,
@@ -169,6 +220,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     if (result.isNew && page.notifyOnView && page.user.email) {
       const ownerEmail = page.user.email;
       const isReturn = result.session.isReturn;
+      const forwarded = isForwardedVisitor(result.effective);
+      const forwardedFromId = forwarded ? result.effective.referredByContactId : null;
       // Derive origin from the incoming request rather than a possibly
       // unset/misconfigured NEXTAUTH_URL (that fallback previously meant
       // notification emails could link to http://localhost:3000).
@@ -177,11 +230,20 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         try {
           const { success } = await notifyLimiter.limit(pageId);
           if (!success) return;
+          let viaLabel: string | undefined;
+          if (forwardedFromId) {
+            const ref = await prisma.pageContact.findUnique({
+              where: { id: forwardedFromId },
+              select: { name: true, email: true },
+            });
+            viaLabel = ref?.name || ref?.email || undefined;
+          }
           await sendViewNotificationEmail(
             ownerEmail,
             page.title,
             `${appUrl}/analytics`,
-            isReturn
+            isReturn,
+            viaLabel
           );
         } catch (err) {
           console.error("[buyer/session notify]", err);

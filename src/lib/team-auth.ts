@@ -82,6 +82,26 @@ export async function checkPageAccessFor(
     return { authorized: false, reason: "Page not found" };
   }
 
+  return evaluatePageAccess(userId, page, action);
+}
+
+/** The page fields the ACL rules read — callers that already hold them can skip the refetch. */
+export type PageAccessInput = {
+  userId: string;
+  teamId: string | null;
+  visibility: "TEAM" | "PRIVATE";
+  lockedById: string | null;
+};
+
+/**
+ * The page ACL rules themselves, for a page the caller has already loaded.
+ * `checkPageAccessFor` delegates here — this is the single implementation.
+ */
+export async function evaluatePageAccess<P extends PageAccessInput>(
+  userId: string,
+  page: P,
+  action: PagePermission
+): Promise<PageAccessResult> {
   const isCreator = page.userId === userId;
 
   // Private page: only creator has any access

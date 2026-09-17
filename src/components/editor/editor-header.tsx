@@ -634,6 +634,7 @@ export function EditorHeader({
         pageId={pageId}
         slug={slug}
         pageTitle={title || "Untitled Page"}
+        onRequireEmailChange={onRequireEmailChange}
       />
 
       {/* ── Save as Template Dialog ── */}

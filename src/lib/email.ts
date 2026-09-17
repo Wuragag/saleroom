@@ -4,6 +4,16 @@ import { APP_NAME, EMAIL_FROM } from "./constants";
 const FROM = EMAIL_FROM;
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
+/** Escape seller-controlled text before interpolating it into email HTML. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function sendPasswordResetEmail(
   email: string,
   token: string
@@ -149,13 +159,18 @@ export async function sendViewNotificationEmail(
   email: string,
   pageTitle: string,
   analyticsUrl: string,
-  isReturn: boolean
+  isReturn: boolean,
+  /** Name/email of the contact whose link a forwarded visitor came through. */
+  viaContact?: string
 ): Promise<void> {
   const visitorLabel = isReturn ? "A returning visitor" : "A new visitor";
+  const viaNote = viaContact
+    ? ` They arrived through <strong>${escapeHtml(viaContact)}</strong>&rsquo;s link — likely a forward to a new stakeholder.`
+    : "";
 
   if (!process.env.RESEND_API_KEY) {
     console.log(
-      `\n[View Notification — dev mode]\nEmail: ${email}\nPage: ${pageTitle}\nVisitor: ${visitorLabel}\nAnalytics: ${analyticsUrl}\n`
+      `\n[View Notification — dev mode]\nEmail: ${email}\nPage: ${pageTitle}\nVisitor: ${visitorLabel}${viaContact ? ` (via ${viaContact}'s link)` : ""}\nAnalytics: ${analyticsUrl}\n`
     );
     return;
   }
@@ -175,7 +190,7 @@ export async function sendViewNotificationEmail(
         ${visitorLabel} is on your page
       </h1>
       <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
-        Someone just opened <strong>&ldquo;${pageTitle}&rdquo;</strong>.
+        Someone just opened <strong>&ldquo;${pageTitle}&rdquo;</strong>.${viaNote}
         Head to your analytics to see what they engage with.
       </p>
       <a href="${analyticsUrl}"
@@ -185,6 +200,51 @@ export async function sendViewNotificationEmail(
       <p style="font-size:12px;color:#a1a1aa;margin:24px 0 0;line-height:1.5;">
         You&apos;re receiving this because view notifications are enabled for this
         page. Turn them off in the page&apos;s share settings.
+      </p>
+    </div>
+  </body>
+</html>`,
+  });
+}
+
+export async function sendGateVerifyEmail(
+  email: string,
+  verifyUrl: string,
+  pageTitle: string
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.log(
+      `\n[Gate Verify — dev mode]\nEmail: ${email}\nPage: ${pageTitle}\nLink: ${verifyUrl}\n`
+    );
+    return;
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const safeTitle = escapeHtml(pageTitle);
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `Your link to view "${pageTitle}"`,
+    html: `
+<!DOCTYPE html>
+<html>
+  <body style="font-family:sans-serif;background:#f4f4f5;margin:0;padding:40px 16px;">
+    <div style="max-width:420px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
+      <h1 style="font-size:20px;font-weight:700;margin:0 0 8px;color:#09090b;">
+        Confirm your email to continue
+      </h1>
+      <p style="font-size:14px;color:#71717a;margin:0 0 24px;line-height:1.5;">
+        Click the button below to open <strong>&ldquo;${safeTitle}&rdquo;</strong>.
+        This link expires in <strong>15 minutes</strong>.
+      </p>
+      <a href="${verifyUrl}"
+         style="display:inline-block;background:#09090b;color:#fff;font-size:14px;font-weight:600;padding:10px 24px;border-radius:8px;text-decoration:none;">
+        Open the page
+      </a>
+      <p style="font-size:12px;color:#a1a1aa;margin:24px 0 0;line-height:1.5;">
+        If you didn&apos;t request this, you can safely ignore this email.
+        Sent via ${APP_NAME}.
       </p>
     </div>
   </body>

@@ -12,9 +12,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { X, Send, Copy, Check, Loader2, Trash2, ExternalLink, Bell, Video } from "lucide-react";
+import {
+  X,
+  Send,
+  Copy,
+  Check,
+  Loader2,
+  Trash2,
+  ExternalLink,
+  Bell,
+  Video,
+  Mail,
+  BadgeCheck,
+  Forward,
+  Globe,
+} from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { normalizeDomains, EMAIL_RE } from "@/lib/page-gate";
 import type { PageContactRow } from "@/types";
 
 interface ShareModalProps {
@@ -23,6 +38,8 @@ interface ShareModalProps {
   pageId: string;
   slug: string;
   pageTitle: string;
+  /** The editor header also toggles the gate — keep both in sync. */
+  onRequireEmailChange?: (requireEmail: boolean) => void;
 }
 
 function SettingToggle({
@@ -55,7 +72,14 @@ interface ContactChip {
   name?: string;
 }
 
-export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: ShareModalProps) {
+export function ShareModal({
+  open,
+  onOpenChange,
+  pageId,
+  slug,
+  pageTitle,
+  onRequireEmailChange,
+}: ShareModalProps) {
   const [chips, setChips] = useState<ContactChip[]>([]);
   const [emailInput, setEmailInput] = useState("");
   const [nameInput, setNameInput] = useState("");
@@ -70,6 +94,12 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
   const [loading, setLoading] = useState(false);
   const [notifyOnView, setNotifyOnView] = useState<boolean | null>(null);
   const [recordingEnabled, setRecordingEnabled] = useState<boolean | null>(null);
+  // Access settings — who has to identify themselves, and how.
+  const [requireEmail, setRequireEmail] = useState<boolean | null>(null);
+  const [verifyEmail, setVerifyEmail] = useState(false);
+  const [allowedDomains, setAllowedDomains] = useState<string[]>([]);
+  const [domainInput, setDomainInput] = useState("");
+  const [savingDomains, setSavingDomains] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -114,40 +144,85 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
       setChips([]);
       setEmailInput("");
       setNameInput("");
-      // Load the current notification + recording settings
+      // Load the current notification, recording and access settings
       apiClient
-        .get<{ notifyOnView?: boolean; recordingEnabled?: boolean }>(`/api/pages/${pageId}`)
+        .get<{
+          notifyOnView?: boolean;
+          recordingEnabled?: boolean;
+          requireEmail?: boolean;
+          verifyEmail?: boolean;
+          allowedDomains?: string[];
+        }>(`/api/pages/${pageId}`)
         .then((p) => {
           setNotifyOnView(!!p.notifyOnView);
           setRecordingEnabled(!!p.recordingEnabled);
+          setRequireEmail(!!p.requireEmail);
+          setVerifyEmail(!!p.verifyEmail);
+          setAllowedDomains(Array.isArray(p.allowedDomains) ? p.allowedDomains : []);
         })
         .catch(() => {
           setNotifyOnView(null);
           setRecordingEnabled(null);
+          setRequireEmail(null);
         });
     }
   }, [open, fetchContacts, pageId]);
 
   // Optimistic per-page boolean setting update with rollback on failure.
+  // Resolves to whether the save stuck, so callers can sync other state.
   const updateSetting = async (
-    field: "notifyOnView" | "recordingEnabled",
+    field: "notifyOnView" | "recordingEnabled" | "requireEmail" | "verifyEmail",
     next: boolean,
     setter: (v: boolean) => void,
     labels: { on: string; off: string; error: string }
-  ) => {
+  ): Promise<boolean> => {
     setter(next); // optimistic
     try {
       await apiClient.put(`/api/pages/${pageId}`, { [field]: next });
       toast.success(next ? labels.on : labels.off);
+      return true;
     } catch {
       setter(!next); // rollback
       toast.error(labels.error);
+      return false;
     }
+  };
+
+  const saveDomains = async (next: string[]) => {
+    const prev = allowedDomains;
+    setAllowedDomains(next); // optimistic
+    setSavingDomains(true);
+    try {
+      const saved = await apiClient.put<{ allowedDomains?: string[] }>(`/api/pages/${pageId}`, {
+        allowedDomains: next,
+      });
+      if (Array.isArray(saved.allowedDomains)) setAllowedDomains(saved.allowedDomains);
+    } catch {
+      setAllowedDomains(prev);
+      toast.error("Failed to update allowed domains");
+    } finally {
+      setSavingDomains(false);
+    }
+  };
+
+  const addDomains = () => {
+    const parsed = normalizeDomains(domainInput);
+    if (parsed.length === 0) {
+      if (domainInput.trim()) toast.error("Enter a domain like acme.com");
+      return;
+    }
+    const merged = normalizeDomains([...allowedDomains, ...parsed]);
+    setDomainInput("");
+    if (merged.length !== allowedDomains.length) void saveDomains(merged);
+  };
+
+  const removeDomain = (d: string) => {
+    void saveDomains(allowedDomains.filter((x) => x !== d));
   };
 
   const addChip = () => {
     const email = emailInput.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    if (!email || !EMAIL_RE.test(email)) return;
     if (chips.some((c) => c.email === email)) return;
     setChips([...chips, { email, name: nameInput.trim() || undefined }]);
     setEmailInput("");
@@ -310,11 +385,27 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
                     {/* Avatar */}
                     <Avatar name={c.name || c.email} size="sm" className="h-6 w-6 text-3xs" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-small font-medium text-foreground truncate">
-                        {c.name || c.email}
+                      <p className="text-small font-medium text-foreground truncate flex items-center gap-1">
+                        <span className="truncate">{c.name || c.email}</span>
+                        {c.verified && (
+                          <BadgeCheck
+                            className="h-3.5 w-3.5 shrink-0 text-success"
+                            aria-label="Email verified"
+                          />
+                        )}
                       </p>
-                      {c.name && (
-                        <p className="text-3xs text-muted-foreground truncate">{c.email}</p>
+                      {(c.name || c.forwardedFrom || c.source === "GATE") && (
+                        <p className="text-3xs text-muted-foreground truncate flex items-center gap-1">
+                          {c.name && <span className="truncate">{c.email}</span>}
+                          {c.forwardedFrom ? (
+                            <span className="inline-flex items-center gap-0.5 text-info shrink-0">
+                              <Forward className="h-3 w-3" aria-hidden="true" />
+                              via {c.forwardedFrom.name || c.forwardedFrom.email}
+                            </span>
+                          ) : c.source === "GATE" ? (
+                            <span className="shrink-0">· self-identified</span>
+                          ) : null}
+                        </p>
                       )}
                     </div>
                     {/* Engagement */}
@@ -378,6 +469,94 @@ export function ShareModal({ open, onOpenChange, pageId, slug, pageTitle }: Shar
             </div>
           )}
         </div>
+
+        {/* Access — who has to identify themselves, and how */}
+        {requireEmail !== null && (
+          <>
+            <SettingToggle
+              checked={requireEmail}
+              icon={Mail}
+              label="Require email to view"
+              onToggle={async () => {
+                const next = !requireEmail;
+                const saved = await updateSetting("requireEmail", next, setRequireEmail, {
+                  on: "Email gate enabled",
+                  off: "Email gate disabled",
+                  error: "Failed to update email gate setting",
+                });
+                // Only tell the editor header once the save actually stuck.
+                if (saved) onRequireEmailChange?.(next);
+              }}
+            />
+            {requireEmail && (
+              <div className="ml-5 mt-2 flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={verifyEmail}
+                    onChange={() =>
+                      updateSetting("verifyEmail", !verifyEmail, setVerifyEmail, {
+                        on: "Visitors must verify their email",
+                        off: "Email verification off",
+                        error: "Failed to update verification setting",
+                      })
+                    }
+                    className="h-3.5 w-3.5 rounded border-border accent-primary"
+                  />
+                  <BadgeCheck className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-foreground">Verify with a magic link</span>
+                  <span className="text-3xs text-muted-foreground">— proves it&apos;s really them</span>
+                </label>
+
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <Input
+                      value={domainInput}
+                      onChange={(e) => setDomainInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          addDomains();
+                        }
+                      }}
+                      onBlur={addDomains}
+                      placeholder={
+                        allowedDomains.length === 0
+                          ? "Only allow domains, e.g. acme.com (optional)"
+                          : "Add another domain"
+                      }
+                      aria-label="Allowed email domains"
+                      disabled={savingDomains}
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                  {allowedDomains.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pl-5">
+                      {allowedDomains.map((d) => (
+                        <Badge
+                          key={d}
+                          variant="neutral"
+                          className="gap-1 rounded-full text-3xs font-medium px-2 py-0.5"
+                        >
+                          @{d}
+                          <button
+                            type="button"
+                            onClick={() => removeDomain(d)}
+                            className="hover:text-destructive"
+                            aria-label={`Remove ${d}`}
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* View notification toggle */}
         {notifyOnView !== null && (

@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
+import { EMAIL_RE } from "@/lib/page-gate";
 
 // Canonical Contact/Company upserts. Contacts auto-populate from activity the
 // product already captures (room shares, email-gate signups, stakeholder
 // adds); these helpers are additive and merge-safe — they never overwrite a
 // real name/title with an empty one, and they never touch tracking tables.
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** The scope every canonical row lives in: a team, or a teamless user. */
 export interface CrmScope {

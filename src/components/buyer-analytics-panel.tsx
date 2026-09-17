@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Layers,
   Video,
+  BadgeCheck,
+  Forward,
   type LucideIcon,
 } from "lucide-react";
 import type { BuyerVisitorRow, SectionEngagement, BuyerSessionSummary } from "@/types";
@@ -24,6 +26,24 @@ import { SessionReplayPlayer } from "@/components/session-replay-player";
 
 interface BuyerAnalyticsPanelProps {
   pageId: string;
+}
+
+/** One-line provenance under an identified visitor's name. */
+function identitySourceLabel(v: BuyerVisitorRow): string {
+  const via = v.forwardedFrom
+    ? ` · via ${v.forwardedFrom.name || v.forwardedFrom.email}'s link`
+    : "";
+  switch (v.identitySource) {
+    case "VERIFIED":
+      return `Verified email${via}`;
+    case "GATE":
+      return `Entered email${via}`;
+    case "LINK":
+      return `Opened personal link${via}`;
+    default:
+      // Linked before provenance was recorded — don't guess how.
+      return `Linked${via}`;
+  }
 }
 
 type Range = "7d" | "30d" | "all";
@@ -175,6 +195,7 @@ function formatDate(iso: string): string {
 export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
   const [range, setRange] = useState<Range>("30d");
   const [visitors, setVisitors] = useState<BuyerVisitorRow[]>([]);
+  const [forwardedCount, setForwardedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -188,6 +209,7 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setVisitors(data.visitors);
+      setForwardedCount(Number(data.summary?.forwardedCount) || 0);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -234,6 +256,19 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
           </button>
         </div>
       </div>
+
+      {/* Forward signal — browsers that opened someone else's personal link */}
+      {!loading && !error && forwardedCount > 0 && (
+        <div className="mx-4 mb-3 flex items-center gap-2 rounded-lg border border-info/30 bg-info-subtle px-3 py-2 text-xs text-foreground">
+          <Forward className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden="true" />
+          <span>
+            <span className="font-medium">
+              {forwardedCount} {forwardedCount === 1 ? "visitor" : "visitors"}
+            </span>{" "}
+            arrived through a forwarded link — new stakeholders may be involved.
+          </span>
+        </div>
+      )}
 
       {/* Table */}
       {loading ? (
@@ -298,16 +333,31 @@ export function BuyerAnalyticsPanel({ pageId }: BuyerAnalyticsPanelProps) {
                             size="xs"
                           />
                           <div className="min-w-0">
-                            <p className="font-medium text-foreground truncate">
-                              {v.contactName || v.contactEmail}
+                            <p className="font-medium text-foreground truncate flex items-center gap-1">
+                              <span className="truncate">{v.contactName || v.contactEmail}</span>
+                              {v.verified && (
+                                <BadgeCheck
+                                  className="h-3.5 w-3.5 shrink-0 text-success"
+                                  aria-label="Email verified"
+                                />
+                              )}
                             </p>
-                            {v.contactName && v.contactEmail && (
-                              <p className="text-3xs text-muted-foreground truncate">{v.contactEmail}</p>
-                            )}
+                            <p className="text-3xs text-muted-foreground truncate">
+                              {v.contactName && v.contactEmail ? `${v.contactEmail} · ` : ""}
+                              {identitySourceLabel(v)}
+                            </p>
                           </div>
                         </div>
                       ) : (
-                        <span className="font-mono text-muted-foreground">#{v.visitorHash}</span>
+                        <div className="min-w-0">
+                          <p className="font-mono text-muted-foreground">#{v.visitorHash}</p>
+                          {v.forwardedFrom && (
+                            <p className="text-3xs text-info truncate flex items-center gap-1">
+                              <Forward className="h-3 w-3 shrink-0" aria-hidden="true" />
+                              via {v.forwardedFrom.name || v.forwardedFrom.email}&rsquo;s link
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>

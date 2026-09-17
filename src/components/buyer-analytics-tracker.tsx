@@ -78,11 +78,27 @@ interface Props {
   pageId: string;
   initialTabId?: string;
   initialTabName?: string;
+  /** Identity: the contact this browser is known to be (from the identity cookie). */
   refToken?: string;
+  /** How that identity was issued (link claim, typed at gate, verified). */
+  refSource?: "link" | "gate" | "verified";
+  /** Server signature over (page, token, source) — the session endpoint rejects identity without it. */
+  refProof?: string;
+  /** Referrer: whose personal link this browser arrived through. */
+  viaToken?: string;
   recordingEnabled?: boolean;
 }
 
-export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, refToken, recordingEnabled }: Props) {
+export function BuyerAnalyticsTracker({
+  pageId,
+  initialTabId,
+  initialTabName,
+  refToken,
+  refSource,
+  refProof,
+  viaToken,
+  recordingEnabled,
+}: Props) {
   // Session replay is opt-in for the buyer (see BuyerPrivacyNotice): it runs
   // only with a stored "granted" answer for this page and no GPC signal.
   const [replayAllowed, setReplayAllowed] = useState(false);
@@ -263,7 +279,12 @@ export function BuyerAnalyticsTracker({ pageId, initialTabId, initialTabName, re
         const res = await fetch(SESSION_API, {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ visitorId, pageId, ...(refToken ? { refToken } : {}) }),
+          body:    JSON.stringify({
+            visitorId,
+            pageId,
+            ...(refToken ? { refToken, refSource, refProof } : {}),
+            ...(viaToken ? { viaToken } : {}),
+          }),
         });
         if (!res.ok || aborted) return;
         const data = await res.json();

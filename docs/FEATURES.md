@@ -260,10 +260,36 @@ UI: [`ai-workspace`](../src/components/ai/ai-workspace.tsx),
 - **Password protection** (Pro+) — gate a page behind a password
   ([`/p/[slug]/password`](../src/app/p/[slug]/password/page.tsx)).
 - **Email gate** (`requireEmail`) — require a visitor to enter their email before
-  viewing; captured visitors become `PageContact` records.
+  viewing; captured visitors become `PageContact` records (`source: GATE`).
+  Two modifiers, set from the share modal's *Access* section:
+  - **Verify with a magic link** (`verifyEmail`) — the gate emails a 15-minute,
+    single-use HMAC-signed link ([`src/lib/gate-token.ts`](../src/lib/gate-token.ts),
+    [`/api/pages/[id]/gate/verify`](../src/app/api/pages/[id]/gate/verify/route.ts);
+    redeemed nonces live in `GateTokenUse`); the contact is only created — and
+    stamped `verifiedAt` — when it's opened. On verify pages a personal link
+    never grants identity by itself; it prefills the gate with the recipient's
+    address instead (plain gates are deliberately *not* prefilled, so a
+    forwarded link can't be turned into the recipient's identity in one click).
+  - **Allowed domains** (`allowedDomains`) — restrict the gate to specific email
+    domains (sub-domains included); rejected addresses get a generic message so
+    the buyer's organisation isn't disclosed to whoever holds the link.
 - **Per-recipient tracking links** — share a page with a specific contact via a
-  unique `ref` token so engagement is attributed to a named person
-  ([`/api/ref`](../src/app/api/ref/route.ts), `PageContact.refToken`).
+  unique `ref` token ([`/api/ref`](../src/app/api/ref/route.ts),
+  `PageContact.refToken`). **A link is a referrer, not proof of identity**
+  ([`src/lib/page-gate.ts`](../src/lib/page-gate.ts)): the first browser to open
+  it claims the contact's identity (`BuyerVisitor.identitySource = LINK`), and
+  the claim *locks* once that browser has a session with ≥10s of visible time
+  (`CLAIM_LOCK_MIN_SECONDS`) — so a JS-executing mail scanner or two
+  near-simultaneous opens can't lock the recipient out. After the lock, any
+  later browser on the same link — a forward, or the recipient on another
+  device — gets a referrer-only cookie (`db_via_<pageId>`) and, on gated pages,
+  meets the gate. A signed-in teammate previewing their own link claims
+  nothing; a stale identity cookie (contact removed) is ignored. Identity
+  cookie values carry their provenance as a suffix (`<token>` link, `<token>.g`
+  typed at the gate, `<token>.v` verified). Because the cookies are httpOnly
+  and `/p/`-scoped, the page hands the tracker the token plus a server-signed
+  assertion over (page, token, source); the session endpoint ignores identity
+  without a valid one, so a client can't assert a token it merely knows.
 - **Preview** ([`/preview/[id]`](../src/app/preview/[id]/page.tsx)) — see the page
   as a buyer would before publishing.
 - **Placeholder guard** — publishing a page that still contains unfilled
@@ -330,7 +356,18 @@ Two layers of tracking: lightweight page analytics and rich per-buyer intelligen
 Deep, identity-aware engagement on published pages:
 - **Visitors** (`BuyerVisitor`) — deduped by a visitor hash, with first/last seen,
   session count, a computed **engagement score**, and a CTA-clicked flag. Linked to
-  a named `PageContact` when known.
+  a named `PageContact` when known, with `identitySource` (LINK / GATE / VERIFIED)
+  recording *how* we know, and `referredByContactId` recording whose personal
+  link brought the browser in. Identity is write-once; the referrer is recorded
+  even while identity is unknown.
+- **Forward / new-stakeholder detection** — a visitor whose referrer differs from
+  their identity (or who is unidentified but has a referrer) arrived through a
+  forwarded link. The buyer panel shows *"via Alice's link"* on the row plus a
+  page-level count, the activity feed says *"opened … via Alice's link"*, the
+  view-notification email names the forwarding contact, and the MCP
+  `get_page_analytics` tool returns `forwardedFrom` / `identitySource` /
+  `emailVerified` per visitor. A contact can own several browsers (phone +
+  laptop, or a re-identified forward); the share modal aggregates across them.
 - **Sessions** (`BuyerSession`) — visible-time duration, return-visit detection,
   per-session engagement score. Sessions resumed within 30 minutes are seeded
   with their accumulated duration/tab state so heartbeats never reset totals.

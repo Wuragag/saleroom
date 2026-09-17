@@ -19,7 +19,8 @@ interface PrismaKnownError {
   meta?: unknown;
 }
 
-function isPrismaKnownError(err: unknown): err is PrismaKnownError {
+/** Name-based (not instanceof) so it holds across bundles/dev reloads. */
+export function isPrismaKnownError(err: unknown): err is PrismaKnownError {
   return (
     err instanceof Error &&
     err.name === "PrismaClientKnownRequestError" &&

@@ -57,6 +57,14 @@ describe("activityPredicate", () => {
     ).toBe("opened Acme Proposal for 2m 15s");
   });
 
+  it("names the forwarding contact on a first visit through their link", () => {
+    expect(
+      activityPredicate(
+        item({ type: "first_visit", detail: { via: "Alice Chen", duration: 10 } })
+      )
+    ).toBe("opened Acme Proposal via Alice Chen's link for 10s");
+  });
+
   it("omits duration when zero or missing", () => {
     expect(
       activityPredicate(item({ type: "return_visit", detail: { duration: 0 } }))

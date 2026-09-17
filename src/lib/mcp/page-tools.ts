@@ -21,6 +21,7 @@ import { collectDocText, findPagePlaceholders } from "@/lib/page-placeholders";
 import { parseDocJson } from "@/lib/pub-html";
 import { getIntentLabel, isPricingTabName } from "@/lib/engagement-score";
 import { DEFAULT_CONTENT, DEFAULT_TAB_NAME } from "@/lib/constants";
+import { isForwardedVisitor } from "@/lib/page-gate";
 import {
   ok,
   fail,
@@ -251,6 +252,7 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
           take: limit ?? 20,
           include: {
             contact: { select: { name: true, email: true, company: true } },
+            referredBy: { select: { name: true, email: true } },
             sessions: {
               select: { duration: true, tabViews: { select: { tabName: true, duration: true } } },
             },
@@ -290,6 +292,15 @@ export function registerPageTools(server: McpServer, p: McpPrincipal) {
             email: v.contact?.email ?? null,
             company: v.contact?.company ?? null,
             anonymousId: v.contact ? null : v.visitorHash.slice(0, 8),
+            // How we know who they are: LINK (opened their personal link),
+            // GATE (typed their email), VERIFIED (magic link); null = unknown.
+            identitySource: v.identitySource,
+            emailVerified: v.identitySource === "VERIFIED",
+            // Set when they came in through someone else's personal link — a
+            // forward, i.e. a stakeholder the seller didn't share with directly.
+            forwardedFrom: isForwardedVisitor(v) && v.referredBy
+              ? { name: v.referredBy.name, email: v.referredBy.email }
+              : null,
             sessions: v.totalSessions,
             totalAttentionSeconds: total,
             engagementScore: v.engagementScore,

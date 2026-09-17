@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { accessiblePageWhere } from "@/lib/team-auth";
 import { extractEmailFromFormData } from "@/lib/timeline-utils";
 import type { ActivityFeedItem, TimelineEventType } from "@/types";
+import { isForwardedVisitor } from "@/lib/page-gate";
 
 /** Look-back window keeps the queries bounded; the feed only shows recent pulse. */
 export const ACTIVITY_SINCE_DAYS = 30;
@@ -40,7 +41,10 @@ export async function listWorkspaceActivity(
   const visitorSelect = {
     select: {
       visitorHash: true,
+      contactId: true,
+      referredByContactId: true,
       contact: { select: { email: true, name: true } },
+      referredBy: { select: { email: true, name: true } },
     },
   } as const;
 
@@ -122,7 +126,12 @@ export async function listWorkspaceActivity(
       actorName: s.visitor.contact?.name ?? null,
       actorEmail: s.visitor.contact?.email ?? null,
       actorHash: s.visitor.contact ? null : s.visitor.visitorHash.slice(0, 8),
-      detail: s.duration > 0 ? { duration: s.duration } : {},
+      detail: {
+        ...(s.duration > 0 ? { duration: s.duration } : {}),
+        ...(!s.isReturn && isForwardedVisitor(s.visitor) && s.visitor.referredBy
+          ? { via: s.visitor.referredBy.name || s.visitor.referredBy.email }
+          : {}),
+      },
     });
   }
 

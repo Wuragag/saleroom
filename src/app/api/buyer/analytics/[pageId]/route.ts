@@ -11,6 +11,7 @@ import { getIntentLabel, aggregateVisitorScore, isPricingTabName } from "@/lib/e
 import { aggregateSections, type SectionScrollInput } from "@/lib/section-engagement";
 import { getUserTeamId } from "@/lib/team-auth";
 import { withErrorHandler } from "@/lib/api-error";
+import { isForwardedVisitor } from "@/lib/page-gate";
 
 function getRangeDate(range: string): Date | null {
   const now = new Date();
@@ -63,13 +64,14 @@ export const GET = withErrorHandler(async (
     };
 
     // Fetch paginated visitors + global summary stats in parallel
-    const [visitors, totalVisitorCount, globalReturning] = await Promise.all([
+    const [visitors, totalVisitorCount, globalReturning, forwardedCount] = await Promise.all([
       prisma.buyerVisitor.findMany({
         where: visitorWhere,
         take: limit,
         skip: (pageParam - 1) * limit,
         include: {
           contact: { select: { name: true, email: true } },
+          referredBy: { select: { name: true, email: true } },
           sessions: {
             take: 10, // limit nested sessions to most recent 10
             include: {
@@ -101,6 +103,14 @@ export const GET = withErrorHandler(async (
       // Global: return visitors (totalSessions > 1)
       prisma.buyerVisitor.count({
         where: { ...visitorWhere, totalSessions: { gt: 1 } },
+      }),
+      // Global: browsers that opened someone else's personal link
+      prisma.buyerVisitor.count({
+        where: {
+          ...visitorWhere,
+          referredByContactId: { not: null },
+          OR: [{ contactId: null }, { NOT: { contactId: { equals: prisma.buyerVisitor.fields.referredByContactId } } }],
+        },
       }),
     ]);
 
@@ -167,6 +177,12 @@ export const GET = withErrorHandler(async (
         intent,
         contactName: v.contact?.name ?? null,
         contactEmail: v.contact?.email ?? null,
+        identitySource: v.identitySource,
+        // Per browser, not per contact: this browser proved the address.
+        verified: v.identitySource === "VERIFIED",
+        forwardedFrom: isForwardedVisitor(v) && v.referredBy
+          ? { name: v.referredBy.name, email: v.referredBy.email }
+          : null,
         sections,
         sessionsList: v.sessions.map((s) => ({
           sessionId: s.id,
@@ -190,6 +206,7 @@ export const GET = withErrorHandler(async (
         uniqueReturning: globalReturning,
         highIntentCount,
         avgScore,
+        forwardedCount,
       },
       visitors: rows,
       pagination: {
